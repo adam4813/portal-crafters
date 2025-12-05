@@ -118,8 +118,8 @@ export class CustomerSystem {
     this.maxQueueSize = size;
   }
 
-  public setPatience(multiplier: number): void {
-    // Apply patience multiplier to spawn interval
+  public setSpawnRate(multiplier: number): void {
+    // Adjust customer spawn interval based on multiplier
     this.customerSpawnInterval = 30000 / multiplier;
   }
 
