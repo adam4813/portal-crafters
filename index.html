@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Portal Crafters</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header class="game-header">
+        <h1>Portal Crafters</h1>
+        <div id="resources">
+          <span id="money-display">Gold: 100</span>
+          <span id="mana-display">Mana: 0</span>
+        </div>
+      </header>
+      
+      <main class="game-main">
+        <aside class="sidebar left-sidebar">
+          <section id="customer-panel" class="panel">
+            <h2>Customers</h2>
+            <div id="customer-queue"></div>
+            <div id="current-contract" class="contract-display"></div>
+          </section>
+          
+          <section id="inventory-panel" class="panel">
+            <h2>Inventory</h2>
+            <div id="inventory-items"></div>
+            <div id="inventory-elements"></div>
+          </section>
+        </aside>
+        
+        <section class="game-canvas-container">
+          <div id="portal-canvas"></div>
+          <div id="crafting-panel" class="panel">
+            <h3>Crafting</h3>
+            <div id="ingredient-slots"></div>
+            <button id="craft-button" class="btn-primary">Craft Portal</button>
+          </div>
+        </section>
+        
+        <aside class="sidebar right-sidebar">
+          <section id="shop-panel" class="panel">
+            <h2>Shop</h2>
+            <div id="mana-shop"></div>
+            <div id="upgrade-shop"></div>
+          </section>
+          
+          <section id="research-panel" class="panel">
+            <h2>Research</h2>
+            <div id="research-tree"></div>
+          </section>
+          
+          <section id="recipes-panel" class="panel">
+            <h2>Recipe Book</h2>
+            <div id="discovered-recipes"></div>
+          </section>
+        </aside>
+      </main>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

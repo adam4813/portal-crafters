@@ -1,0 +1,31 @@
+{
+  "name": "portal-crafters",
+  "version": "1.0.0",
+  "description": "A 2D incremental/crafting game where players create portals using elemental energy, RPG equipment, and mundane items as ingredients",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "keywords": [
+    "game",
+    "three.js",
+    "typescript",
+    "crafting",
+    "incremental"
+  ],
+  "author": "adam4813",
+  "license": "MIT",
+  "dependencies": {
+    "three": "^0.169.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.169.0",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.2"
+  }
+}
