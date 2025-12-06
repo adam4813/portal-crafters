@@ -1,5 +1,34 @@
 // Element types available in the game
-export type ElementType = 'fire' | 'water' | 'earth' | 'air' | 'lightning' | 'void' | 'light';
+export type ElementType =
+  | 'fire'
+  | 'water'
+  | 'earth'
+  | 'air'
+  | 'ice'
+  | 'lightning'
+  | 'metal'
+  | 'nature'
+  | 'shadow'
+  | 'light'
+  | 'void'
+  | 'crystal'
+  | 'arcane'
+  | 'time'
+  | 'chaos'
+  | 'life'
+  | 'death';
+
+// Element tier for categorizing element rarity and progression
+export type ElementTier = 'common' | 'standard' | 'rare' | 'exotic' | 'legendary';
+
+// Unlock methods for elements
+export type UnlockMethod =
+  | 'starting'
+  | 'early_research'
+  | 'mid_research'
+  | 'late_research'
+  | 'secret_recipe'
+  | 'rare_reward';
 
 // Ingredient categories
 export type IngredientCategory = 'elemental' | 'equipment' | 'mundane';
