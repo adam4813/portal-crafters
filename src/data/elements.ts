@@ -337,9 +337,9 @@ export const RESEARCH_TREE: ResearchNode[] = [
   { element: 'nature', unlocked: false, cost: 250, prerequisites: ['earth', 'water'] },
 
   // Exotic Tier - Late-game research
+  { element: 'void', unlocked: false, cost: 500, prerequisites: ['earth', 'air'] },
   { element: 'shadow', unlocked: false, cost: 500, prerequisites: ['void', 'earth'] },
   { element: 'light', unlocked: false, cost: 500, prerequisites: ['fire', 'water', 'lightning'] },
-  { element: 'void', unlocked: false, cost: 500, prerequisites: ['earth', 'air'] },
   { element: 'crystal', unlocked: false, cost: 600, prerequisites: ['earth', 'light'] },
   { element: 'arcane', unlocked: false, cost: 750, prerequisites: ['lightning', 'void'] },
 
