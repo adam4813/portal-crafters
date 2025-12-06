@@ -163,7 +163,10 @@ export class Portal {
     if (!this.portalData.generatedEquipmentAttributes) {
       this.portalData.generatedEquipmentAttributes = [];
     }
-    this.portalData.generatedEquipmentAttributes.push(...equipment);
+    // Deep clone equipment objects before storing to prevent unintended mutations
+    this.portalData.generatedEquipmentAttributes.push(
+      ...equipment.map((eq) => structuredClone(eq))
+    );
 
     // Generated equipment attributes contribute to portal level
     const attributeBonus = equipment.reduce(

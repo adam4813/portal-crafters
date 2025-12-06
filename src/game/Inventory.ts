@@ -194,12 +194,13 @@ export class InventorySystem {
   /**
    * Add a generated equipment item to inventory.
    * Stores the full equipment object with all attributes.
+   * Uses deep clone to prevent mutations of the original object.
    */
   public addGeneratedEquipment(equipment: GeneratedEquipment): void {
     if (!this.state.generatedEquipment) {
       this.state.generatedEquipment = {};
     }
-    this.state.generatedEquipment[equipment.id] = { ...equipment };
+    this.state.generatedEquipment[equipment.id] = structuredClone(equipment);
     this.notifyChange();
   }
 
@@ -286,10 +287,11 @@ export class InventorySystem {
 
   // State operations
   public getState(): InventoryState {
+    // Deep clone generated equipment to prevent mutations affecting stored state
     const generatedEquipmentCopy: Record<string, GeneratedEquipment> = {};
     if (this.state.generatedEquipment) {
       for (const [id, eq] of Object.entries(this.state.generatedEquipment)) {
-        generatedEquipmentCopy[id] = { ...eq };
+        generatedEquipmentCopy[id] = structuredClone(eq);
       }
     }
 
@@ -304,10 +306,11 @@ export class InventorySystem {
   }
 
   public loadState(state: InventoryState): void {
+    // Deep clone generated equipment to prevent mutations affecting stored state
     const generatedEquipmentCopy: Record<string, GeneratedEquipment> = {};
     if (state.generatedEquipment) {
       for (const [id, eq] of Object.entries(state.generatedEquipment)) {
-        generatedEquipmentCopy[id] = { ...eq };
+        generatedEquipmentCopy[id] = structuredClone(eq);
       }
     }
 
