@@ -2,6 +2,12 @@ import * as THREE from 'three';
 import type { Portal as PortalType, ElementType, GeneratedEquipment } from '../types';
 import { generateId, calculatePortalLevel, calculatePortalColor } from '../utils/helpers';
 
+/**
+ * Scaling factor for converting equipment total cost to portal level bonus.
+ * A divisor of 3 means every 3 points of total cost = 1 portal level bonus.
+ */
+const EQUIPMENT_COST_TO_LEVEL_DIVISOR = 3;
+
 export class Portal {
   private scene: THREE.Scene;
   private portalMesh: THREE.Mesh | null = null;
@@ -160,7 +166,10 @@ export class Portal {
     this.portalData.generatedEquipmentAttributes.push(...equipment);
 
     // Generated equipment attributes contribute to portal level
-    const attributeBonus = equipment.reduce((sum, eq) => sum + Math.floor(eq.totalCost / 3), 0);
+    const attributeBonus = equipment.reduce(
+      (sum, eq) => sum + Math.floor(eq.totalCost / EQUIPMENT_COST_TO_LEVEL_DIVISOR),
+      0
+    );
     if (attributeBonus > 0) {
       this.portalData.level += attributeBonus;
     }

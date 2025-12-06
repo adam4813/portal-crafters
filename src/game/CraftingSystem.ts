@@ -9,6 +9,12 @@ import type {
 import { getIngredientById } from '../data/ingredients';
 import { getEquipmentById } from '../data/equipment';
 
+/**
+ * Scaling factor for converting generated equipment total cost to bonus level.
+ * A divisor of 2 means every 2 points of total cost = 1 bonus level.
+ */
+const GENERATED_EQUIPMENT_COST_TO_BONUS_DIVISOR = 2;
+
 export class CraftingSystem {
   private slots: CraftingSlot[] = [];
   private maxSlots: number = 4;
@@ -163,7 +169,9 @@ export class CraftingSystem {
         if (this.isGeneratedEquipment(slot.equipment)) {
           generatedEquipmentUsed.push(slot.equipment);
           // Generated equipment attributes contribute additional bonus
-          bonusLevel += Math.floor(slot.equipment.totalCost / 2);
+          bonusLevel += Math.floor(
+            slot.equipment.totalCost / GENERATED_EQUIPMENT_COST_TO_BONUS_DIVISOR
+          );
         }
       }
     }

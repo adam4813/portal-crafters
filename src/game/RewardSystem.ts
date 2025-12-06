@@ -4,6 +4,18 @@ import { EQUIPMENT, getEquipmentById } from '../data/equipment';
 import { randomElement, calculateRewardChance } from '../utils/helpers';
 import { equipmentGenerator } from './EquipmentGenerator';
 
+/**
+ * Reward probability thresholds (cumulative).
+ * These define the chance of receiving each reward type.
+ */
+const REWARD_PROBABILITIES = {
+  GOLD_THRESHOLD: 0.35, // 35% chance for gold (0 to 0.35)
+  INGREDIENT_THRESHOLD: 0.55, // 20% chance for ingredient (0.35 to 0.55)
+  MANA_THRESHOLD: 0.7, // 15% chance for mana (0.55 to 0.70)
+  STATIC_EQUIPMENT_THRESHOLD: 0.85, // 15% chance for static equipment (0.70 to 0.85)
+  // Remaining 15% (0.85 to 1.0) is for generated equipment
+};
+
 export class RewardSystem {
   private rewardChanceUpgrade: number = 0;
 
@@ -20,23 +32,18 @@ export class RewardSystem {
       return null;
     }
 
-    // Determine reward type
+    // Determine reward type using probability thresholds
     const roll = Math.random();
 
-    if (roll < 0.35) {
-      // 35% chance for gold
+    if (roll < REWARD_PROBABILITIES.GOLD_THRESHOLD) {
       return this.generateGoldReward(portalLevel);
-    } else if (roll < 0.55) {
-      // 20% chance for ingredient
+    } else if (roll < REWARD_PROBABILITIES.INGREDIENT_THRESHOLD) {
       return this.generateIngredientReward(portalLevel);
-    } else if (roll < 0.7) {
-      // 15% chance for mana
+    } else if (roll < REWARD_PROBABILITIES.MANA_THRESHOLD) {
       return this.generateManaReward(portalLevel);
-    } else if (roll < 0.85) {
-      // 15% chance for static equipment
+    } else if (roll < REWARD_PROBABILITIES.STATIC_EQUIPMENT_THRESHOLD) {
       return this.generateEquipmentReward(portalLevel);
     } else {
-      // 15% chance for generated equipment
       return this.generateGeneratedEquipmentReward(portalLevel);
     }
   }
