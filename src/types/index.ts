@@ -73,6 +73,11 @@ export interface Portal {
   visualColor: number;
   visualIntensity: number;
   createdAt: number;
+  /**
+   * Generated equipment attributes used in this portal.
+   * Stored for use in calculating portal effects and rewards.
+   */
+  generatedEquipmentAttributes?: GeneratedEquipment[];
 }
 
 // Customer contract requirements
@@ -143,9 +148,13 @@ export interface Upgrade {
 
 // Reward from portal completion
 export interface Reward {
-  type: 'gold' | 'ingredient' | 'equipment' | 'mana';
+  type: 'gold' | 'ingredient' | 'equipment' | 'mana' | 'generatedEquipment';
   amount?: number;
   itemId?: string;
+  /**
+   * Generated equipment item (when type is 'generatedEquipment').
+   */
+  generatedEquipment?: GeneratedEquipment;
 }
 
 // Inventory state
@@ -155,6 +164,11 @@ export interface InventoryState {
   ingredients: Record<string, number>;
   equipment: Record<string, number>;
   elements: Partial<Record<ElementType, number>>;
+  /**
+   * Storage for generated equipment items with full attribute data.
+   * Keyed by unique generated item ID.
+   */
+  generatedEquipment?: Record<string, GeneratedEquipment>;
 }
 
 // Game state for saving
@@ -182,7 +196,7 @@ export interface GameEvent {
 export interface CraftingSlot {
   index: number;
   ingredient: Ingredient | null;
-  equipment: Equipment | null;
+  equipment: AnyEquipment | null;
 }
 
 // Element conversion rate
@@ -201,4 +215,88 @@ export interface ShopItem {
   cost: number;
   amount?: number;
   itemId?: string;
+}
+
+// ============================================
+// Procedural Equipment Generation Types
+// ============================================
+
+/**
+ * Attribute that can be applied to generated equipment.
+ * Each attribute contributes to the item's cost/quality score.
+ */
+export interface EquipmentAttribute {
+  id: string;
+  name: string;
+  costContribution: number;
+  levelRange: { min: number; max: number };
+  elementAffinity?: ElementType;
+  description?: string;
+}
+
+/**
+ * Equipment prefix attribute (e.g., "Rusted", "Enchanted").
+ * Affects item quality and name generation.
+ */
+export interface PrefixAttribute extends EquipmentAttribute {
+  type: 'prefix';
+}
+
+/**
+ * Equipment material attribute (e.g., "Iron", "Mithril").
+ * Affects item quality and element affinity.
+ */
+export interface MaterialAttribute extends EquipmentAttribute {
+  type: 'material';
+}
+
+/**
+ * Equipment suffix attribute (e.g., "of Strength", "of Annihilation").
+ * Provides bonus effects and contributes to cost.
+ */
+export interface SuffixAttribute extends EquipmentAttribute {
+  type: 'suffix';
+  effectType?: 'damage' | 'defense' | 'elemental' | 'special';
+  effectValue?: number;
+}
+
+/**
+ * Equipment gear type (e.g., "Sword", "Shield", "Ring").
+ * Determines the base slot and icon for the equipment.
+ */
+export interface GearTypeAttribute {
+  id: string;
+  name: string;
+  slot: EquipmentSlot;
+  icon: string;
+  baseCost: number;
+  description: string;
+}
+
+/**
+ * Generated equipment item with all procedural attributes stored.
+ * Extends the base Equipment interface with attribute tracking.
+ */
+export interface GeneratedEquipment extends Equipment {
+  isGenerated: true;
+  attributes: {
+    prefix?: PrefixAttribute;
+    material?: MaterialAttribute;
+    gearType: GearTypeAttribute;
+    suffix?: SuffixAttribute;
+  };
+  totalCost: number;
+  itemLevel: number;
+}
+
+/**
+ * Union type for all equipment types (static or generated).
+ */
+export type AnyEquipment = Equipment | GeneratedEquipment;
+
+/**
+ * Type guard to check if equipment is generated.
+ */
+export function isGeneratedEquipment(eq: AnyEquipment): eq is GeneratedEquipment {
+  return 'isGenerated' in eq && eq.isGenerated === true;
 }

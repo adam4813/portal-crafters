@@ -1,4 +1,11 @@
-import type { InventoryState, ElementType, Ingredient, Equipment } from '../types';
+import type {
+  InventoryState,
+  ElementType,
+  Ingredient,
+  Equipment,
+  GeneratedEquipment,
+  AnyEquipment,
+} from '../types';
 import { getIngredientById } from '../data/ingredients';
 import { getEquipmentById } from '../data/equipment';
 
@@ -19,6 +26,7 @@ export class InventorySystem {
         water_essence: 3,
       },
       equipment: {},
+      generatedEquipment: {},
       elements: {
         fire: 10,
         water: 10,
@@ -175,6 +183,80 @@ export class InventorySystem {
     return owned;
   }
 
+  // Generated Equipment operations
+  /**
+   * Get all generated equipment items stored in inventory.
+   */
+  public getGeneratedEquipment(): Record<string, GeneratedEquipment> {
+    return { ...(this.state.generatedEquipment || {}) };
+  }
+
+  /**
+   * Add a generated equipment item to inventory.
+   * Stores the full equipment object with all attributes.
+   * Uses deep clone to prevent mutations of the original object.
+   */
+  public addGeneratedEquipment(equipment: GeneratedEquipment): void {
+    if (!this.state.generatedEquipment) {
+      this.state.generatedEquipment = {};
+    }
+    this.state.generatedEquipment[equipment.id] = structuredClone(equipment);
+    this.notifyChange();
+  }
+
+  /**
+   * Remove a generated equipment item from inventory by ID.
+   */
+  public removeGeneratedEquipment(equipmentId: string): boolean {
+    if (this.state.generatedEquipment && this.state.generatedEquipment[equipmentId]) {
+      delete this.state.generatedEquipment[equipmentId];
+      this.notifyChange();
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Check if a generated equipment item exists in inventory.
+   */
+  public hasGeneratedEquipment(equipmentId: string): boolean {
+    return !!(this.state.generatedEquipment && this.state.generatedEquipment[equipmentId]);
+  }
+
+  /**
+   * Get a specific generated equipment item by ID.
+   */
+  public getGeneratedEquipmentById(equipmentId: string): GeneratedEquipment | undefined {
+    return this.state.generatedEquipment?.[equipmentId];
+  }
+
+  /**
+   * Get all owned equipment (both static and generated) as an array.
+   * Returns AnyEquipment[] which includes both Equipment and GeneratedEquipment.
+   */
+  public getAllOwnedEquipment(): AnyEquipment[] {
+    const owned: AnyEquipment[] = [];
+
+    // Add static equipment
+    for (const id of Object.keys(this.state.equipment)) {
+      if (this.state.equipment[id] > 0) {
+        const equipment = getEquipmentById(id);
+        if (equipment) {
+          owned.push(equipment);
+        }
+      }
+    }
+
+    // Add generated equipment
+    if (this.state.generatedEquipment) {
+      for (const equipment of Object.values(this.state.generatedEquipment)) {
+        owned.push(equipment);
+      }
+    }
+
+    return owned;
+  }
+
   // Element operations
   public getElements(): Partial<Record<ElementType, number>> {
     return { ...this.state.elements };
@@ -205,22 +287,40 @@ export class InventorySystem {
 
   // State operations
   public getState(): InventoryState {
+    // Deep clone generated equipment to prevent mutations affecting stored state
+    const generatedEquipmentCopy: Record<string, GeneratedEquipment> = {};
+    if (this.state.generatedEquipment) {
+      for (const [id, eq] of Object.entries(this.state.generatedEquipment)) {
+        generatedEquipmentCopy[id] = structuredClone(eq);
+      }
+    }
+
     return {
       gold: this.state.gold,
       mana: this.state.mana,
       ingredients: { ...this.state.ingredients },
       equipment: { ...this.state.equipment },
       elements: { ...this.state.elements },
+      generatedEquipment: generatedEquipmentCopy,
     };
   }
 
   public loadState(state: InventoryState): void {
+    // Deep clone generated equipment to prevent mutations affecting stored state
+    const generatedEquipmentCopy: Record<string, GeneratedEquipment> = {};
+    if (state.generatedEquipment) {
+      for (const [id, eq] of Object.entries(state.generatedEquipment)) {
+        generatedEquipmentCopy[id] = structuredClone(eq);
+      }
+    }
+
     this.state = {
       gold: state.gold,
       mana: state.mana,
       ingredients: { ...state.ingredients },
       equipment: { ...state.equipment },
       elements: { ...state.elements },
+      generatedEquipment: generatedEquipmentCopy,
     };
     this.notifyChange();
   }

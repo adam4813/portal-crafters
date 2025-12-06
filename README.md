@@ -154,6 +154,7 @@ portal-crafters/
 │   │   ├── ManaSystem.ts       # Mana purchasing and conversion
 │   │   ├── UpgradeSystem.ts    # Purchasable upgrades
 │   │   ├── RewardSystem.ts     # Random reward generation
+│   │   ├── EquipmentGenerator.ts # Procedural equipment generation
 │   │   └── SaveSystem.ts       # LocalStorage persistence
 │   ├── ui/
 │   │   ├── UIManager.ts        # UI orchestration
@@ -166,6 +167,7 @@ portal-crafters/
 │   │   ├── ingredients.ts      # Ingredient definitions
 │   │   ├── elements.ts         # Element types and properties
 │   │   ├── equipment.ts        # RPG equipment definitions
+│   │   ├── attributePools.ts   # Procedural equipment attribute pools
 │   │   └── customers.ts        # Customer templates
 │   ├── types/
 │   │   └── index.ts            # TypeScript interfaces and types
@@ -184,6 +186,84 @@ portal-crafters/
 ├── LICENSE                     # MIT License
 └── README.md                   # This file
 ```
+
+## ⚔️ Procedural Equipment Generator
+
+The game features a procedural equipment generation system that creates unique items using attribute pools. Generated equipment can be used in portal crafting, with all attributes affecting the portal's properties and rewards.
+
+### Generation Logic
+
+The `EquipmentGenerator` creates items by combining attributes from multiple pools:
+
+1. **Gear Type** (required): Determines the base item (Sword, Helmet, Ring, etc.)
+2. **Prefix** (optional, 60% chance): Quality modifier (Rusted, Sturdy, Enchanted)
+3. **Material** (optional, 70% chance): Material type (Iron, Steel, Mithril)
+4. **Suffix** (optional, 50% chance): Special effect (of Strength, of Flames)
+
+Each attribute contributes to the item's total cost/quality score, which determines rarity.
+
+### Item Attribute Pools & Level Scaling
+
+| Level Range | Prefix Examples                | Materials                     | Suffix Examples              |
+| ----------- | ------------------------------ | ----------------------------- | ---------------------------- |
+| 1-3         | Rusted, Worn, Cracked          | Iron, Wood, Leather           | of the Novice                |
+| 4-6         | Sturdy, Polished, Reinforced   | Steel, Bronze, Bone           | of Strength, of Vigor        |
+| 7-9         | Tempered, Masterwork, Gleaming | Silver, Mithril, Dragonscale  | of Flames, of Frost          |
+| 10+         | Enchanted, Legendary, Ancient  | Obsidian, Adamantine, Crystal | of Annihilation, of the Void |
+
+### Attribute Cost Contribution
+
+Each attribute adds to the item's total cost/quality score:
+
+- **Low cost**: Rusted (-2), Worn (-1), Cracked (-1), Iron (0), Wood (0)
+- **Medium cost**: Sturdy (+2), Polished (+3), Steel (+2), Bronze (+1)
+- **High cost**: Tempered (+5), Masterwork (+7), Silver (+4), Mithril (+6)
+- **Premium cost**: Enchanted (+10), Legendary (+15), Obsidian (+8), Adamantine (+12)
+- **Suffixes**: of the Novice (+1), of Strength (+3), of Flames (+5), of Annihilation (+15)
+
+### Rarity Calculation
+
+Rarity is determined by total cost contribution:
+
+| Total Cost | Rarity    |
+| ---------- | --------- |
+| < 5        | Common    |
+| 5-9        | Uncommon  |
+| 10-19      | Rare      |
+| 20-34      | Epic      |
+| 35+        | Legendary |
+
+### Usage in Code
+
+```typescript
+import { equipmentGenerator } from './game/EquipmentGenerator';
+
+// Generate a random item at default level (1)
+const lowLevelItem = equipmentGenerator.generate();
+
+// Generate a random item at level 5
+const item = equipmentGenerator.generate({ level: 5 });
+
+// Generate with specific settings
+const customItem = equipmentGenerator.generate({
+  level: 10,
+  prefixChance: 0.8, // 80% chance for prefix
+  materialChance: 1.0, // Always include material
+  suffixChance: 0.6, // 60% chance for suffix
+  forcedGearType: 'sword', // Force specific gear type
+});
+
+// Generate multiple items
+const items = equipmentGenerator.generateMultiple(5, { level: 8 });
+```
+
+### Portal Integration
+
+When generated equipment is used in crafting:
+
+1. The item's `portalBonus` (based on total cost) adds to portal level
+2. Element affinities from attributes contribute elemental bonuses
+3. All attributes are stored on the portal for effect/reward calculations
 
 ## 🛠️ Tech Stack
 
