@@ -67,11 +67,20 @@ const DEFAULT_OPTIONS: Required<
 };
 
 /**
+ * Pattern to detect if a string ends with sentence-ending punctuation.
+ */
+const ENDS_WITH_PUNCTUATION = /[.!?]$/;
+
+/**
  * EquipmentGenerator - Procedurally generates equipment with varied attributes
  */
 export class EquipmentGenerator {
   /**
    * Clamp a chance value to the valid range [0, 1].
+   * Values below 0 become 0, values above 1 become 1.
+   *
+   * @param chance - The probability value to clamp
+   * @returns A value between 0 and 1 (inclusive)
    */
   private clampChance(chance: number): number {
     return Math.max(0, Math.min(1, chance));
@@ -137,7 +146,8 @@ export class EquipmentGenerator {
    * @returns Array of generated equipment items
    */
   public generateMultiple(count: number, options: GeneratorOptions = {}): GeneratedEquipment[] {
-    // Validate count parameter
+    // Validate count: floor to integer, clamp negative to 0
+    // This ensures we always get a non-negative integer for the loop
     const validCount = Math.max(0, Math.floor(count));
     const items: GeneratedEquipment[] = [];
     for (let i = 0; i < validCount; i++) {
@@ -357,7 +367,7 @@ export class EquipmentGenerator {
 
     const desc = descriptions.join('. ');
     // Only add a period if the description doesn't already end with punctuation
-    return /[.!?]$/.test(desc) ? desc : desc + '.';
+    return ENDS_WITH_PUNCTUATION.test(desc) ? desc : desc + '.';
   }
 }
 
