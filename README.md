@@ -71,6 +71,70 @@ npm run format:check
 6. **Upgrade your shop**: Improve conversion rates and unlock more crafting slots
 7. **Discover recipes**: Experiment with different ingredient combinations
 
+## 🔮 Element System
+
+Portal Crafters features a comprehensive elemental system with multiple tiers. Elements determine portal properties, contract difficulty, and reward quality.
+
+### Element Tiers
+
+| Tier      | Elements                                            | Unlock Method                |
+| --------- | --------------------------------------------------- | ---------------------------- |
+| Common    | Fire 🔥, Water 💧                                   | Starting elements            |
+| Standard  | Earth 🌍, Air 💨                                    | Early research               |
+| Rare      | Ice ❄️, Lightning ⚡, Metal ⚙️, Nature 🌿           | Mid-game research            |
+| Exotic    | Shadow 🌑, Light ✨, Void 🕳️, Crystal 💎, Arcane ✴️ | Late-game research           |
+| Legendary | Time ⏳, Chaos 🌀, Life 💚, Death 💀                | Secret recipes, rare rewards |
+
+### Element Properties
+
+Each element has unique properties that affect gameplay:
+
+- **Portal Effect Multiplier**: Affects the visual intensity of portals
+- **Reward Bonus Multiplier**: Increases rewards from completed portals
+- **Contract Difficulty Modifier**: Affects how challenging contracts become
+
+### Discovery Paths
+
+1. **Starting Elements**: Fire and Water are available from the beginning
+2. **Early Research**: Unlock Earth and Air by researching with Fire and Water
+3. **Mid-Game Research**: Combine elements to research Ice, Lightning, Metal, and Nature
+4. **Late-Game Research**: Advanced combinations unlock Shadow, Light, Void, Crystal, and Arcane
+5. **Secret Recipes**: Discover legendary elements like Time and Chaos through special ingredient combinations
+6. **Rare Rewards**: Life and Death elements can be unlocked as rare rewards from high-level portals
+
+### Element Data Structure
+
+Elements are defined in `src/data/elements.ts` with the following structure:
+
+```typescript
+interface ElementDefinition {
+  type: ElementType; // Unique identifier
+  name: string; // Display name
+  color: number; // Hex color for visualization
+  icon: string; // Emoji icon
+  description: string; // Flavor text
+  baseUnlocked: boolean; // Available at game start
+  tier: ElementTier; // common | standard | rare | exotic | legendary
+  unlockMethod: UnlockMethod; // How to unlock this element
+  rarity: number; // 1-5 scale
+  properties: {
+    portalEffectMultiplier: number; // Visual effect intensity
+    rewardBonusMultiplier: number; // Reward quality bonus
+    contractDifficultyModifier: number; // Contract difficulty impact
+  };
+}
+```
+
+### Extending the Element System
+
+To add a new element:
+
+1. Add the element type to `ElementType` in `src/types/index.ts`
+2. Add the element definition to `ELEMENTS` array in `src/data/elements.ts`
+3. Add a research node to `RESEARCH_TREE` with prerequisites
+4. Add a conversion rate to `CONVERSION_RATES`
+5. Optionally add element combinations to `ELEMENT_REQUIREMENTS` in `src/data/customers.ts`
+
 ## 📁 Project Structure
 
 ```

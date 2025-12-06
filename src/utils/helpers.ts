@@ -73,14 +73,24 @@ export function calculatePortalLevel(
  * Calculate color based on element composition
  */
 export function calculatePortalColor(elements: Partial<Record<ElementType, number>>): number {
-  const colors: Record<ElementType, number> = {
+  const colors: Partial<Record<ElementType, number>> = {
     fire: 0xf56565,
     water: 0x4299e1,
     earth: 0x68d391,
     air: 0xe2e8f0,
+    ice: 0x81e6d9,
     lightning: 0xfaf089,
-    void: 0x553c9a,
+    metal: 0x718096,
+    nature: 0x48bb78,
+    shadow: 0x2d3748,
     light: 0xffffff,
+    void: 0x553c9a,
+    crystal: 0xb794f4,
+    arcane: 0x9f7aea,
+    time: 0xd69e2e,
+    chaos: 0xe53e3e,
+    life: 0x38a169,
+    death: 0x1a202c,
   };
 
   let r = 0,
@@ -90,7 +100,7 @@ export function calculatePortalColor(elements: Partial<Record<ElementType, numbe
 
   for (const [element, amount] of Object.entries(elements)) {
     if (amount && amount > 0) {
-      const color = colors[element as ElementType];
+      const color = colors[element as ElementType] ?? 0x6b46c1;
       const weight = amount;
       r += ((color >> 16) & 0xff) * weight;
       g += ((color >> 8) & 0xff) * weight;
