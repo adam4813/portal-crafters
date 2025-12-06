@@ -105,12 +105,16 @@ export class Game {
     this.saveSystem.initialize();
 
     // Set up crafting callbacks
-    this.craftingSystem.onCraft((elements, _bonus) => {
+    this.craftingSystem.onCraft((elements, _bonus, generatedEquipmentUsed) => {
       // Add elements to portal
       for (const [element, amount] of Object.entries(elements)) {
         if (amount) {
           this.portal.addElement(element as ElementType, amount);
         }
+      }
+      // Add generated equipment attributes to portal for effect calculations
+      if (generatedEquipmentUsed.length > 0) {
+        this.portal.addGeneratedEquipmentAttributes(generatedEquipmentUsed);
       }
       this.updateUI();
     });
@@ -262,6 +266,7 @@ export class Game {
         addMana: (amount) => this.inventorySystem.addMana(amount),
         addIngredient: (id, amount) => this.inventorySystem.addIngredient(id, amount),
         addEquipment: (id, amount) => this.inventorySystem.addEquipment(id, amount),
+        addGeneratedEquipment: (equipment) => this.inventorySystem.addGeneratedEquipment(equipment),
       });
       showToast(message, 'success');
     }

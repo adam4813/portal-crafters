@@ -1,7 +1,8 @@
-import type { Reward } from '../types';
+import type { Reward, GeneratedEquipment } from '../types';
 import { INGREDIENTS, getIngredientById } from '../data/ingredients';
 import { EQUIPMENT, getEquipmentById } from '../data/equipment';
 import { randomElement, calculateRewardChance } from '../utils/helpers';
+import { equipmentGenerator } from './EquipmentGenerator';
 
 export class RewardSystem {
   private rewardChanceUpgrade: number = 0;
@@ -22,18 +23,21 @@ export class RewardSystem {
     // Determine reward type
     const roll = Math.random();
 
-    if (roll < 0.4) {
-      // 40% chance for gold
+    if (roll < 0.35) {
+      // 35% chance for gold
       return this.generateGoldReward(portalLevel);
-    } else if (roll < 0.7) {
-      // 30% chance for ingredient
+    } else if (roll < 0.55) {
+      // 20% chance for ingredient
       return this.generateIngredientReward(portalLevel);
-    } else if (roll < 0.9) {
-      // 20% chance for mana
+    } else if (roll < 0.7) {
+      // 15% chance for mana
       return this.generateManaReward(portalLevel);
-    } else {
-      // 10% chance for equipment
+    } else if (roll < 0.85) {
+      // 15% chance for static equipment
       return this.generateEquipmentReward(portalLevel);
+    } else {
+      // 15% chance for generated equipment
+      return this.generateGeneratedEquipmentReward(portalLevel);
     }
   }
 
@@ -98,6 +102,22 @@ export class RewardSystem {
     };
   }
 
+  /**
+   * Generate a procedurally created equipment item as a reward.
+   * The item level is based on the portal level.
+   */
+  private generateGeneratedEquipmentReward(portalLevel: number): Reward {
+    // Use portal level to determine equipment generation level
+    const generatedEquipment = equipmentGenerator.generate({
+      level: portalLevel,
+    });
+
+    return {
+      type: 'generatedEquipment',
+      generatedEquipment,
+    };
+  }
+
   private getRarityScore(rarity: string): number {
     const scores: Record<string, number> = {
       common: 0,
@@ -116,6 +136,7 @@ export class RewardSystem {
       addMana: (amount: number) => void;
       addIngredient: (id: string, amount: number) => void;
       addEquipment: (id: string, amount: number) => void;
+      addGeneratedEquipment: (equipment: GeneratedEquipment) => void;
     }
   ): string {
     switch (reward.type) {
@@ -140,6 +161,13 @@ export class RewardSystem {
           callbacks.addEquipment(reward.itemId, reward.amount || 1);
           const equipment = getEquipmentById(reward.itemId);
           return `Received ${equipment?.name || 'equipment'}!`;
+        }
+        break;
+
+      case 'generatedEquipment':
+        if (reward.generatedEquipment) {
+          callbacks.addGeneratedEquipment(reward.generatedEquipment);
+          return `Received ${reward.generatedEquipment.name}!`;
         }
         break;
     }

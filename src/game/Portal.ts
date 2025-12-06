@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import type { Portal as PortalType, ElementType } from '../types';
+import type { Portal as PortalType, ElementType, GeneratedEquipment } from '../types';
 import { generateId, calculatePortalLevel, calculatePortalColor } from '../utils/helpers';
 
 export class Portal {
@@ -26,6 +26,7 @@ export class Portal {
       visualColor: 0x6b46c1,
       visualIntensity: 0.5,
       createdAt: Date.now(),
+      generatedEquipmentAttributes: [],
     };
   }
 
@@ -146,6 +147,32 @@ export class Portal {
   public addEquipment(equipmentId: string): void {
     this.portalData.equipment.push(equipmentId);
     this.updateVisualization();
+  }
+
+  /**
+   * Add generated equipment attributes to the portal.
+   * These attributes are used to calculate portal effects and rewards.
+   */
+  public addGeneratedEquipmentAttributes(equipment: GeneratedEquipment[]): void {
+    if (!this.portalData.generatedEquipmentAttributes) {
+      this.portalData.generatedEquipmentAttributes = [];
+    }
+    this.portalData.generatedEquipmentAttributes.push(...equipment);
+
+    // Generated equipment attributes contribute to portal level
+    const attributeBonus = equipment.reduce((sum, eq) => sum + Math.floor(eq.totalCost / 3), 0);
+    if (attributeBonus > 0) {
+      this.portalData.level += attributeBonus;
+    }
+
+    this.updateVisualization();
+  }
+
+  /**
+   * Get the generated equipment attributes stored in this portal.
+   */
+  public getGeneratedEquipmentAttributes(): GeneratedEquipment[] {
+    return this.portalData.generatedEquipmentAttributes || [];
   }
 
   private updateVisualization(): void {
