@@ -6,14 +6,16 @@ import type {
   AnyEquipment,
   GeneratedEquipment,
 } from '../types';
+import { isGeneratedEquipment } from '../types';
 import { getIngredientById } from '../data/ingredients';
 import { getEquipmentById } from '../data/equipment';
 
 /**
  * Scaling factor for converting generated equipment total cost to bonus level.
- * A divisor of 2 means every 2 points of total cost = 1 bonus level.
+ * A divisor of 3 means every 3 points of total cost = 1 bonus level.
+ * This matches the same scaling used in Portal.ts for consistency.
  */
-const GENERATED_EQUIPMENT_COST_TO_BONUS_DIVISOR = 2;
+const GENERATED_EQUIPMENT_COST_TO_BONUS_DIVISOR = 3;
 
 export class CraftingSystem {
   private slots: CraftingSlot[] = [];
@@ -166,7 +168,7 @@ export class CraftingSystem {
         }
 
         // Track generated equipment for portal attribute effects
-        if (this.isGeneratedEquipment(slot.equipment)) {
+        if (isGeneratedEquipment(slot.equipment)) {
           generatedEquipmentUsed.push(slot.equipment);
           // Generated equipment attributes contribute additional bonus
           bonusLevel += Math.floor(
@@ -198,13 +200,6 @@ export class CraftingSystem {
     this.onCraftCallbacks.forEach((cb) => cb(elements, bonusLevel, generatedEquipmentUsed));
 
     return { elements, bonusLevel, isNewRecipe, generatedEquipmentUsed };
-  }
-
-  /**
-   * Type guard to check if equipment is generated.
-   */
-  private isGeneratedEquipment(eq: AnyEquipment): eq is GeneratedEquipment {
-    return 'isGenerated' in eq && eq.isGenerated === true;
   }
 
   private generateRecipeId(ingredientIds: string[]): string {

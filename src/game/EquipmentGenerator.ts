@@ -71,6 +71,13 @@ const DEFAULT_OPTIONS: Required<
  */
 export class EquipmentGenerator {
   /**
+   * Clamp a chance value to the valid range [0, 1].
+   */
+  private clampChance(chance: number): number {
+    return Math.max(0, Math.min(1, chance));
+  }
+
+  /**
    * Generate a single equipment item with random attributes.
    * Not all attribute pools are required - combinations vary based on chance.
    *
@@ -81,17 +88,22 @@ export class EquipmentGenerator {
     const opts = { ...DEFAULT_OPTIONS, ...options };
     const level = Math.max(1, opts.level);
 
+    // Validate and clamp chance parameters to [0, 1] range
+    const prefixChance = this.clampChance(opts.prefixChance);
+    const materialChance = this.clampChance(opts.materialChance);
+    const suffixChance = this.clampChance(opts.suffixChance);
+
     // Step 1: Select gear type (always required)
     const gearType = this.selectGearType(opts.forcedGearType);
 
     // Step 2: Optionally select prefix based on chance
-    const prefix = this.maybeSelectPrefix(level, opts.prefixChance, opts.forcedPrefix);
+    const prefix = this.maybeSelectPrefix(level, prefixChance, opts.forcedPrefix);
 
     // Step 3: Optionally select material based on chance
-    const material = this.maybeSelectMaterial(level, opts.materialChance, opts.forcedMaterial);
+    const material = this.maybeSelectMaterial(level, materialChance, opts.forcedMaterial);
 
     // Step 4: Optionally select suffix based on chance
-    const suffix = this.maybeSelectSuffix(level, opts.suffixChance, opts.forcedSuffix);
+    const suffix = this.maybeSelectSuffix(level, suffixChance, opts.forcedSuffix);
 
     // Step 5: Calculate total cost from all attribute contributions
     const totalCost = this.calculateTotalCost(gearType, prefix, material, suffix);
@@ -120,13 +132,15 @@ export class EquipmentGenerator {
   /**
    * Generate multiple equipment items.
    *
-   * @param count - Number of items to generate
+   * @param count - Number of items to generate (must be a non-negative integer)
    * @param options - Configuration options for generation
    * @returns Array of generated equipment items
    */
   public generateMultiple(count: number, options: GeneratorOptions = {}): GeneratedEquipment[] {
+    // Validate count parameter
+    const validCount = Math.max(0, Math.floor(count));
     const items: GeneratedEquipment[] = [];
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < validCount; i++) {
       items.push(this.generate(options));
     }
     return items;
@@ -137,11 +151,13 @@ export class EquipmentGenerator {
    * Randomly selects a level within the range for more variety.
    *
    * @param minLevel - Minimum level for generation
-   * @param maxLevel - Maximum level for generation
+   * @param maxLevel - Maximum level for generation (must be >= minLevel)
    * @returns A generated equipment item
    */
   public generateForLevelRange(minLevel: number, maxLevel: number): GeneratedEquipment {
-    const level = Math.floor(Math.random() * (maxLevel - minLevel + 1)) + minLevel;
+    // Ensure maxLevel is at least minLevel
+    const effectiveMaxLevel = Math.max(minLevel, maxLevel);
+    const level = Math.floor(Math.random() * (effectiveMaxLevel - minLevel + 1)) + minLevel;
     return this.generate({ level });
   }
 
@@ -339,7 +355,9 @@ export class EquipmentGenerator {
     if (material?.description) descriptions.push(material.description);
     if (suffix?.description) descriptions.push(suffix.description);
 
-    return descriptions.join('. ') + '.';
+    const desc = descriptions.join('. ');
+    // Only add a period if the description doesn't already end with punctuation
+    return /[.!?]$/.test(desc) ? desc : desc + '.';
   }
 }
 

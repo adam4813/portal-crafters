@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { GameState, ElementType } from '../types';
+import { isGeneratedEquipment } from '../types';
 import { Portal } from './Portal';
 import { CustomerSystem } from './Customer';
 import { InventorySystem } from './Inventory';
@@ -373,13 +374,32 @@ export class Game {
     this.updateUI();
   }
 
+  public addGeneratedEquipmentToSlot(slotIndex: number, equipmentId: string): void {
+    if (!this.inventorySystem.hasGeneratedEquipment(equipmentId)) {
+      showToast('No equipment available!', 'error');
+      return;
+    }
+
+    const equipment = this.inventorySystem.getGeneratedEquipmentById(equipmentId);
+    if (!equipment) return;
+
+    this.inventorySystem.removeGeneratedEquipment(equipmentId);
+    this.craftingSystem.addGeneratedEquipmentToSlot(slotIndex, equipment);
+    this.updateUI();
+  }
+
   public clearCraftingSlot(slotIndex: number): void {
     const slot = this.craftingSystem.getSlot(slotIndex);
     if (slot?.ingredient) {
       this.inventorySystem.addIngredient(slot.ingredient.id);
     }
     if (slot?.equipment) {
-      this.inventorySystem.addEquipment(slot.equipment.id);
+      // Check if equipment is generated and return to appropriate inventory
+      if (isGeneratedEquipment(slot.equipment)) {
+        this.inventorySystem.addGeneratedEquipment(slot.equipment);
+      } else {
+        this.inventorySystem.addEquipment(slot.equipment.id);
+      }
     }
     this.craftingSystem.clearSlot(slotIndex);
     this.updateUI();

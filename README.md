@@ -174,6 +174,9 @@ Rarity is determined by total cost contribution:
 ```typescript
 import { equipmentGenerator } from './game/EquipmentGenerator';
 
+// Generate a random item at default level (1)
+const lowLevelItem = equipmentGenerator.generate();
+
 // Generate a random item at level 5
 const item = equipmentGenerator.generate({ level: 5 });
 
