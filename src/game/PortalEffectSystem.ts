@@ -21,6 +21,13 @@ import type {
 } from '../types';
 
 /**
+ * Configuration constants for portal effect calculations.
+ */
+const MATERIAL_ELEMENT_AFFINITY_BONUS = 5; // Bonus to element affinity from materials
+const COST_BONUS_DIVISOR = 10; // Divisor for converting total cost to bonus multiplier
+const COST_BONUS_MULTIPLIER = 0.05; // Multiplier per cost tier for rewards
+
+/**
  * Portal effect modifiers calculated from equipment attributes.
  */
 export interface PortalEffectModifiers {
@@ -145,7 +152,8 @@ function applyMaterialEffects(modifiers: PortalEffectModifiers, material: Materi
   // Materials with elemental affinity boost those elements
   if (material.elementAffinity) {
     modifiers.elementalAffinities[material.elementAffinity] =
-      (modifiers.elementalAffinities[material.elementAffinity] || 0) + 5;
+      (modifiers.elementalAffinities[material.elementAffinity] || 0) +
+      MATERIAL_ELEMENT_AFFINITY_BONUS;
   }
 
   // High quality materials increase rewards
@@ -256,7 +264,7 @@ function applyTotalCostEffects(
   rarity: string
 ): void {
   // Higher total cost increases all rewards
-  const costBonus = Math.floor(totalCost / 10) * 0.05;
+  const costBonus = Math.floor(totalCost / COST_BONUS_DIVISOR) * COST_BONUS_MULTIPLIER;
   modifiers.goldMultiplier += costBonus;
 
   // Rarity provides additional bonuses

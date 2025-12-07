@@ -223,7 +223,13 @@ export class RewardSystem {
     }
 
     // Increase attribute chances based on effect modifiers
-    const options: any = { level: effectiveLevel };
+    const options: {
+      level: number;
+      prefixChance?: number;
+      materialChance?: number;
+      suffixChance?: number;
+    } = { level: effectiveLevel };
+
     if (effectModifiers) {
       // Higher rarity increases chance of premium attributes
       if (effectModifiers.rarityBonus >= 2) {
