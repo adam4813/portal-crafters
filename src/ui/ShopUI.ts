@@ -27,10 +27,16 @@ export class ShopUI {
   private renderManaShop(): void {
     if (!this.manaShopContainer) return;
 
+    const manaSystem = this.game.getManaSystem();
+    const exchangeRate = manaSystem.getExchangeRate();
+
     let html = '<h4>Buy Mana</h4>';
+    html += '<div class="exchange-rate-info">';
+    html += `<p class="info-text">Current rate: <strong>${exchangeRate.manaPerGold} mana per gold</strong></p>`;
+    html += '</div>';
 
     for (const pack of this.manaPackages) {
-      const manaAmount = pack.gold * 10; // 10 mana per gold
+      const manaAmount = pack.gold * exchangeRate.manaPerGold;
       html += `
         <div class="shop-item" data-gold="${pack.gold}">
           <div class="shop-item-info">
@@ -84,11 +90,20 @@ export class ShopUI {
       const canAfford = gold >= cost;
       const isMaxed = upgrade.currentLevel >= upgrade.maxLevel;
 
+      // Show conversion rate effect for conversion upgrades
+      let effectInfo = '';
+      if (upgrade.id.includes('conversion') && upgrade.currentLevel > 0) {
+        const effectValue = upgrades.getEffect(upgrade.id);
+        const percentage = Math.round(effectValue * 100);
+        effectInfo = `<div class="upgrade-effect">+${percentage}% efficiency</div>`;
+      }
+
       html += `
         <div class="shop-item ${isMaxed ? 'maxed' : ''}">
           <div class="shop-item-info">
             <div class="shop-item-name">${upgrade.name}</div>
             <div class="shop-item-description">${upgrade.description}</div>
+            ${effectInfo}
             <div class="shop-item-level">
               Level: ${upgrade.currentLevel}/${upgrade.maxLevel}
             </div>

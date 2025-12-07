@@ -477,6 +477,10 @@ export class Game {
     return this.portal;
   }
 
+  public getManaSystem(): ManaSystem {
+    return this.manaSystem;
+  }
+
   public dispose(): void {
     this.stop();
     this.saveSystem.dispose();
