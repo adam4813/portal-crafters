@@ -16,6 +16,7 @@
   --success-color: #48bb78;
   --warning-color: #ecc94b;
   --danger-color: #f56565;
+  --danger-color-light: rgba(245, 101, 101, 0.2);
   --fire-color: #f56565;
   --water-color: #4299e1;
   --earth-color: #68d391;
@@ -120,7 +121,7 @@ body {
   font-size: 0.85rem;
   color: var(--text-secondary);
   text-align: center;
-  margin: -0.5rem 0 0 0;
+  margin-top: 0;
 }
 
 #ingredient-slots {
@@ -156,7 +157,7 @@ body {
 
 .ingredient-slot.filled:hover {
   border-color: var(--danger-color);
-  background-color: rgba(245, 101, 101, 0.2);
+  background-color: var(--danger-color-light);
 }
 
 .ingredient-slot.filled:hover::after {
