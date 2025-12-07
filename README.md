@@ -64,12 +64,109 @@ npm run format:check
 ## 🎯 How to Play
 
 1. **Start with basic elements**: You begin with Fire and Water elements
-2. **Craft portals**: Add ingredients and elements to your crafting slots
-3. **Serve customers**: Match portal requirements to fulfill contracts
-4. **Earn gold**: Complete contracts to earn gold for upgrades
-5. **Research elements**: Unlock new elements like Earth, Air, and Lightning
-6. **Upgrade your shop**: Improve conversion rates and unlock more crafting slots
-7. **Discover recipes**: Experiment with different ingredient combinations
+2. **Buy mana with gold**: Use the Shop's "Buy Mana" section to purchase mana
+3. **Convert mana to elements**: Use the "Convert Mana to Elements" panel to transform mana into elemental energy
+4. **Craft portals**: Add ingredients and elements to your crafting slots
+5. **Serve customers**: Match portal requirements to fulfill contracts
+6. **Earn gold**: Complete contracts to earn gold for upgrades
+7. **Upgrade conversion rates**: Purchase Fire/Water Conversion upgrades for better efficiency
+8. **Research elements**: Unlock new elements like Earth, Air, and Lightning
+9. **Upgrade your shop**: Improve conversion rates and unlock more crafting slots
+10. **Discover recipes**: Experiment with different ingredient combinations
+
+## 💎 Mana System
+
+The mana system is the core economic loop of Portal Crafters. Understanding how to efficiently manage your mana and element conversion is key to success.
+
+### Purchasing Mana
+
+**Exchange Rate**: 10 mana per 1 gold (default)
+
+The Shop's "Buy Mana" section offers three convenient packages:
+
+- **Small Mana Pack**: 10 gold → 100 mana
+- **Medium Mana Pack**: 50 gold → 500 mana
+- **Large Mana Pack**: 100 gold → 1000 mana
+
+The exchange rate is displayed at the top of the mana shop for transparency.
+
+### Converting Mana to Elements
+
+Once you have mana, use the "Convert Mana to Elements" panel to transform it into elemental energy:
+
+1. **Select an element**: Click on an unlocked element (Fire, Water, etc.)
+2. **Choose amount**: Use +/- buttons or type the amount you want to convert
+3. **Quick conversion**: Use "Min" for 1 unit, "Max" to convert all available mana
+4. **Conversion details**: The panel shows:
+   - Cost per unit of the element
+   - Your available mana
+   - Maximum possible conversion
+   - Total cost and what you'll receive
+
+**Base Conversion Costs** (per unit):
+
+- Fire/Water: 10 mana
+- Earth/Air: 14 mana
+- Ice/Lightning/Nature: 19 mana
+- Metal: 24 mana
+- Higher tier elements cost progressively more
+
+### Upgrading Conversion Rates
+
+Purchase conversion upgrades in the Shop to improve efficiency:
+
+- **Fire Conversion** (10 levels): Each level provides a 10% efficiency multiplier (additive), reducing mana costs proportionally
+- **Water Conversion** (10 levels): Each level provides a 10% efficiency multiplier (additive), reducing mana costs proportionally
+
+**Example**: With Fire Conversion Level 1 (+10% efficiency), converting fire becomes about 9% cheaper (cost is divided by 1.1). Stack multiple levels for even better rates!
+
+The current efficiency bonus is displayed directly on each upgrade.
+
+### Tips for Managing Mana
+
+1. **Plan ahead**: Check customer requirements before converting mana
+2. **Upgrade early**: Conversion upgrades pay for themselves over time
+3. **Balance resources**: Keep some gold for research and other upgrades
+4. **Higher tiers = higher cost**: Exotic and Legendary elements require significantly more mana
+5. **Stockpile elements**: Convert mana into elements during downtime to always have inventory ready
+
+### 📖 Recipe Book
+
+The Recipe Book keeps track of all discovered recipes and provides helpful features:
+
+- **Visual Ingredient Status**: Recipe ingredients are displayed with visual indicators:
+  - **Bright/colored icons** (🔥💧) indicate ingredients you currently own
+  - **Dim/greyed icons** indicate ingredients you're missing
+- **One-Click Auto-Fill**: Click on any recipe where you own all ingredients to automatically fill the crafting slots with those ingredients
+- **Smart Tooltips**: Hover over recipes to see:
+  - "Click to auto-fill crafting slots" when all ingredients are available
+  - "Some ingredients missing" when you don't own all required items
+  - "All ingredients missing" when you don't own any of the required items
+- **Recipe Discovery**: Recipes are automatically discovered when you craft with 2 or more ingredients for the first time
+
+### Crafting Interface
+
+The crafting interface is where you combine ingredients, equipment, and elements to create portals:
+
+#### Adding Ingredients
+
+- Click on any ingredient or equipment in your inventory
+- It will be automatically added to the first available empty crafting slot
+- Alternatively, click on an empty crafting slot (marked with "+") to add items
+
+#### Removing Ingredients
+
+- Click on any filled crafting slot to remove the ingredient or equipment
+- The item will be returned to your inventory immediately
+- A red "✕" indicator appears when hovering over filled slots
+- Ingredients can be freely added and removed before crafting
+
+#### Crafting Portals
+
+- Once you have ingredients in your crafting slots, click "Craft Portal"
+- The portal is created using your selected ingredients
+- Crafting slots are automatically cleared after creating a portal
+- Different ingredient combinations may discover new recipes!
 
 ## 🔮 Element System
 

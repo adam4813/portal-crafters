@@ -142,6 +142,18 @@ export class Game {
     this.customerSystem.loadQueue(state.customerQueue);
     this.manaSystem.initialize(state.inventory.mana);
 
+    // Apply conversion rate upgrades based on saved upgrade levels
+    const fireConversionLevel = this.upgradeSystem.getLevel('mana_conversion_fire');
+    if (fireConversionLevel > 0) {
+      const effect = fireConversionLevel * 0.1; // 0.1 per level
+      this.elementSystem.setConversionRateMultiplier('fire', 1 + effect);
+    }
+    const waterConversionLevel = this.upgradeSystem.getLevel('mana_conversion_water');
+    if (waterConversionLevel > 0) {
+      const effect = waterConversionLevel * 0.1; // 0.1 per level
+      this.elementSystem.setConversionRateMultiplier('water', 1 + effect);
+    }
+
     if (state.currentPortal) {
       this.portal.setData(state.currentPortal);
     }
@@ -353,44 +365,68 @@ export class Game {
     const rewardChance = this.upgradeSystem.getTotalEffect('rewardChance');
     this.rewardSystem.setRewardChanceUpgrade(rewardChance * 20);
 
+    // Apply mana conversion rate upgrades
+    if (upgradeId === 'mana_conversion_fire') {
+      const totalEffect = this.upgradeSystem.getEffect(upgradeId);
+      this.elementSystem.setConversionRateMultiplier('fire', 1 + totalEffect);
+    } else if (upgradeId === 'mana_conversion_water') {
+      const totalEffect = this.upgradeSystem.getEffect(upgradeId);
+      this.elementSystem.setConversionRateMultiplier('water', 1 + totalEffect);
+    }
+
     showToast('Upgrade purchased!', 'success');
     this.updateUI();
   }
 
-  public addIngredientToSlot(slotIndex: number, ingredientId: string): void {
+  public addIngredientToSlot(slotIndex: number, ingredientId: string): boolean {
     if (!this.inventorySystem.hasIngredient(ingredientId)) {
       showToast('No ingredient available!', 'error');
-      return;
+      return false;
     }
 
     this.inventorySystem.removeIngredient(ingredientId);
-    this.craftingSystem.addIngredientToSlot(slotIndex, ingredientId);
+    const success = this.craftingSystem.addIngredientToSlot(slotIndex, ingredientId);
+    if (!success) {
+      // Rollback: return ingredient to inventory if slot addition failed
+      this.inventorySystem.addIngredient(ingredientId);
+    }
     this.updateUI();
+    return success;
   }
 
-  public addEquipmentToSlot(slotIndex: number, equipmentId: string): void {
+  public addEquipmentToSlot(slotIndex: number, equipmentId: string): boolean {
     if (!this.inventorySystem.hasEquipment(equipmentId)) {
       showToast('No equipment available!', 'error');
-      return;
+      return false;
     }
 
     this.inventorySystem.removeEquipment(equipmentId);
-    this.craftingSystem.addEquipmentToSlot(slotIndex, equipmentId);
+    const success = this.craftingSystem.addEquipmentToSlot(slotIndex, equipmentId);
+    if (!success) {
+      // Rollback: return equipment to inventory if slot addition failed
+      this.inventorySystem.addEquipment(equipmentId);
+    }
     this.updateUI();
+    return success;
   }
 
-  public addGeneratedEquipmentToSlot(slotIndex: number, equipmentId: string): void {
+  public addGeneratedEquipmentToSlot(slotIndex: number, equipmentId: string): boolean {
     if (!this.inventorySystem.hasGeneratedEquipment(equipmentId)) {
       showToast('No equipment available!', 'error');
-      return;
+      return false;
     }
 
     const equipment = this.inventorySystem.getGeneratedEquipmentById(equipmentId);
-    if (!equipment) return;
+    if (!equipment) return false;
 
     this.inventorySystem.removeGeneratedEquipment(equipmentId);
-    this.craftingSystem.addGeneratedEquipmentToSlot(slotIndex, equipment);
+    const success = this.craftingSystem.addGeneratedEquipmentToSlot(slotIndex, equipment);
+    if (!success) {
+      // Rollback: return generated equipment to inventory if slot addition failed
+      this.inventorySystem.addGeneratedEquipment(equipment);
+    }
     this.updateUI();
+    return success;
   }
 
   public clearCraftingSlot(slotIndex: number): void {
@@ -480,6 +516,10 @@ export class Game {
 
   public getPortal(): Portal {
     return this.portal;
+  }
+  
+  public getManaSystem(): ManaSystem {
+    return this.manaSystem;
   }
 
   /**
