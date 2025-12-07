@@ -92,7 +92,7 @@ export class ShopUI {
 
       // Show conversion rate effect for conversion upgrades
       let effectInfo = '';
-      if (upgrade.id.includes('conversion') && upgrade.currentLevel > 0) {
+      if (upgrade.type === 'manaConversion' && upgrade.currentLevel > 0) {
         const effectValue = upgrades.getEffect(upgrade.id);
         const percentage = Math.round(effectValue * 100);
         effectInfo = `<div class="upgrade-effect">+${percentage}% efficiency</div>`;

@@ -45,7 +45,7 @@ export class UIManager {
     this.shopUI = new ShopUI(game);
     this.researchUI = new ResearchUI(game);
     this.manaConversionUI = new ManaConversionUI(game);
-    this.tutorialUI = new TutorialUI(game);
+    this.tutorialUI = new TutorialUI();
 
     this.moneyDisplay = document.getElementById('money-display');
     this.manaDisplay = document.getElementById('mana-display');

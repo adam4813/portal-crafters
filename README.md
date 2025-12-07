@@ -106,7 +106,7 @@ Once you have mana, use the "Convert Mana to Elements" panel to transform it int
 **Base Conversion Costs** (per unit):
 
 - Fire/Water: 10 mana
-- Earth/Air: 13 mana (rounded from 12/0.9)
+- Earth/Air: 14 mana
 - Ice/Lightning/Nature: 19 mana
 - Metal: 24 mana
 - Higher tier elements cost progressively more
@@ -115,10 +115,10 @@ Once you have mana, use the "Convert Mana to Elements" panel to transform it int
 
 Purchase conversion upgrades in the Shop to improve efficiency:
 
-- **Fire Conversion** (10 levels): Each level reduces mana cost for fire elements by 10%
-- **Water Conversion** (10 levels): Each level reduces mana cost for water elements by 10%
+- **Fire Conversion** (10 levels): Each level provides a 10% efficiency multiplier (additive), reducing mana costs proportionally
+- **Water Conversion** (10 levels): Each level provides a 10% efficiency multiplier (additive), reducing mana costs proportionally
 
-**Example**: With Fire Conversion Level 1 (+10% efficiency), converting fire becomes ~10% cheaper. Stack multiple levels for even better rates!
+**Example**: With Fire Conversion Level 1 (+10% efficiency), converting fire becomes about 9% cheaper (cost is divided by 1.1). Stack multiple levels for even better rates!
 
 The current efficiency bonus is displayed directly on each upgrade.
 

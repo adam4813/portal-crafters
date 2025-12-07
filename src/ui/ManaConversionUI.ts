@@ -68,7 +68,7 @@ export class ManaConversionUI {
 
       html += `
         <div class="element-option ${isSelected ? 'selected' : ''} ${!canAfford ? 'disabled' : ''}" 
-             data-element="${element}">
+             data-element="${element}"${!canAfford ? ' aria-disabled="true"' : ''}>
           <div class="element-icon">${elementInfo.icon}</div>
           <div class="element-name">${elementInfo.name}</div>
           <div class="element-cost">${manaPerElement} mana</div>
@@ -108,7 +108,11 @@ export class ManaConversionUI {
     const maxConversion = Math.floor(currentMana / manaPerElement);
 
     // Ensure conversionAmount is within valid range
-    this.conversionAmount = Math.max(1, Math.min(this.conversionAmount, maxConversion));
+    if (maxConversion < 1) {
+      this.conversionAmount = 0;
+    } else {
+      this.conversionAmount = Math.max(1, Math.min(this.conversionAmount, maxConversion));
+    }
 
     const totalCost = manaPerElement * this.conversionAmount;
     const canAfford = currentMana >= totalCost;
@@ -131,13 +135,13 @@ export class ManaConversionUI {
     html += '</div>';
 
     html += '<div class="conversion-amount-selector">';
-    html += '<label>Amount to convert:</label>';
+    html += '<label for="conversion-amount">Amount to convert:</label>';
     html += '<div class="amount-controls">';
-    html += `<button class="btn-amount" data-action="min" ${maxConversion < 1 ? 'disabled' : ''}>Min</button>`;
-    html += `<button class="btn-amount" data-action="dec" ${this.conversionAmount <= 1 ? 'disabled' : ''}>-</button>`;
+    html += `<button class="btn-amount" data-action="min" aria-label="Set to minimum amount (1)" ${maxConversion < 1 ? 'disabled' : ''}>Min</button>`;
+    html += `<button class="btn-amount" data-action="dec" aria-label="Decrease amount by 1" ${this.conversionAmount <= 1 ? 'disabled' : ''}>-</button>`;
     html += `<input type="number" id="conversion-amount" min="1" max="${maxConversion}" value="${this.conversionAmount}" ${maxConversion < 1 ? 'disabled' : ''}>`;
-    html += `<button class="btn-amount" data-action="inc" ${this.conversionAmount >= maxConversion ? 'disabled' : ''}>+</button>`;
-    html += `<button class="btn-amount" data-action="max" ${maxConversion < 1 ? 'disabled' : ''}>Max</button>`;
+    html += `<button class="btn-amount" data-action="inc" aria-label="Increase amount by 1" ${this.conversionAmount >= maxConversion ? 'disabled' : ''}>+</button>`;
+    html += `<button class="btn-amount" data-action="max" aria-label="Set to maximum available amount" ${maxConversion < 1 ? 'disabled' : ''}>Max</button>`;
     html += '</div>';
     html += '</div>';
 

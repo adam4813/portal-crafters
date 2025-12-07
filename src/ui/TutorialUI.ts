@@ -1,9 +1,7 @@
-import type { Game } from '../game/Game';
-
 export class TutorialUI {
   private container: HTMLElement | null;
 
-  constructor(_game: Game) {
+  constructor() {
     this.container = document.getElementById('tutorial-content');
   }
 

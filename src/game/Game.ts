@@ -141,6 +141,18 @@ export class Game {
     this.customerSystem.loadQueue(state.customerQueue);
     this.manaSystem.initialize(state.inventory.mana);
 
+    // Apply conversion rate upgrades based on saved upgrade levels
+    const fireConversionLevel = this.upgradeSystem.getLevel('mana_conversion_fire');
+    if (fireConversionLevel > 0) {
+      const effect = fireConversionLevel * 0.1; // 0.1 per level
+      this.elementSystem.setConversionRateMultiplier('fire', 1 + effect);
+    }
+    const waterConversionLevel = this.upgradeSystem.getLevel('mana_conversion_water');
+    if (waterConversionLevel > 0) {
+      const effect = waterConversionLevel * 0.1; // 0.1 per level
+      this.elementSystem.setConversionRateMultiplier('water', 1 + effect);
+    }
+
     if (state.currentPortal) {
       this.portal.setData(state.currentPortal);
     }
@@ -347,6 +359,15 @@ export class Game {
     // Apply upgrade effects
     const rewardChance = this.upgradeSystem.getTotalEffect('rewardChance');
     this.rewardSystem.setRewardChanceUpgrade(rewardChance * 20);
+
+    // Apply mana conversion rate upgrades
+    if (upgradeId === 'mana_conversion_fire') {
+      const totalEffect = this.upgradeSystem.getEffect(upgradeId);
+      this.elementSystem.setConversionRateMultiplier('fire', 1 + totalEffect);
+    } else if (upgradeId === 'mana_conversion_water') {
+      const totalEffect = this.upgradeSystem.getEffect(upgradeId);
+      this.elementSystem.setConversionRateMultiplier('water', 1 + totalEffect);
+    }
 
     showToast('Upgrade purchased!', 'success');
     this.updateUI();
