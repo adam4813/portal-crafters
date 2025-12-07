@@ -71,6 +71,20 @@ npm run format:check
 6. **Upgrade your shop**: Improve conversion rates and unlock more crafting slots
 7. **Discover recipes**: Experiment with different ingredient combinations
 
+### 📖 Recipe Book
+
+The Recipe Book keeps track of all discovered recipes and provides helpful features:
+
+- **Visual Ingredient Status**: Recipe ingredients are displayed with visual indicators:
+  - **Bright/colored icons** (🔥💧) indicate ingredients you currently own
+  - **Dim/greyed icons** indicate ingredients you're missing
+- **One-Click Auto-Fill**: Click on any recipe where you own all ingredients to automatically fill the crafting slots with those ingredients
+- **Smart Tooltips**: Hover over recipes to see:
+  - "Click to auto-fill crafting slots" when all ingredients are available
+  - "Some ingredients missing" when you don't own all required items
+  - "All ingredients missing" when you don't own any of the required items
+- **Recipe Discovery**: Recipes are automatically discovered when you craft with 2 or more ingredients for the first time
+
 ## 🔮 Element System
 
 Portal Crafters features a comprehensive elemental system with multiple tiers. Elements determine portal properties, contract difficulty, and reward quality.

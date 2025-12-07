@@ -352,15 +352,16 @@ export class Game {
     this.updateUI();
   }
 
-  public addIngredientToSlot(slotIndex: number, ingredientId: string): void {
+  public addIngredientToSlot(slotIndex: number, ingredientId: string): boolean {
     if (!this.inventorySystem.hasIngredient(ingredientId)) {
       showToast('No ingredient available!', 'error');
-      return;
+      return false;
     }
 
     this.inventorySystem.removeIngredient(ingredientId);
-    this.craftingSystem.addIngredientToSlot(slotIndex, ingredientId);
+    const success = this.craftingSystem.addIngredientToSlot(slotIndex, ingredientId);
     this.updateUI();
+    return success;
   }
 
   public addEquipmentToSlot(slotIndex: number, equipmentId: string): void {
