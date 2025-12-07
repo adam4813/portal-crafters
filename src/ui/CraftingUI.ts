@@ -74,15 +74,15 @@ export class CraftingUI {
       if (slot?.ingredient) {
         slotElement.classList.add('filled');
         slotElement.innerHTML = `<span class="ingredient-icon">${slot.ingredient.icon}</span>`;
-        slotElement.title = slot.ingredient.name;
+        slotElement.title = `${slot.ingredient.name}\nClick to remove`;
       } else if (slot?.equipment) {
         slotElement.classList.add('filled');
         slotElement.innerHTML = `<span class="ingredient-icon">${slot.equipment.icon}</span>`;
-        slotElement.title = slot.equipment.name;
+        slotElement.title = `${slot.equipment.name}\nClick to remove`;
       } else {
         slotElement.classList.remove('filled');
         slotElement.innerHTML = '<span class="ingredient-icon">+</span>';
-        slotElement.title = 'Empty slot';
+        slotElement.title = 'Click to add ingredient or equipment';
       }
     });
 

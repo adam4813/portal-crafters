@@ -16,6 +16,7 @@
   --success-color: #48bb78;
   --warning-color: #ecc94b;
   --danger-color: #f56565;
+  --danger-color-light: rgba(245, 101, 101, 0.2);
   --fire-color: #f56565;
   --water-color: #4299e1;
   --earth-color: #68d391;
@@ -116,6 +117,13 @@ body {
   gap: 1rem;
 }
 
+.crafting-help {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  text-align: center;
+  margin-top: 0;
+}
+
 #ingredient-slots {
   display: flex;
   gap: 0.5rem;
@@ -144,6 +152,22 @@ body {
 .ingredient-slot.filled {
   border-style: solid;
   border-color: var(--accent-color);
+  position: relative;
+}
+
+.ingredient-slot.filled:hover {
+  border-color: var(--danger-color);
+  background-color: var(--danger-color-light);
+}
+
+.ingredient-slot.filled:hover::after {
+  content: '✕';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 0.8rem;
+  color: var(--danger-color);
+  font-weight: bold;
 }
 
 .ingredient-slot .ingredient-icon {

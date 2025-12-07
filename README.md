@@ -85,6 +85,30 @@ The Recipe Book keeps track of all discovered recipes and provides helpful featu
   - "All ingredients missing" when you don't own any of the required items
 - **Recipe Discovery**: Recipes are automatically discovered when you craft with 2 or more ingredients for the first time
 
+### Crafting Interface
+
+The crafting interface is where you combine ingredients, equipment, and elements to create portals:
+
+#### Adding Ingredients
+
+- Click on any ingredient or equipment in your inventory
+- It will be automatically added to the first available empty crafting slot
+- Alternatively, click on an empty crafting slot (marked with "+") to add items
+
+#### Removing Ingredients
+
+- Click on any filled crafting slot to remove the ingredient or equipment
+- The item will be returned to your inventory immediately
+- A red "✕" indicator appears when hovering over filled slots
+- Ingredients can be freely added and removed before crafting
+
+#### Crafting Portals
+
+- Once you have ingredients in your crafting slots, click "Craft Portal"
+- The portal is created using your selected ingredients
+- Crafting slots are automatically cleared after creating a portal
+- Different ingredient combinations may discover new recipes!
+
 ## 🔮 Element System
 
 Portal Crafters features a comprehensive elemental system with multiple tiers. Elements determine portal properties, contract difficulty, and reward quality.
