@@ -79,6 +79,9 @@ export class RewardSystem {
       return REWARD_PROBABILITIES;
     }
 
+    // Small epsilon to ensure strict ordering of thresholds
+    const EPSILON = 0.0001;
+
     // Calculate adjustments based on attribute effects
     const ingredientBonus = effectModifiers.ingredientChance * 0.15; // Scale to threshold space
     const equipmentBonus = effectModifiers.equipmentChance * 0.15;
@@ -95,16 +98,20 @@ export class RewardSystem {
       goldThreshold = Math.max(0.15, goldThreshold - totalBonus * 0.5);
     }
 
-    // Increase ingredient threshold
-    ingredientThreshold = clamp(ingredientThreshold + ingredientBonus, goldThreshold, 0.7);
+    // Increase ingredient threshold, ensuring it's strictly greater than gold threshold
+    ingredientThreshold = clamp(
+      ingredientThreshold + ingredientBonus,
+      goldThreshold + EPSILON,
+      0.7
+    );
 
-    // Keep mana threshold relative
-    manaThreshold = clamp(manaThreshold, ingredientThreshold, 0.8);
+    // Keep mana threshold relative, ensuring it's strictly greater than ingredient threshold
+    manaThreshold = clamp(manaThreshold, ingredientThreshold + EPSILON, 0.8);
 
-    // Increase equipment threshold
+    // Increase equipment threshold, ensuring it's strictly greater than mana threshold
     staticEquipmentThreshold = clamp(
       staticEquipmentThreshold + equipmentBonus,
-      manaThreshold,
+      manaThreshold + EPSILON,
       0.95
     );
 

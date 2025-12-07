@@ -384,17 +384,17 @@ Recipe discovery bonuses also give a chance to "rediscover" known recipes with b
 
 #### Combined Effects Example
 
-**Enchanted Mithril Sword of Storms** (Legendary rarity, total cost ~36)
+**Enchanted Mithril Sword of Storms** (Legendary rarity, total cost 27)
 
 - Portal Effects:
   - Visual: +0.7 intensity, electrified effect, lighter color
-  - Gold: +130% (50% + 25% + 30% + 25% from rarity)
+  - Gold: +115% (50% + 25% + 30% + 10% from cost tiers)
   - Mana: +50%
-  - Equipment drops: +25%
-  - Rarity: +5 (2 + 1 + 2 from legendary)
-  - Recipe discovery: +11%
+  - Equipment drops: +20%
+  - Rarity: +6 (2 + 1 + 3 from legendary)
+  - Recipe discovery: +25%
 - Element Bonuses:
-  - Air +3 (from Mithril)
+  - Air +5 (from Mithril)
   - Lightning +6 (from Storms suffix)
 - Special Effects:
   - Magical Resonance
