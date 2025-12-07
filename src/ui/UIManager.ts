@@ -11,6 +11,8 @@ import { InventoryUI } from './InventoryUI';
 import { CustomerUI } from './CustomerUI';
 import { ShopUI } from './ShopUI';
 import { ResearchUI } from './ResearchUI';
+import { ManaConversionUI } from './ManaConversionUI';
+import { TutorialUI } from './TutorialUI';
 import { formatNumber } from '../utils/helpers';
 
 export interface UIUpdateData {
@@ -29,6 +31,8 @@ export class UIManager {
   private customerUI: CustomerUI;
   private shopUI: ShopUI;
   private researchUI: ResearchUI;
+  private manaConversionUI: ManaConversionUI;
+  private tutorialUI: TutorialUI;
 
   // DOM elements
   private moneyDisplay: HTMLElement | null;
@@ -40,6 +44,8 @@ export class UIManager {
     this.customerUI = new CustomerUI(game);
     this.shopUI = new ShopUI(game);
     this.researchUI = new ResearchUI(game);
+    this.manaConversionUI = new ManaConversionUI(game);
+    this.tutorialUI = new TutorialUI();
 
     this.moneyDisplay = document.getElementById('money-display');
     this.manaDisplay = document.getElementById('mana-display');
@@ -51,6 +57,8 @@ export class UIManager {
     this.customerUI.initialize();
     this.shopUI.initialize();
     this.researchUI.initialize();
+    this.manaConversionUI.initialize();
+    this.tutorialUI.initialize();
   }
 
   public update(data: UIUpdateData): void {
@@ -68,5 +76,7 @@ export class UIManager {
     this.customerUI.update(data.customers, data.portal);
     this.shopUI.update(data.inventory, data.upgrades);
     this.researchUI.update(data.elements, data.inventory);
+    this.manaConversionUI.update(data.inventory, data.elements);
+    this.tutorialUI.update();
   }
 }

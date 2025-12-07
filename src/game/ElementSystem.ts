@@ -123,6 +123,13 @@ export class ElementSystem {
     }
   }
 
+  public setConversionRateMultiplier(element: ElementType, multiplier: number): void {
+    const rate = this.conversionRates.get(element);
+    if (rate) {
+      rate.currentMultiplier = multiplier;
+    }
+  }
+
   public getElementInfo(element: ElementType): {
     name: string;
     color: number;

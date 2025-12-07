@@ -413,6 +413,294 @@ body {
   }
 }
 
+/* Mana Conversion Styles */
+.mana-conversion-info {
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  background-color: rgba(107, 70, 193, 0.1);
+  border-left: 3px solid var(--primary-color);
+  border-radius: 4px;
+}
+
+.info-text {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.element-selector-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.element-option {
+  padding: 0.5rem;
+  background-color: var(--background-light);
+  border: 2px solid transparent;
+  border-radius: 6px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.element-option:hover:not(.disabled) {
+  border-color: var(--primary-color);
+  transform: translateY(-2px);
+}
+
+.element-option.selected {
+  border-color: var(--accent-color);
+  background-color: rgba(237, 137, 54, 0.2);
+}
+
+.element-option.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.element-icon {
+  font-size: 1.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.element-name {
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.element-cost {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+}
+
+.conversion-prompt {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.conversion-details h5 {
+  color: var(--accent-color);
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.conversion-rate-display {
+  background-color: var(--background-light);
+  padding: 0.75rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+.rate-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.rate-info:last-child {
+  margin-bottom: 0;
+}
+
+.rate-label {
+  color: var(--text-secondary);
+}
+
+.rate-value {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.rate-value.insufficient {
+  color: var(--danger-color);
+}
+
+.conversion-amount-selector {
+  margin-bottom: 1rem;
+}
+
+.conversion-amount-selector label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.amount-controls {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.btn-amount {
+  padding: 0.5rem 0.75rem;
+  background-color: var(--secondary-color);
+  color: var(--text-primary);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+}
+
+.btn-amount:hover:not(:disabled) {
+  background-color: var(--primary-color);
+}
+
+.btn-amount:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+#conversion-amount {
+  flex: 1;
+  padding: 0.5rem;
+  background-color: var(--background-light);
+  color: var(--text-primary);
+  border: 1px solid var(--secondary-color);
+  border-radius: 4px;
+  text-align: center;
+  font-size: 1rem;
+}
+
+#conversion-amount:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.conversion-summary {
+  background-color: rgba(107, 70, 193, 0.15);
+  padding: 0.75rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.summary-row:last-child {
+  margin-bottom: 0;
+}
+
+.summary-value {
+  font-weight: 600;
+}
+
+.summary-value.highlight {
+  color: var(--accent-color);
+}
+
+.summary-value.insufficient {
+  color: var(--danger-color);
+}
+
+.btn-convert {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 1rem;
+  margin-top: 0.5rem;
+}
+
+.exchange-rate-info {
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  background-color: rgba(237, 137, 54, 0.1);
+  border-left: 3px solid var(--accent-color);
+  border-radius: 4px;
+}
+
+.upgrade-effect {
+  font-size: 0.8rem;
+  color: var(--success-color);
+  margin-top: 0.25rem;
+  font-weight: 500;
+}
+
+/* Tutorial Styles */
+.tutorial-section {
+  margin-bottom: 1.5rem;
+}
+
+.tutorial-section h4 {
+  color: var(--primary-color);
+  margin-bottom: 1rem;
+}
+
+.tutorial-step {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background-color: var(--background-light);
+  border-radius: 6px;
+}
+
+.step-number {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  background-color: var(--primary-color);
+  color: var(--text-primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.step-content strong {
+  display: block;
+  color: var(--accent-color);
+  margin-bottom: 0.25rem;
+}
+
+.step-content p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.tutorial-tips {
+  background-color: rgba(237, 137, 54, 0.1);
+  padding: 1rem;
+  border-radius: 6px;
+  border-left: 3px solid var(--accent-color);
+}
+
+.tutorial-tips h4 {
+  color: var(--accent-color);
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
+}
+
+.tutorial-tips ul {
+  margin: 0;
+  padding-left: 1.5rem;
+  list-style-type: disc;
+}
+
+.tutorial-tips li {
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.tutorial-tips li:last-child {
+  margin-bottom: 0;
+}
+
 /* Scrollbar Styles */
 ::-webkit-scrollbar {
   width: 8px;
