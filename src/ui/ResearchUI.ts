@@ -167,6 +167,15 @@ export class ResearchUI {
 
     const inventory = this.game.getInventory();
 
+    // Check if we have enough crafting slots for this recipe
+    if (recipe.ingredientIds.length > crafting.getMaxSlots()) {
+      showToast(
+        `Not enough crafting slots! Need ${recipe.ingredientIds.length} slots.`,
+        'error'
+      );
+      return;
+    }
+
     // Check if all ingredients are available
     const missingIngredients: string[] = [];
     for (const ingredientId of recipe.ingredientIds) {
@@ -185,19 +194,24 @@ export class ResearchUI {
     crafting.clearAllSlots();
 
     // Add ingredients to crafting slots
-    let success = true;
-    for (let i = 0; i < recipe.ingredientIds.length && i < crafting.getMaxSlots(); i++) {
+    let successCount = 0;
+    for (let i = 0; i < recipe.ingredientIds.length; i++) {
       const ingredientId = recipe.ingredientIds[i];
-      if (!this.game.addIngredientToSlot(i, ingredientId)) {
-        success = false;
+      if (this.game.addIngredientToSlot(i, ingredientId)) {
+        successCount++;
+      } else {
+        // If adding fails, stop trying to add more
         break;
       }
     }
 
-    if (success) {
+    if (successCount === recipe.ingredientIds.length) {
       showToast('Recipe ingredients added to crafting slots!', 'success');
     } else {
-      showToast('Failed to add all ingredients. Not enough slots or ingredients.', 'error');
+      showToast(
+        `Failed to add all ingredients. Added ${successCount} of ${recipe.ingredientIds.length}.`,
+        'error'
+      );
     }
   }
 }
