@@ -1,6 +1,21 @@
-import type { Recipe, CraftingSlot, Ingredient, Equipment, ElementType } from '../types';
+import type {
+  Recipe,
+  CraftingSlot,
+  Ingredient,
+  ElementType,
+  AnyEquipment,
+  GeneratedEquipment,
+} from '../types';
+import { isGeneratedEquipment } from '../types';
 import { getIngredientById } from '../data/ingredients';
 import { getEquipmentById } from '../data/equipment';
+
+/**
+ * Scaling factor for converting generated equipment total cost to bonus level.
+ * A divisor of 3 means every 3 points of total cost = 1 bonus level.
+ * This matches the same scaling used in Portal.ts for consistency.
+ */
+const GENERATED_EQUIPMENT_COST_TO_BONUS_DIVISOR = 3;
 
 export class CraftingSystem {
   private slots: CraftingSlot[] = [];
@@ -8,7 +23,8 @@ export class CraftingSystem {
   private discoveredRecipes: Map<string, Recipe> = new Map();
   private onCraftCallbacks: ((
     elements: Partial<Record<ElementType, number>>,
-    bonus: number
+    bonus: number,
+    equipmentAttributes: GeneratedEquipment[]
   ) => void)[] = [];
 
   constructor() {
@@ -39,7 +55,11 @@ export class CraftingSystem {
   }
 
   public onCraft(
-    callback: (elements: Partial<Record<ElementType, number>>, bonus: number) => void
+    callback: (
+      elements: Partial<Record<ElementType, number>>,
+      bonus: number,
+      equipmentAttributes: GeneratedEquipment[]
+    ) => void
   ): void {
     this.onCraftCallbacks.push(callback);
   }
@@ -80,6 +100,21 @@ export class CraftingSystem {
     return true;
   }
 
+  /**
+   * Add a generated equipment item directly to a crafting slot.
+   * This preserves all the item's attributes for portal crafting.
+   */
+  public addGeneratedEquipmentToSlot(index: number, equipment: GeneratedEquipment): boolean {
+    if (index < 0 || index >= this.maxSlots) return false;
+
+    this.slots[index] = {
+      index,
+      ingredient: null,
+      equipment,
+    };
+    return true;
+  }
+
   public clearSlot(index: number): void {
     if (index >= 0 && index < this.maxSlots) {
       this.slots[index] = {
@@ -94,16 +129,23 @@ export class CraftingSystem {
     this.initializeSlots();
   }
 
+  /**
+   * Craft a portal using the current slot contents.
+   * Returns element bonuses, level bonus, and generated equipment attributes
+   * that can be used by the portal system to calculate effects.
+   */
   public craft(): {
     elements: Partial<Record<ElementType, number>>;
     bonusLevel: number;
     isNewRecipe: boolean;
+    generatedEquipmentUsed: GeneratedEquipment[];
   } | null {
     const filledSlots = this.slots.filter((s) => s.ingredient || s.equipment);
     if (filledSlots.length === 0) return null;
 
     const elements: Partial<Record<ElementType, number>> = {};
     let bonusLevel = 0;
+    const generatedEquipmentUsed: GeneratedEquipment[] = [];
 
     // Process ingredients
     const ingredientIds: string[] = [];
@@ -123,6 +165,15 @@ export class CraftingSystem {
           for (const [element, amount] of Object.entries(slot.equipment.elementBonus)) {
             elements[element as ElementType] = (elements[element as ElementType] || 0) + amount;
           }
+        }
+
+        // Track generated equipment for portal attribute effects
+        if (isGeneratedEquipment(slot.equipment)) {
+          generatedEquipmentUsed.push(slot.equipment);
+          // Generated equipment attributes contribute additional bonus
+          bonusLevel += Math.floor(
+            slot.equipment.totalCost / GENERATED_EQUIPMENT_COST_TO_BONUS_DIVISOR
+          );
         }
       }
     }
@@ -145,10 +196,10 @@ export class CraftingSystem {
     // Clear slots after crafting
     this.clearAllSlots();
 
-    // Notify callbacks
-    this.onCraftCallbacks.forEach((cb) => cb(elements, bonusLevel));
+    // Notify callbacks with generated equipment attributes
+    this.onCraftCallbacks.forEach((cb) => cb(elements, bonusLevel, generatedEquipmentUsed));
 
-    return { elements, bonusLevel, isNewRecipe };
+    return { elements, bonusLevel, isNewRecipe, generatedEquipmentUsed };
   }
 
   private generateRecipeId(ingredientIds: string[]): string {
@@ -207,7 +258,7 @@ export class CraftingSystem {
     return this.slots.filter((s) => s.ingredient || s.equipment).length;
   }
 
-  public getSlotContents(): (Ingredient | Equipment | null)[] {
+  public getSlotContents(): (Ingredient | AnyEquipment | null)[] {
     return this.slots.map((s) => s.ingredient || s.equipment);
   }
 }
