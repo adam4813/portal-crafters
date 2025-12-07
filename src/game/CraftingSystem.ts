@@ -9,6 +9,7 @@ import type {
 import { isGeneratedEquipment } from '../types';
 import { getIngredientById } from '../data/ingredients';
 import { getEquipmentById } from '../data/equipment';
+import { calculatePortalEffects } from './PortalEffectSystem';
 
 /**
  * Scaling factor for converting generated equipment total cost to bonus level.
@@ -180,7 +181,21 @@ export class CraftingSystem {
 
     // Check for recipe discovery
     const recipeId = this.generateRecipeId(ingredientIds);
-    const isNewRecipe = !this.discoveredRecipes.has(recipeId);
+    let isNewRecipe = !this.discoveredRecipes.has(recipeId);
+
+    // Apply recipe discovery bonus from attributes
+    if (!isNewRecipe && generatedEquipmentUsed.length > 0) {
+      const effects = calculatePortalEffects(generatedEquipmentUsed);
+      if (effects.recipeDiscoveryBonus > 0) {
+        // Give a chance to rediscover as a "variant" recipe if attributes provide discovery bonus
+        // This encourages experimentation with different equipment
+        const rediscoveryChance = effects.recipeDiscoveryBonus * 0.3; // Max 30% chance
+        if (Math.random() < rediscoveryChance) {
+          // Treat as a new discovery for bonus purposes
+          isNewRecipe = true;
+        }
+      }
+    }
 
     if (isNewRecipe && ingredientIds.length >= 2) {
       const recipe: Recipe = {
