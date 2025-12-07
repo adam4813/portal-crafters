@@ -373,40 +373,55 @@ export class Game {
     this.updateUI();
   }
 
-  public addIngredientToSlot(slotIndex: number, ingredientId: string): void {
+  public addIngredientToSlot(slotIndex: number, ingredientId: string): boolean {
     if (!this.inventorySystem.hasIngredient(ingredientId)) {
       showToast('No ingredient available!', 'error');
-      return;
+      return false;
     }
 
     this.inventorySystem.removeIngredient(ingredientId);
-    this.craftingSystem.addIngredientToSlot(slotIndex, ingredientId);
+    const success = this.craftingSystem.addIngredientToSlot(slotIndex, ingredientId);
+    if (!success) {
+      // Rollback: return ingredient to inventory if slot addition failed
+      this.inventorySystem.addIngredient(ingredientId);
+    }
     this.updateUI();
+    return success;
   }
 
-  public addEquipmentToSlot(slotIndex: number, equipmentId: string): void {
+  public addEquipmentToSlot(slotIndex: number, equipmentId: string): boolean {
     if (!this.inventorySystem.hasEquipment(equipmentId)) {
       showToast('No equipment available!', 'error');
-      return;
+      return false;
     }
 
     this.inventorySystem.removeEquipment(equipmentId);
-    this.craftingSystem.addEquipmentToSlot(slotIndex, equipmentId);
+    const success = this.craftingSystem.addEquipmentToSlot(slotIndex, equipmentId);
+    if (!success) {
+      // Rollback: return equipment to inventory if slot addition failed
+      this.inventorySystem.addEquipment(equipmentId);
+    }
     this.updateUI();
+    return success;
   }
 
-  public addGeneratedEquipmentToSlot(slotIndex: number, equipmentId: string): void {
+  public addGeneratedEquipmentToSlot(slotIndex: number, equipmentId: string): boolean {
     if (!this.inventorySystem.hasGeneratedEquipment(equipmentId)) {
       showToast('No equipment available!', 'error');
-      return;
+      return false;
     }
 
     const equipment = this.inventorySystem.getGeneratedEquipmentById(equipmentId);
-    if (!equipment) return;
+    if (!equipment) return false;
 
     this.inventorySystem.removeGeneratedEquipment(equipmentId);
-    this.craftingSystem.addGeneratedEquipmentToSlot(slotIndex, equipment);
+    const success = this.craftingSystem.addGeneratedEquipmentToSlot(slotIndex, equipment);
+    if (!success) {
+      // Rollback: return generated equipment to inventory if slot addition failed
+      this.inventorySystem.addGeneratedEquipment(equipment);
+    }
     this.updateUI();
+    return success;
   }
 
   public clearCraftingSlot(slotIndex: number): void {

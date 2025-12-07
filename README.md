@@ -130,6 +130,20 @@ The current efficiency bonus is displayed directly on each upgrade.
 4. **Higher tiers = higher cost**: Exotic and Legendary elements require significantly more mana
 5. **Stockpile elements**: Convert mana into elements during downtime to always have inventory ready
 
+### 📖 Recipe Book
+
+The Recipe Book keeps track of all discovered recipes and provides helpful features:
+
+- **Visual Ingredient Status**: Recipe ingredients are displayed with visual indicators:
+  - **Bright/colored icons** (🔥💧) indicate ingredients you currently own
+  - **Dim/greyed icons** indicate ingredients you're missing
+- **One-Click Auto-Fill**: Click on any recipe where you own all ingredients to automatically fill the crafting slots with those ingredients
+- **Smart Tooltips**: Hover over recipes to see:
+  - "Click to auto-fill crafting slots" when all ingredients are available
+  - "Some ingredients missing" when you don't own all required items
+  - "All ingredients missing" when you don't own any of the required items
+- **Recipe Discovery**: Recipes are automatically discovered when you craft with 2 or more ingredients for the first time
+
 ### Crafting Interface
 
 The crafting interface is where you combine ingredients, equipment, and elements to create portals:
