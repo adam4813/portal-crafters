@@ -190,8 +190,13 @@ export class ResearchUI {
       return;
     }
 
-    // Clear existing slots first
-    crafting.clearAllSlots();
+    // Clear existing slots and return items to inventory
+    for (let i = 0; i < crafting.getMaxSlots(); i++) {
+      const slot = crafting.getSlot(i);
+      if (slot?.ingredient || slot?.equipment) {
+        this.game.clearCraftingSlot(i);
+      }
+    }
 
     // Add ingredients to crafting slots
     let successCount = 0;
