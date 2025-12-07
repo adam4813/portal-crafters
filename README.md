@@ -287,19 +287,21 @@ Equipment attributes directly affect portal behavior, rewards, and outcomes. Whe
 
 Equipment quality directly scales rewards:
 
-| Attribute Quality | Gold Multiplier | Example Attributes                       |
-| ----------------- | --------------- | ---------------------------------------- |
-| Premium (10+ cost)| +50-60%         | Enchanted, Legendary, Ancient            |
-| High (5-9 cost)   | +25-30%         | Tempered, Masterwork, Flames, Frost      |
-| Mid (2-4 cost)    | +10-25%         | Sturdy, Polished, Steel, Silver          |
-| Low (<0 cost)     | -10%            | Rusted, Worn, Cracked                    |
+| Attribute Quality  | Gold Multiplier | Example Attributes                  |
+| ------------------ | --------------- | ----------------------------------- |
+| Premium (10+ cost) | +50-60%         | Enchanted, Legendary, Ancient       |
+| High (5-9 cost)    | +25-30%         | Tempered, Masterwork, Flames, Frost |
+| Mid (2-4 cost)     | +10-25%         | Sturdy, Polished, Steel, Silver     |
+| Low (<0 cost)      | -10%            | Rusted, Worn, Cracked               |
 
 **Special Material Bonuses:**
+
 - Adamantine: +20% gold
 - Dragonscale: +25% gold, +1 rarity
 - Obsidian/Crystal: +40% gold
 
 **Mana Multipliers:**
+
 - Enchanted prefix: +50% mana
 - Eternity suffix: +50% mana
 - Defense-type suffixes: +5% per effect value
@@ -312,7 +314,6 @@ Attributes increase the chance of specific reward types:
   - Elemental suffixes: +2% per effect value
   - Mid-tier materials (Silver, Mithril): +10%
   - High-tier prefixes: +5-15%
-  
 - **Equipment Drop Chance:**
   - Legendary prefix: +20%
   - Premium suffixes (Annihilation, Void): +25-30%
@@ -339,47 +340,47 @@ Recipe discovery bonuses also give a chance to "rediscover" known recipes with b
 
 #### Prefix Effects
 
-| Prefix     | Cost | Primary Effects                                         |
-| ---------- | ---- | ------------------------------------------------------- |
-| Enchanted  | +10  | +50% gold, +2 rarity, Magic Resonance, +50% mana        |
-| Legendary  | +15  | +50% gold, +2 rarity, Legendary Aura, +20% equipment    |
-| Ancient    | +12  | +50% gold, +2 rarity, Ancient Power, void affinity      |
-| Masterwork | +7   | +30% gold, +1 rarity, +0.2 intensity, +5% discovery     |
-| Tempered   | +5   | +30% gold, +1 rarity, +0.2 intensity                    |
-| Gleaming   | +5   | +30% gold, +0.2 intensity, lighter colors               |
-| Sturdy     | +2   | +15% gold, +0.1 intensity                               |
-| Polished   | +3   | +15% gold, +0.1 intensity                               |
-| Rusted     | -2   | -10% gold, +5% discovery (experimental learning)        |
-| Worn/Cracked | -1 | -10% gold, +5% discovery                                |
+| Prefix       | Cost | Primary Effects                                      |
+| ------------ | ---- | ---------------------------------------------------- |
+| Enchanted    | +10  | +50% gold, +2 rarity, Magic Resonance, +50% mana     |
+| Legendary    | +15  | +50% gold, +2 rarity, Legendary Aura, +20% equipment |
+| Ancient      | +12  | +50% gold, +2 rarity, Ancient Power, void affinity   |
+| Masterwork   | +7   | +30% gold, +1 rarity, +0.2 intensity, +5% discovery  |
+| Tempered     | +5   | +30% gold, +1 rarity, +0.2 intensity                 |
+| Gleaming     | +5   | +30% gold, +0.2 intensity, lighter colors            |
+| Sturdy       | +2   | +15% gold, +0.1 intensity                            |
+| Polished     | +3   | +15% gold, +0.1 intensity                            |
+| Rusted       | -2   | -10% gold, +5% discovery (experimental learning)     |
+| Worn/Cracked | -1   | -10% gold, +5% discovery                             |
 
 #### Material Effects
 
-| Material    | Cost | Element Affinity | Primary Effects                        |
-| ----------- | ---- | ---------------- | -------------------------------------- |
-| Adamantine  | +12  | Earth            | +40% gold, Unbreakable, +20% bonus     |
-| Crystal     | +10  | Light            | +40% gold, Crystal Clarity, +15% discovery |
-| Obsidian    | +8   | Void             | +40% gold, Void Touch, darker colors   |
-| Dragonscale | +6   | Fire             | +25% gold, Dragon Essence, +1 rarity   |
-| Mithril     | +6   | Air              | +25% gold, Mithril Glow, +0.15 intensity |
-| Silver      | +4   | Light            | +25% gold, +10% ingredients            |
-| Steel       | +2   | Earth            | +10% gold                              |
-| Bronze      | +1   | Fire             | +10% gold                              |
-| Iron        | 0    | Earth            | Elemental bonus only                   |
-| Wood/Leather | 0   | -                | Base stats                             |
+| Material     | Cost | Element Affinity | Primary Effects                            |
+| ------------ | ---- | ---------------- | ------------------------------------------ |
+| Adamantine   | +12  | Earth            | +40% gold, Unbreakable, +20% bonus         |
+| Crystal      | +10  | Light            | +40% gold, Crystal Clarity, +15% discovery |
+| Obsidian     | +8   | Void             | +40% gold, Void Touch, darker colors       |
+| Dragonscale  | +6   | Fire             | +25% gold, Dragon Essence, +1 rarity       |
+| Mithril      | +6   | Air              | +25% gold, Mithril Glow, +0.15 intensity   |
+| Silver       | +4   | Light            | +25% gold, +10% ingredients                |
+| Steel        | +2   | Earth            | +10% gold                                  |
+| Bronze       | +1   | Fire             | +10% gold                                  |
+| Iron         | 0    | Earth            | Elemental bonus only                       |
+| Wood/Leather | 0    | -                | Base stats                                 |
 
 #### Suffix Effects
 
-| Suffix         | Cost | Element Affinity | Effect Type | Primary Effects                    |
-| -------------- | ---- | ---------------- | ----------- | ---------------------------------- |
-| Annihilation   | +15  | -                | Special     | +60% gold, +2 rarity, Destructive Force, +30% equipment |
-| Void           | +12  | Void             | Elemental   | +60% gold, +2 rarity, Void Touched |
-| Eternity       | +10  | Light            | Special     | +60% gold, +2 rarity, Timeless, +50% mana |
-| Flames         | +5   | Fire             | Elemental   | +30% gold, +1 rarity, Burning, warmer colors |
-| Frost          | +5   | Water            | Elemental   | +30% gold, +1 rarity, Frozen, cooler colors |
-| Storms         | +6   | Lightning        | Elemental   | +30% gold, +1 rarity, Electrified, +0.25 intensity |
-| Strength       | +3   | -                | Damage      | +15% gold, +15% bonus              |
-| Vigor          | +3   | -                | Defense     | +15% gold, +15% mana               |
-| Novice         | +1   | -                | Damage      | Minor bonuses                      |
+| Suffix       | Cost | Element Affinity | Effect Type | Primary Effects                                         |
+| ------------ | ---- | ---------------- | ----------- | ------------------------------------------------------- |
+| Annihilation | +15  | -                | Special     | +60% gold, +2 rarity, Destructive Force, +30% equipment |
+| Void         | +12  | Void             | Elemental   | +60% gold, +2 rarity, Void Touched                      |
+| Eternity     | +10  | Light            | Special     | +60% gold, +2 rarity, Timeless, +50% mana               |
+| Flames       | +5   | Fire             | Elemental   | +30% gold, +1 rarity, Burning, warmer colors            |
+| Frost        | +5   | Water            | Elemental   | +30% gold, +1 rarity, Frozen, cooler colors             |
+| Storms       | +6   | Lightning        | Elemental   | +30% gold, +1 rarity, Electrified, +0.25 intensity      |
+| Strength     | +3   | -                | Damage      | +15% gold, +15% bonus                                   |
+| Vigor        | +3   | -                | Defense     | +15% gold, +15% mana                                    |
+| Novice       | +1   | -                | Damage      | Minor bonuses                                           |
 
 #### Combined Effects Example
 

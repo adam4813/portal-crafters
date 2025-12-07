@@ -482,6 +482,15 @@ export class Game {
     return this.portal;
   }
 
+  /**
+   * Get portal effects for the current portal's equipment attributes.
+   * Useful for displaying effect descriptions in the UI.
+   */
+  public getCurrentPortalEffects() {
+    const generatedEquipmentAttributes = this.portal.getGeneratedEquipmentAttributes();
+    return calculatePortalEffects(generatedEquipmentAttributes);
+  }
+
   public dispose(): void {
     this.stop();
     this.saveSystem.dispose();
