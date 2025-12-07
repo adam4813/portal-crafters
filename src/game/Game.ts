@@ -12,6 +12,7 @@ import { RewardSystem } from './RewardSystem';
 import { SaveSystem } from './SaveSystem';
 import { UIManager } from '../ui/UIManager';
 import { createInitialGameState, showToast } from '../utils/helpers';
+import { calculatePortalEffects } from './PortalEffectSystem';
 
 export class Game {
   // Three.js components
@@ -259,8 +260,12 @@ export class Game {
     this.gameState.totalGoldEarned += payment;
     this.gameState.totalPortalsCreated++;
 
-    // Generate reward
-    const reward = this.rewardSystem.generateReward(portalData.level);
+    // Calculate portal effects from equipment attributes
+    const generatedEquipmentAttributes = this.portal.getGeneratedEquipmentAttributes();
+    const portalEffects = calculatePortalEffects(generatedEquipmentAttributes);
+
+    // Generate reward with attribute-based modifiers
+    const reward = this.rewardSystem.generateReward(portalData.level, portalEffects);
     if (reward) {
       const message = this.rewardSystem.applyReward(reward, {
         addGold: (amount) => this.inventorySystem.addGold(amount),

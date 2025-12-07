@@ -265,6 +265,159 @@ When generated equipment is used in crafting:
 2. Element affinities from attributes contribute elemental bonuses
 3. All attributes are stored on the portal for effect/reward calculations
 
+## ✨ Attribute-Based Portal Effects
+
+Equipment attributes directly affect portal behavior, rewards, and outcomes. When you craft a portal using generated equipment, **all attributes are consumed** and influence the resulting portal's properties.
+
+### How Attributes Affect Portals
+
+#### 🎨 Visual Effects
+
+- **Color Shifts**: Elemental suffixes and special materials change portal colors
+  - Flames: Warmer colors (+15° hue shift)
+  - Frost: Cooler colors (-60° hue shift)
+  - Obsidian: Darker tones (-45° hue shift)
+  - Gleaming: Lighter appearance (+30° hue shift)
+- **Intensity**: High-quality prefixes and special effects increase visual intensity
+  - Enchanted/Legendary/Ancient prefixes: +0.3 intensity
+  - Storms suffix: +0.25 intensity
+  - Materials like Mithril: +0.15 intensity
+
+#### 💰 Reward Multipliers
+
+Equipment quality directly scales rewards:
+
+| Attribute Quality | Gold Multiplier | Example Attributes                       |
+| ----------------- | --------------- | ---------------------------------------- |
+| Premium (10+ cost)| +50-60%         | Enchanted, Legendary, Ancient            |
+| High (5-9 cost)   | +25-30%         | Tempered, Masterwork, Flames, Frost      |
+| Mid (2-4 cost)    | +10-25%         | Sturdy, Polished, Steel, Silver          |
+| Low (<0 cost)     | -10%            | Rusted, Worn, Cracked                    |
+
+**Special Material Bonuses:**
+- Adamantine: +20% gold
+- Dragonscale: +25% gold, +1 rarity
+- Obsidian/Crystal: +40% gold
+
+**Mana Multipliers:**
+- Enchanted prefix: +50% mana
+- Eternity suffix: +50% mana
+- Defense-type suffixes: +5% per effect value
+
+#### 🎲 Drop Rate Modifiers
+
+Attributes increase the chance of specific reward types:
+
+- **Ingredient Drop Chance:**
+  - Elemental suffixes: +2% per effect value
+  - Mid-tier materials (Silver, Mithril): +10%
+  - High-tier prefixes: +5-15%
+  
+- **Equipment Drop Chance:**
+  - Legendary prefix: +20%
+  - Premium suffixes (Annihilation, Void): +25-30%
+  - High-cost materials: +15%
+
+- **Rarity Bonuses** (affects reward quality):
+  - Legendary equipment: +3 rarity
+  - Epic equipment: +2 rarity
+  - Ancient/Void effects: +1-2 rarity
+
+#### 🔬 Recipe Discovery
+
+Experimenting with different equipment attributes teaches you more:
+
+- **Discovery Bonus:**
+  - Premium prefixes (Enchanted, Legendary): +10-15%
+  - Crystal material: +15%
+  - Low-quality items (Rusted, Worn): +5% (experimentation bonus)
+  - Special effect suffixes: +1% per effect value
+
+Recipe discovery bonuses also give a chance to "rediscover" known recipes with better understanding (max 30% chance for high-bonus items).
+
+### Attribute-to-Effect Mapping
+
+#### Prefix Effects
+
+| Prefix     | Cost | Primary Effects                                         |
+| ---------- | ---- | ------------------------------------------------------- |
+| Enchanted  | +10  | +50% gold, +2 rarity, Magic Resonance, +50% mana        |
+| Legendary  | +15  | +50% gold, +2 rarity, Legendary Aura, +20% equipment    |
+| Ancient    | +12  | +50% gold, +2 rarity, Ancient Power, void affinity      |
+| Masterwork | +7   | +30% gold, +1 rarity, +0.2 intensity, +5% discovery     |
+| Tempered   | +5   | +30% gold, +1 rarity, +0.2 intensity                    |
+| Gleaming   | +5   | +30% gold, +0.2 intensity, lighter colors               |
+| Sturdy     | +2   | +15% gold, +0.1 intensity                               |
+| Polished   | +3   | +15% gold, +0.1 intensity                               |
+| Rusted     | -2   | -10% gold, +5% discovery (experimental learning)        |
+| Worn/Cracked | -1 | -10% gold, +5% discovery                                |
+
+#### Material Effects
+
+| Material    | Cost | Element Affinity | Primary Effects                        |
+| ----------- | ---- | ---------------- | -------------------------------------- |
+| Adamantine  | +12  | Earth            | +40% gold, Unbreakable, +20% bonus     |
+| Crystal     | +10  | Light            | +40% gold, Crystal Clarity, +15% discovery |
+| Obsidian    | +8   | Void             | +40% gold, Void Touch, darker colors   |
+| Dragonscale | +6   | Fire             | +25% gold, Dragon Essence, +1 rarity   |
+| Mithril     | +6   | Air              | +25% gold, Mithril Glow, +0.15 intensity |
+| Silver      | +4   | Light            | +25% gold, +10% ingredients            |
+| Steel       | +2   | Earth            | +10% gold                              |
+| Bronze      | +1   | Fire             | +10% gold                              |
+| Iron        | 0    | Earth            | Elemental bonus only                   |
+| Wood/Leather | 0   | -                | Base stats                             |
+
+#### Suffix Effects
+
+| Suffix         | Cost | Element Affinity | Effect Type | Primary Effects                    |
+| -------------- | ---- | ---------------- | ----------- | ---------------------------------- |
+| Annihilation   | +15  | -                | Special     | +60% gold, +2 rarity, Destructive Force, +30% equipment |
+| Void           | +12  | Void             | Elemental   | +60% gold, +2 rarity, Void Touched |
+| Eternity       | +10  | Light            | Special     | +60% gold, +2 rarity, Timeless, +50% mana |
+| Flames         | +5   | Fire             | Elemental   | +30% gold, +1 rarity, Burning, warmer colors |
+| Frost          | +5   | Water            | Elemental   | +30% gold, +1 rarity, Frozen, cooler colors |
+| Storms         | +6   | Lightning        | Elemental   | +30% gold, +1 rarity, Electrified, +0.25 intensity |
+| Strength       | +3   | -                | Damage      | +15% gold, +15% bonus              |
+| Vigor          | +3   | -                | Defense     | +15% gold, +15% mana               |
+| Novice         | +1   | -                | Damage      | Minor bonuses                      |
+
+#### Combined Effects Example
+
+**Enchanted Mithril Sword of Storms** (Legendary rarity, total cost ~36)
+
+- Portal Effects:
+  - Visual: +0.7 intensity, electrified effect, lighter color
+  - Gold: +130% (50% + 25% + 30% + 25% from rarity)
+  - Mana: +50%
+  - Equipment drops: +25%
+  - Rarity: +5 (2 + 1 + 2 from legendary)
+  - Recipe discovery: +11%
+- Element Bonuses:
+  - Air +3 (from Mithril)
+  - Lightning +6 (from Storms suffix)
+- Special Effects:
+  - Magical Resonance
+  - Mithril Glow
+  - Electrified
+
+### Compatibility with Random Equipment
+
+The attribute system is fully compatible with procedurally generated equipment:
+
+- Equipment generation uses level-appropriate attribute pools
+- All attributes (prefix, material, suffix) are optional
+- Cost contributions stack to determine final rarity
+- Every combination creates unique portal effects
+- System encourages experimentation with different equipment types
+
+### Using Attributes in Portal Crafting
+
+1. **Add Equipment to Crafting Slots**: Place generated or static equipment in crafting slots
+2. **Attributes Are Consumed**: When you craft the portal, all equipment attributes are consumed and stored
+3. **Effects Are Applied**: The portal gains visual effects, reward bonuses, and special properties
+4. **Complete Contracts**: When customers complete the portal, attributes affect reward calculation
+5. **Rewards Reflect Quality**: Higher-quality equipment = better rewards and more interesting effects
+
 ## 🛠️ Tech Stack
 
 - **Runtime**: [Three.js](https://threejs.org/) for 2D portal visualization

@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { Portal as PortalType, ElementType, GeneratedEquipment } from '../types';
 import { generateId, calculatePortalLevel, calculatePortalColor } from '../utils/helpers';
+import { calculatePortalEffects } from './PortalEffectSystem';
 
 /**
  * Scaling factor for converting equipment total cost to portal level bonus.
@@ -191,12 +192,90 @@ export class Portal {
     const newColor = calculatePortalColor(this.portalData.elements);
     this.portalData.visualColor = newColor;
 
-    if (this.portalMesh) {
-      (this.portalMesh.material as THREE.MeshBasicMaterial).color.setHex(newColor);
+    // Calculate attribute effects for visual modifiers
+    const generatedEquipment = this.portalData.generatedEquipmentAttributes || [];
+    const effects = calculatePortalEffects(generatedEquipment);
+
+    // Apply color shift from attributes
+    let finalColor = newColor;
+    if (effects.colorShift !== 0) {
+      finalColor = this.applyColorShift(newColor, effects.colorShift);
     }
 
-    // Increase intensity based on level
-    this.portalData.visualIntensity = Math.min(1 + this.portalData.level * 0.1, 2);
+    if (this.portalMesh) {
+      (this.portalMesh.material as THREE.MeshBasicMaterial).color.setHex(finalColor);
+    }
+
+    // Increase intensity based on level and attribute effects
+    this.portalData.visualIntensity =
+      Math.min(1 + this.portalData.level * 0.1, 2) + effects.intensityBonus;
+  }
+
+  /**
+   * Apply color shift (in degrees) to a hex color.
+   * Converts to HSL, shifts hue, and converts back to hex.
+   */
+  private applyColorShift(hexColor: number, shiftDegrees: number): number {
+    // Extract RGB components
+    const r = ((hexColor >> 16) & 0xff) / 255;
+    const g = ((hexColor >> 8) & 0xff) / 255;
+    const b = (hexColor & 0xff) / 255;
+
+    // Convert RGB to HSL
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    let h = 0;
+    let s = 0;
+    const l = (max + min) / 2;
+
+    if (max !== min) {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+
+      switch (max) {
+        case r:
+          h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+          break;
+        case g:
+          h = ((b - r) / d + 2) / 6;
+          break;
+        case b:
+          h = ((r - g) / d + 4) / 6;
+          break;
+      }
+    }
+
+    // Apply hue shift (normalized to 0-1 range)
+    h = (h + shiftDegrees / 360) % 1;
+    if (h < 0) h += 1;
+
+    // Convert HSL back to RGB
+    const hue2rgb = (p: number, q: number, t: number): number => {
+      if (t < 0) t += 1;
+      if (t > 1) t -= 1;
+      if (t < 1 / 6) return p + (q - p) * 6 * t;
+      if (t < 1 / 2) return q;
+      if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+      return p;
+    };
+
+    let newR: number, newG: number, newB: number;
+    if (s === 0) {
+      newR = newG = newB = l;
+    } else {
+      const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+      const p = 2 * l - q;
+      newR = hue2rgb(p, q, h + 1 / 3);
+      newG = hue2rgb(p, q, h);
+      newB = hue2rgb(p, q, h - 1 / 3);
+    }
+
+    // Convert back to hex
+    const rHex = Math.round(newR * 255);
+    const gHex = Math.round(newG * 255);
+    const bHex = Math.round(newB * 255);
+
+    return (rHex << 16) | (gHex << 8) | bHex;
   }
 
   public reset(): void {

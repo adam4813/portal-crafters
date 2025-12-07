@@ -1,8 +1,9 @@
 import type { Reward, GeneratedEquipment } from '../types';
 import { INGREDIENTS, getIngredientById } from '../data/ingredients';
 import { EQUIPMENT, getEquipmentById } from '../data/equipment';
-import { randomElement, calculateRewardChance } from '../utils/helpers';
+import { randomElement, calculateRewardChance, clamp } from '../utils/helpers';
 import { equipmentGenerator } from './EquipmentGenerator';
+import type { PortalEffectModifiers } from './PortalEffectSystem';
 
 /**
  * Reward probability thresholds (cumulative).
@@ -34,34 +35,97 @@ export class RewardSystem {
     this.rewardChanceUpgrade = level;
   }
 
-  public generateReward(portalLevel: number): Reward | null {
+  /**
+   * Generate a reward with optional portal effect modifiers from equipment attributes.
+   * @param portalLevel - Level of the portal
+   * @param effectModifiers - Optional modifiers from equipment attributes
+   */
+  public generateReward(
+    portalLevel: number,
+    effectModifiers?: PortalEffectModifiers
+  ): Reward | null {
     const chance = calculateRewardChance(portalLevel, this.rewardChanceUpgrade);
 
     if (Math.random() > chance) {
       return null;
     }
 
-    // Determine reward type using probability thresholds
+    // Adjust thresholds based on effect modifiers
+    const thresholds = this.calculateAdjustedThresholds(effectModifiers);
+
+    // Determine reward type using adjusted probability thresholds
     const roll = Math.random();
 
-    if (roll < REWARD_PROBABILITIES.GOLD_THRESHOLD) {
-      return this.generateGoldReward(portalLevel);
-    } else if (roll < REWARD_PROBABILITIES.INGREDIENT_THRESHOLD) {
-      return this.generateIngredientReward(portalLevel);
-    } else if (roll < REWARD_PROBABILITIES.MANA_THRESHOLD) {
-      return this.generateManaReward(portalLevel);
-    } else if (roll < REWARD_PROBABILITIES.STATIC_EQUIPMENT_THRESHOLD) {
-      return this.generateEquipmentReward(portalLevel);
+    if (roll < thresholds.GOLD_THRESHOLD) {
+      return this.generateGoldReward(portalLevel, effectModifiers);
+    } else if (roll < thresholds.INGREDIENT_THRESHOLD) {
+      return this.generateIngredientReward(portalLevel, effectModifiers);
+    } else if (roll < thresholds.MANA_THRESHOLD) {
+      return this.generateManaReward(portalLevel, effectModifiers);
+    } else if (roll < thresholds.STATIC_EQUIPMENT_THRESHOLD) {
+      return this.generateEquipmentReward(portalLevel, effectModifiers);
     } else {
-      return this.generateGeneratedEquipmentReward(portalLevel);
+      return this.generateGeneratedEquipmentReward(portalLevel, effectModifiers);
     }
   }
 
-  private generateGoldReward(portalLevel: number): Reward {
+  /**
+   * Calculate adjusted reward type thresholds based on effect modifiers.
+   */
+  private calculateAdjustedThresholds(
+    effectModifiers?: PortalEffectModifiers
+  ): typeof REWARD_PROBABILITIES {
+    if (!effectModifiers) {
+      return REWARD_PROBABILITIES;
+    }
+
+    // Calculate adjustments based on attribute effects
+    const ingredientBonus = effectModifiers.ingredientChance * 0.15; // Scale to threshold space
+    const equipmentBonus = effectModifiers.equipmentChance * 0.15;
+
+    // Start with base thresholds
+    let goldThreshold = REWARD_PROBABILITIES.GOLD_THRESHOLD;
+    let ingredientThreshold = REWARD_PROBABILITIES.INGREDIENT_THRESHOLD;
+    let manaThreshold = REWARD_PROBABILITIES.MANA_THRESHOLD;
+    let staticEquipmentThreshold = REWARD_PROBABILITIES.STATIC_EQUIPMENT_THRESHOLD;
+
+    // Reduce gold chance to make room for increased item chances
+    if (ingredientBonus > 0 || equipmentBonus > 0) {
+      const totalBonus = ingredientBonus + equipmentBonus;
+      goldThreshold = Math.max(0.15, goldThreshold - totalBonus * 0.5);
+    }
+
+    // Increase ingredient threshold
+    ingredientThreshold = clamp(ingredientThreshold + ingredientBonus, goldThreshold, 0.7);
+
+    // Keep mana threshold relative
+    manaThreshold = clamp(manaThreshold, ingredientThreshold, 0.8);
+
+    // Increase equipment threshold
+    staticEquipmentThreshold = clamp(
+      staticEquipmentThreshold + equipmentBonus,
+      manaThreshold,
+      0.95
+    );
+
+    return {
+      GOLD_THRESHOLD: goldThreshold,
+      INGREDIENT_THRESHOLD: ingredientThreshold,
+      MANA_THRESHOLD: manaThreshold,
+      STATIC_EQUIPMENT_THRESHOLD: staticEquipmentThreshold,
+    };
+  }
+
+  private generateGoldReward(portalLevel: number, effectModifiers?: PortalEffectModifiers): Reward {
     const baseAmount = 10;
     const levelBonus = portalLevel * 5;
     const variance = Math.floor(Math.random() * 10);
-    const amount = baseAmount + levelBonus + variance;
+    let amount = baseAmount + levelBonus + variance;
+
+    // Apply gold multiplier from effect modifiers
+    if (effectModifiers) {
+      amount = Math.floor(amount * effectModifiers.goldMultiplier);
+    }
 
     return {
       type: 'gold',
@@ -69,11 +133,16 @@ export class RewardSystem {
     };
   }
 
-  private generateManaReward(portalLevel: number): Reward {
+  private generateManaReward(portalLevel: number, effectModifiers?: PortalEffectModifiers): Reward {
     const baseAmount = 5;
     const levelBonus = portalLevel * 3;
     const variance = Math.floor(Math.random() * 5);
-    const amount = baseAmount + levelBonus + variance;
+    let amount = baseAmount + levelBonus + variance;
+
+    // Apply mana multiplier from effect modifiers
+    if (effectModifiers) {
+      amount = Math.floor(amount * effectModifiers.manaMultiplier);
+    }
 
     return {
       type: 'mana',
@@ -81,9 +150,20 @@ export class RewardSystem {
     };
   }
 
-  private generateIngredientReward(portalLevel: number): Reward {
+  private generateIngredientReward(
+    portalLevel: number,
+    effectModifiers?: PortalEffectModifiers
+  ): Reward {
     // Higher portal levels can drop rarer ingredients
-    const maxIngredientIndex = Math.min(Math.floor(portalLevel / 2) + 3, INGREDIENTS.length - 1);
+    let maxIngredientIndex = Math.min(Math.floor(portalLevel / 2) + 3, INGREDIENTS.length - 1);
+
+    // Apply rarity bonus from effect modifiers
+    if (effectModifiers && effectModifiers.rarityBonus > 0) {
+      maxIngredientIndex = Math.min(
+        maxIngredientIndex + effectModifiers.rarityBonus,
+        INGREDIENTS.length - 1
+      );
+    }
 
     const eligibleIngredients = INGREDIENTS.slice(0, maxIngredientIndex + 1);
     const ingredient = randomElement(eligibleIngredients);
@@ -95,9 +175,17 @@ export class RewardSystem {
     };
   }
 
-  private generateEquipmentReward(portalLevel: number): Reward {
+  private generateEquipmentReward(
+    portalLevel: number,
+    effectModifiers?: PortalEffectModifiers
+  ): Reward {
     // Higher portal levels can drop better equipment
-    const rarityThreshold = Math.min(portalLevel / 5, 4);
+    let rarityThreshold = Math.min(portalLevel / 5, 4);
+
+    // Apply rarity bonus from effect modifiers
+    if (effectModifiers && effectModifiers.rarityBonus > 0) {
+      rarityThreshold = Math.min(rarityThreshold + effectModifiers.rarityBonus * 0.5, 4);
+    }
 
     const eligibleEquipment = EQUIPMENT.filter((eq) => {
       const rarityScore = this.getRarityScore(eq.rarity);
@@ -106,7 +194,7 @@ export class RewardSystem {
 
     if (eligibleEquipment.length === 0) {
       // Fallback to gold
-      return this.generateGoldReward(portalLevel);
+      return this.generateGoldReward(portalLevel, effectModifiers);
     }
 
     const equipment = randomElement(eligibleEquipment);
@@ -122,11 +210,34 @@ export class RewardSystem {
    * Generate a procedurally created equipment item as a reward.
    * The item level is based on the portal level.
    */
-  private generateGeneratedEquipmentReward(portalLevel: number): Reward {
+  private generateGeneratedEquipmentReward(
+    portalLevel: number,
+    effectModifiers?: PortalEffectModifiers
+  ): Reward {
     // Use portal level to determine equipment generation level
-    const generatedEquipment = equipmentGenerator.generate({
-      level: portalLevel,
-    });
+    let effectiveLevel = portalLevel;
+
+    // Apply rarity bonus to increase generation level
+    if (effectModifiers && effectModifiers.rarityBonus > 0) {
+      effectiveLevel = Math.floor(portalLevel + effectModifiers.rarityBonus);
+    }
+
+    // Increase attribute chances based on effect modifiers
+    const options: any = { level: effectiveLevel };
+    if (effectModifiers) {
+      // Higher rarity increases chance of premium attributes
+      if (effectModifiers.rarityBonus >= 2) {
+        options.prefixChance = 0.9;
+        options.materialChance = 0.95;
+        options.suffixChance = 0.8;
+      } else if (effectModifiers.rarityBonus >= 1) {
+        options.prefixChance = 0.75;
+        options.materialChance = 0.85;
+        options.suffixChance = 0.65;
+      }
+    }
+
+    const generatedEquipment = equipmentGenerator.generate(options);
 
     return {
       type: 'generatedEquipment',
