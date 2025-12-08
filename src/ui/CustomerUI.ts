@@ -44,21 +44,21 @@ export class CustomerUI {
     const now = Date.now();
     const timerElements = this.queueContainer.querySelectorAll('.customer-timer');
     let hasExpired = false;
-    
+
     timerElements.forEach((timerEl) => {
       const card = timerEl.closest('.customer-card') as HTMLElement;
       if (!card) return;
-      
+
       const arrivedAt = parseInt(card.dataset.arrivedAt || '0', 10);
       const patience = parseInt(card.dataset.patience || '0', 10);
-      
+
       if (arrivedAt && patience) {
         const waitTime = Math.floor((now - arrivedAt) / 1000);
         const timeRemaining = Math.max(0, patience - waitTime);
-        
+
         timerEl.textContent = `⏱️ ${formatTime(timeRemaining)}`;
         timerEl.classList.toggle('urgent', timeRemaining < 30);
-        
+
         if (timeRemaining === 0) {
           hasExpired = true;
         }
@@ -72,9 +72,9 @@ export class CustomerUI {
   }
 
   public update(
-    customers: CustomerSystem, 
-    storedPortals: PortalType[], 
-    progression?: ProgressionSystem, 
+    customers: CustomerSystem,
+    storedPortals: PortalType[],
+    progression?: ProgressionSystem,
     elements?: ElementSystem
   ): void {
     this.renderProgressionStatus(progression, elements);
@@ -104,24 +104,24 @@ export class CustomerUI {
       html += `<div class="next-tier-info">`;
       html += `<div class="next-tier-name">Next: ${nextTier.name}</div>`;
       html += `<div class="unlock-requirements">`;
-      
+
       // Mini-boss requirement
       html += `<div class="requirement ${unlockStatus.miniBossCompleted ? 'met' : 'unmet'}">`;
       html += `${unlockStatus.miniBossCompleted ? '✅' : '❌'} Complete mini-boss`;
       html += `</div>`;
-      
+
       // Contracts requirement
       html += `<div class="requirement ${unlockStatus.contractsCompleted ? 'met' : 'unmet'}">`;
       html += `${unlockStatus.contractsCompleted ? '✅' : '❌'} ${contractsCompleted}/${unlockStatus.contractsNeeded} contracts`;
       html += `</div>`;
-      
+
       // Element requirement
       if (unlockStatus.elementNeeded) {
         html += `<div class="requirement ${unlockStatus.elementUnlocked ? 'met' : 'unmet'}">`;
         html += `${unlockStatus.elementUnlocked ? '✅' : '❌'} Research ${unlockStatus.elementNeeded}`;
         html += `</div>`;
       }
-      
+
       html += `</div>`;
       html += `</div>`;
     } else {
@@ -151,20 +151,18 @@ export class CustomerUI {
       const isMiniBoss = customer.id.startsWith('miniboss-');
 
       // Find which portals can fulfill this customer
-      const matchingPortals = storedPortals.filter(portal => 
+      const matchingPortals = storedPortals.filter((portal) =>
         this.portalMeetsRequirements(portal, customer)
       );
 
       // Build requirements display
       const reqElements = this.formatElementRequirement(customer.requirements);
-      const reqMana = customer.requirements.minMana 
-        ? `✨ ≥${customer.requirements.minMana}` 
-        : '';
+      const reqMana = customer.requirements.minMana ? `✨ ≥${customer.requirements.minMana}` : '';
 
       // Add special class for mini-boss
       const cardClass = isMiniBoss ? 'customer-card miniboss-card' : 'customer-card';
-      const timerDisplay = isMiniBoss 
-        ? '<div class="customer-timer unlimited">⏱️ ∞ Unlimited</div>' 
+      const timerDisplay = isMiniBoss
+        ? '<div class="customer-timer unlimited">⏱️ ∞ Unlimited</div>'
         : `<div class="customer-timer ${timeRemaining < 30 ? 'urgent' : ''}">⏱️ ${formatTime(timeRemaining)}</div>`;
 
       html += `
@@ -189,7 +187,7 @@ export class CustomerUI {
     this.queueContainer.innerHTML = html;
 
     // Add event listeners for fulfill buttons
-    this.queueContainer.querySelectorAll('.btn-fulfill-contract').forEach(btn => {
+    this.queueContainer.querySelectorAll('.btn-fulfill-contract').forEach((btn) => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         const button = e.target as HTMLButtonElement;
@@ -202,14 +200,14 @@ export class CustomerUI {
     });
 
     // Add event listeners for portal selectors
-    this.queueContainer.querySelectorAll('.portal-select').forEach(select => {
+    this.queueContainer.querySelectorAll('.portal-select').forEach((select) => {
       select.addEventListener('change', (e) => {
         const selectEl = e.target as HTMLSelectElement;
         const customerId = selectEl.dataset.customerId;
         const fulfillBtn = this.queueContainer?.querySelector(
           `.btn-fulfill-contract[data-customer-id="${customerId}"]`
         ) as HTMLButtonElement;
-        
+
         if (fulfillBtn) {
           fulfillBtn.dataset.portalId = selectEl.value;
           fulfillBtn.disabled = !selectEl.value;
@@ -218,7 +216,11 @@ export class CustomerUI {
     });
   }
 
-  private renderPortalSelector(customer: Customer, matchingPortals: PortalType[], allPortals: PortalType[]): string {
+  private renderPortalSelector(
+    customer: Customer,
+    matchingPortals: PortalType[],
+    allPortals: PortalType[]
+  ): string {
     if (allPortals.length === 0) {
       return '<span class="no-portals">No portals crafted</span>';
     }
@@ -234,7 +236,7 @@ export class CustomerUI {
         .filter(([, amt]) => amt && amt > 0)
         .map(([el, amt]) => `${el}:${amt}`)
         .join(' ');
-      
+
       return `
         <button class="btn-fulfill-contract btn-primary-small" 
                 data-customer-id="${customer.id}" 
@@ -269,25 +271,25 @@ export class CustomerUI {
 
   private formatElementRequirement(requirements: Customer['requirements']): string {
     const req = requirements.requiredElements;
-    
+
     if (req === undefined) {
       return 'Any'; // No restriction
     }
-    
+
     if (req === 'any') {
       return 'Any element';
     }
-    
+
     if (req === 'none') {
       return 'No elements';
     }
-    
+
     // Specific elements array
     if (Array.isArray(req) && req.length > 0) {
       const needed = requirements.minElementAmount || 1;
-      return req.map(el => `${el} ≥${needed}`).join(', ');
+      return req.map((el) => `${el} ≥${needed}`).join(', ');
     }
-    
+
     return 'Any';
   }
 
@@ -304,8 +306,11 @@ export class CustomerUI {
 
     // Check element requirements
     const reqElements = customer.requirements.requiredElements;
-    const portalElementTotal = Object.values(portal.elements).reduce((sum, val) => sum + (val || 0), 0);
-    
+    const portalElementTotal = Object.values(portal.elements).reduce(
+      (sum, val) => sum + (val || 0),
+      0
+    );
+
     if (reqElements === 'any') {
       // Must have at least some elements
       if (portalElementTotal === 0) {

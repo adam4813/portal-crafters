@@ -165,9 +165,8 @@ export class Game {
 
     // Load crafting slots (items that were placed in slots before save)
     if (state.craftingSlots) {
-      this.craftingSystem.loadSlotsState(
-        state.craftingSlots,
-        (id) => this.inventorySystem.getGeneratedEquipmentById(id)
+      this.craftingSystem.loadSlotsState(state.craftingSlots, (id) =>
+        this.inventorySystem.getGeneratedEquipmentById(id)
       );
     }
 
@@ -247,7 +246,7 @@ export class Game {
     // Update customer system (handles patience/expiration) - only when not paused
     if (!this.isPaused) {
       this.customerSystem.update(deltaTime);
-      
+
       // Ensure mini-boss contract is in queue if not completed
       this.updateMiniBossContract();
     }
@@ -258,7 +257,7 @@ export class Game {
    */
   private updateMiniBossContract(): void {
     const currentTier = this.progressionSystem.getCurrentTier();
-    
+
     // Check if mini-boss for current tier is already completed
     if (this.progressionSystem.isMiniBossCompleted(currentTier.tier)) {
       // Remove mini-boss from queue if it's there
@@ -268,8 +267,8 @@ export class Game {
 
     // Add mini-boss contract if not in queue
     const queue = this.customerSystem.getQueue();
-    const hasMiniBoss = queue.some(c => c.id.startsWith('miniboss-'));
-    
+    const hasMiniBoss = queue.some((c) => c.id.startsWith('miniboss-'));
+
     if (!hasMiniBoss) {
       this.customerSystem.addMiniBossContract(
         currentTier.tier,
@@ -309,10 +308,10 @@ export class Game {
   // Public API for UI interactions
   public craftPortal(): void {
     const portalData = this.portal.getData();
-    const hasElements = Object.values(portalData.elements).some(v => v && v > 0);
+    const hasElements = Object.values(portalData.elements).some((v) => v && v > 0);
     const hasMana = portalData.manaInvested > 0;
     const result = this.craftingSystem.craft();
-    
+
     // Need either items, elements, or mana to craft
     if (!result && !hasElements && !hasMana) {
       showToast('Add elements or items to craft a portal!', 'warning');
@@ -347,26 +346,26 @@ export class Game {
     } else {
       showToast('Portal crafted and stored!', 'success');
     }
-    
+
     this.updateUI();
   }
 
   public fulfillCustomerWithPortal(customerId: string, portalId: string): void {
     const queue = this.customerSystem.getQueue();
-    const customer = queue.find(c => c.id === customerId);
+    const customer = queue.find((c) => c.id === customerId);
     if (!customer) {
       showToast('Customer not found!', 'error');
       return;
     }
 
-    const portalIndex = this.storedPortals.findIndex(p => p.id === portalId);
+    const portalIndex = this.storedPortals.findIndex((p) => p.id === portalId);
     if (portalIndex === -1) {
       showToast('Portal not found!', 'error');
       return;
     }
 
     const portalData = this.storedPortals[portalIndex];
-    
+
     // Check requirements
     if (!this.portalMeetsRequirements(portalData, customer)) {
       showToast('Portal does not meet requirements!', 'error');
@@ -378,7 +377,7 @@ export class Game {
 
     // Check if this is a mini-boss contract
     const isMiniBoss = customer.id.startsWith('miniboss-');
-    
+
     // Complete the contract
     const payment = this.customerSystem.completeContract(customer.id);
     this.inventorySystem.addGold(payment);
@@ -391,7 +390,7 @@ export class Game {
       const currentTier = this.progressionSystem.getCurrentTier();
       this.progressionSystem.completeMiniBoss(currentTier.tier);
       showToast(`🏆 Mini-boss contract complete! Tier ${currentTier.tier} mastered!`, 'success');
-      
+
       // Check if we can advance to next tier
       if (this.progressionSystem.canAdvanceToNextTier(this.elementSystem.getUnlockedElements())) {
         this.progressionSystem.advanceToNextTier();
@@ -461,8 +460,11 @@ export class Game {
 
     // Check element requirements
     const reqElements = customer.requirements.requiredElements;
-    const portalElementTotal = Object.values(portal.elements).reduce((sum, val) => sum + (val || 0), 0);
-    
+    const portalElementTotal = Object.values(portal.elements).reduce(
+      (sum, val) => sum + (val || 0),
+      0
+    );
+
     if (reqElements === 'any') {
       // Must have at least some elements
       if (portalElementTotal === 0) {
@@ -651,7 +653,7 @@ export class Game {
   public removeManaFromPortal(amount: number): void {
     const portalData = this.portal.getData();
     const currentMana = portalData.manaInvested;
-    
+
     if (currentMana < amount) {
       showToast('Not enough mana in portal!', 'error');
       return;
@@ -676,7 +678,7 @@ export class Game {
   public removeElementFromPortal(element: ElementType, amount: number): void {
     const portalData = this.portal.getData();
     const currentAmount = portalData.elements[element] || 0;
-    
+
     if (currentAmount < amount) {
       showToast(`Not enough ${element} in portal!`, 'error');
       return;
@@ -724,11 +726,15 @@ export class Game {
   // Stored Portal operations
   public storeCurrentPortal(): void {
     const portalData = this.portal.getData();
-    if (portalData.level <= 1 && portalData.manaInvested === 0 && Object.keys(portalData.elements).length === 0) {
+    if (
+      portalData.level <= 1 &&
+      portalData.manaInvested === 0 &&
+      Object.keys(portalData.elements).length === 0
+    ) {
       showToast('Nothing to store - portal is empty!', 'warning');
       return;
     }
-    
+
     this.storedPortals.push({ ...portalData });
     this.portal.reset();
     showToast('Portal stored for later use!', 'success');
@@ -736,7 +742,7 @@ export class Game {
   }
 
   public useStoredPortal(portalId: string): void {
-    const index = this.storedPortals.findIndex(p => p.id === portalId);
+    const index = this.storedPortals.findIndex((p) => p.id === portalId);
     if (index === -1) {
       showToast('Portal not found!', 'error');
       return;
@@ -744,7 +750,11 @@ export class Game {
 
     // Check if current portal has content
     const currentData = this.portal.getData();
-    if (currentData.level > 1 || currentData.manaInvested > 0 || Object.keys(currentData.elements).length > 0) {
+    if (
+      currentData.level > 1 ||
+      currentData.manaInvested > 0 ||
+      Object.keys(currentData.elements).length > 0
+    ) {
       showToast('Store or complete current portal first!', 'warning');
       return;
     }
@@ -756,7 +766,7 @@ export class Game {
   }
 
   public reclaimStoredPortal(portalId: string): void {
-    const index = this.storedPortals.findIndex(p => p.id === portalId);
+    const index = this.storedPortals.findIndex((p) => p.id === portalId);
     if (index === -1) {
       showToast('Portal not found!', 'error');
       return;
@@ -812,7 +822,7 @@ export class Game {
   public getPortal(): Portal {
     return this.portal;
   }
-  
+
   public getManaSystem(): ManaSystem {
     return this.manaSystem;
   }
@@ -827,21 +837,24 @@ export class Game {
 
   public startExpedition(portalId: string): void {
     // Find the portal
-    const portalIndex = this.storedPortals.findIndex(p => p.id === portalId);
+    const portalIndex = this.storedPortals.findIndex((p) => p.id === portalId);
     if (portalIndex === -1) {
       showToast('Portal not found!', 'error');
       return;
     }
 
     const portal = this.storedPortals[portalIndex];
-    
+
     // Remove portal from storage (it's consumed by the expedition)
     this.storedPortals.splice(portalIndex, 1);
 
     // Start expedition
     const expedition = this.expeditionSystem.startExpedition(portal);
     const duration = Math.floor(expedition.duration / 60);
-    showToast(`Expedition started! Party sent through portal. Returns in ${duration} minutes.`, 'success');
+    showToast(
+      `Expedition started! Party sent through portal. Returns in ${duration} minutes.`,
+      'success'
+    );
     this.updateUI();
   }
 
