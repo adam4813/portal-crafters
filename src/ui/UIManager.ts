@@ -197,7 +197,16 @@ export class UIManager {
       { gold: 100, label: 'Large Mana Pack' },
     ];
 
-    let html = '<div class="exchange-rate-info">';
+    const shopItems = [
+      { id: 'health_potion', name: 'Health Potion', description: 'A basic healing potion', cost: 25, goldReward: 0 },
+      { id: 'mana_crystal', name: 'Mana Crystal', description: 'A small crystal infused with mana', cost: 50, goldReward: 0 },
+      { id: 'lucky_charm', name: 'Lucky Charm', description: 'Brings good fortune to the bearer', cost: 75, goldReward: 0 },
+      { id: 'debug_gold_grant', name: '[DEBUG] Gold Grant', description: 'Gives 1000 gold for testing', cost: 0, goldReward: 1000 },
+      { id: 'debug_gold_sink', name: '[DEBUG] Gold Sink', description: 'Burns 100 gold for testing', cost: 100, goldReward: 0 },
+    ];
+
+    let html = '<h4>Buy Mana</h4>';
+    html += '<div class="exchange-rate-info">';
     html += `<p class="info-text">Current rate: <strong>${exchangeRate.manaPerGold} mana per gold</strong></p>`;
     html += '</div>';
 
@@ -217,14 +226,51 @@ export class UIManager {
       `;
     }
 
+    html += '<h4>Items</h4>';
+    for (const item of shopItems) {
+      const canAfford = gold >= item.cost;
+      html += `
+        <div class="shop-item">
+          <div class="shop-item-info">
+            <div class="shop-item-name">${item.name}</div>
+            <div class="shop-item-description">${item.description}</div>
+          </div>
+          <button class="btn-secondary buy-item-btn" data-id="${item.id}" data-cost="${item.cost}" data-reward="${item.goldReward}" ${!canAfford ? 'disabled' : ''}>
+            ${item.cost === 0 ? 'FREE' : `${item.cost} 💰`}
+          </button>
+        </div>
+      `;
+    }
+
     this.modalContent.innerHTML = html;
 
-    // Add click handlers
+    // Add click handlers for mana packs
     this.modalContent.querySelectorAll('.buy-mana-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
         const goldCost = parseInt((btn as HTMLElement).dataset.gold || '0', 10);
         this.game.purchaseMana(goldCost);
         this.renderShopModal();
+      });
+    });
+
+    // Add click handlers for shop items
+    this.modalContent.querySelectorAll('.buy-item-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = (btn as HTMLElement).dataset.id || '';
+        const cost = parseInt((btn as HTMLElement).dataset.cost || '0', 10);
+        const reward = parseInt((btn as HTMLElement).dataset.reward || '0', 10);
+        const inv = this.game.getInventory();
+        if (inv.canAfford(cost)) {
+          inv.spendGold(cost);
+          if (reward > 0) {
+            inv.addGold(reward);
+          }
+          // Add non-debug items to inventory as ingredients
+          if (!id.startsWith('debug_')) {
+            inv.addIngredient(id, 1);
+          }
+          this.game.refreshUI();
+        }
       });
     });
   }

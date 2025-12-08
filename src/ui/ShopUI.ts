@@ -3,10 +3,19 @@ import type { InventorySystem } from '../game/Inventory';
 import type { UpgradeSystem } from '../game/UpgradeSystem';
 import { formatNumber } from '../utils/helpers';
 
+interface ShopItem {
+  id: string;
+  name: string;
+  description: string;
+  cost: number;
+  goldReward: number;
+}
+
 export class ShopUI {
   private game: Game;
   private manaShopContainer: HTMLElement | null;
   private upgradeShopContainer: HTMLElement | null;
+  private itemShopContainer: HTMLElement | null;
 
   private manaPackages = [
     { gold: 10, label: 'Small Mana Pack' },
@@ -14,14 +23,24 @@ export class ShopUI {
     { gold: 100, label: 'Large Mana Pack' },
   ];
 
+  private shopItems: ShopItem[] = [
+    { id: 'health_potion', name: 'Health Potion', description: 'A basic healing potion', cost: 25, goldReward: 0 },
+    { id: 'mana_crystal', name: 'Mana Crystal', description: 'A small crystal infused with mana', cost: 50, goldReward: 0 },
+    { id: 'lucky_charm', name: 'Lucky Charm', description: 'Brings good fortune to the bearer', cost: 75, goldReward: 0 },
+    { id: 'debug_gold_grant', name: '[DEBUG] Gold Grant', description: 'Gives 1000 gold for testing', cost: 0, goldReward: 1000 },
+    { id: 'debug_gold_sink', name: '[DEBUG] Gold Sink', description: 'Burns 100 gold for testing', cost: 100, goldReward: 0 },
+  ];
+
   constructor(game: Game) {
     this.game = game;
     this.manaShopContainer = document.getElementById('mana-shop');
     this.upgradeShopContainer = document.getElementById('upgrade-shop');
+    this.itemShopContainer = document.getElementById('item-shop');
   }
 
   public initialize(): void {
     this.renderManaShop();
+    this.renderItemShop();
   }
 
   private renderManaShop(): void {
@@ -63,6 +82,7 @@ export class ShopUI {
 
   public update(inventory: InventorySystem, upgrades: UpgradeSystem): void {
     this.updateManaShop(inventory);
+    this.updateItemShop(inventory);
     this.renderUpgradeShop(upgrades, inventory);
   }
 
@@ -75,6 +95,67 @@ export class ShopUI {
       const cost = parseInt((btn as HTMLElement).dataset.gold || '0', 10);
       (btn as HTMLButtonElement).disabled = gold < cost;
     });
+  }
+
+  private renderItemShop(): void {
+    if (!this.itemShopContainer) return;
+
+    let html = '<h4>Items</h4>';
+
+    for (const item of this.shopItems) {
+      html += `
+        <div class="shop-item" data-id="${item.id}">
+          <div class="shop-item-info">
+            <div class="shop-item-name">${item.name}</div>
+            <div class="shop-item-description">${item.description}</div>
+          </div>
+          <button class="btn-secondary buy-item-btn" data-id="${item.id}">
+            ${item.cost === 0 ? 'FREE' : `${item.cost} 💰`}
+          </button>
+        </div>
+      `;
+    }
+
+    this.itemShopContainer.innerHTML = html;
+
+    // Add click handlers
+    this.itemShopContainer.querySelectorAll('.buy-item-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = (btn as HTMLElement).dataset.id;
+        if (id) {
+          this.purchaseItem(id);
+        }
+      });
+    });
+  }
+
+  private updateItemShop(inventory: InventorySystem): void {
+    if (!this.itemShopContainer) return;
+
+    const gold = inventory.getGold();
+
+    this.itemShopContainer.querySelectorAll('.buy-item-btn').forEach((btn) => {
+      const id = (btn as HTMLElement).dataset.id;
+      const item = this.shopItems.find((i) => i.id === id);
+      if (item) {
+        (btn as HTMLButtonElement).disabled = gold < item.cost;
+      }
+    });
+  }
+
+  private purchaseItem(itemId: string): void {
+    const item = this.shopItems.find((i) => i.id === itemId);
+    if (!item) return;
+
+    const inventory = this.game.getInventory();
+    if (!inventory.canAfford(item.cost)) {
+      return;
+    }
+
+    inventory.spendGold(item.cost);
+    if (item.goldReward > 0) {
+      inventory.addGold(item.goldReward);
+    }
   }
 
   private renderUpgradeShop(upgrades: UpgradeSystem, inventory: InventorySystem): void {

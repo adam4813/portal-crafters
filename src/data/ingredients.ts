@@ -114,6 +114,32 @@ export const INGREDIENTS: Ingredient[] = [
     description: 'A scale from a mighty dragon',
     baseValue: 75,
   },
+
+  // Shop Items
+  {
+    id: 'health_potion',
+    name: 'Health Potion',
+    category: 'mundane',
+    icon: '🧪',
+    description: 'A basic healing potion',
+    baseValue: 25,
+  },
+  {
+    id: 'mana_crystal',
+    name: 'Mana Crystal',
+    category: 'mundane',
+    icon: '💎',
+    description: 'A small crystal infused with mana',
+    baseValue: 50,
+  },
+  {
+    id: 'lucky_charm',
+    name: 'Lucky Charm',
+    category: 'mundane',
+    icon: '🍀',
+    description: 'Brings good fortune to the bearer',
+    baseValue: 75,
+  },
 ];
 
 export function getIngredientById(id: string): Ingredient | undefined {
