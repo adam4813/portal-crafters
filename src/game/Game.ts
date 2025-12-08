@@ -273,7 +273,6 @@ export class Game {
       this.customerSystem.addMiniBossContract(
         currentTier.tier,
         currentTier.miniBossContract.name,
-        currentTier.miniBossContract.description,
         {
           minLevel: currentTier.miniBossContract.minLevel,
           requiredElements: currentTier.miniBossContract.requiredElements,

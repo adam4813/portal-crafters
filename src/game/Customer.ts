@@ -189,7 +189,6 @@ export class CustomerSystem {
   public addMiniBossContract(
     tierNumber: number,
     name: string,
-    _description: string,
     requirements: ContractRequirements,
     payment: number
   ): void {

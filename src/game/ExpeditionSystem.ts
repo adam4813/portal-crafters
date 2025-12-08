@@ -21,154 +21,188 @@ function calculateExpeditionRewards(portal: Portal): ExpeditionReward[] {
 
   // Fire element: fire crystals, metal ore
   if (elements.fire && elements.fire > 0) {
-    rewards.push(
-      { type: 'ingredient', itemId: 'fire_crystal', amount: Math.ceil(elements.fire / 3), chance: 0.8 }
-    );
+    rewards.push({
+      type: 'ingredient',
+      itemId: 'fire_crystal',
+      amount: Math.ceil(elements.fire / 3),
+      chance: 0.8,
+    });
     if (elements.fire >= 5) {
-      rewards.push(
-        { type: 'ingredient', itemId: 'metal_ore', amount: 1, chance: 0.4 }
-      );
+      rewards.push({ type: 'ingredient', itemId: 'metal_ore', amount: 1, chance: 0.4 });
     }
   }
 
-  // Water element: water essence, fish
+  // Water element: water essence
   if (elements.water && elements.water > 0) {
-    rewards.push(
-      { type: 'ingredient', itemId: 'water_essence', amount: Math.ceil(elements.water / 3), chance: 0.8 }
-    );
+    rewards.push({
+      type: 'ingredient',
+      itemId: 'water_essence',
+      amount: Math.ceil(elements.water / 3),
+      chance: 0.8,
+    });
   }
 
   // Earth element: stone, metal ore
   if (elements.earth && elements.earth > 0) {
-    rewards.push(
-      { type: 'ingredient', itemId: 'stone', amount: Math.ceil(elements.earth / 2), chance: 0.9 }
-    );
+    rewards.push({
+      type: 'ingredient',
+      itemId: 'stone',
+      amount: Math.ceil(elements.earth / 2),
+      chance: 0.9,
+    });
     if (elements.earth >= 5) {
-      rewards.push(
-        { type: 'ingredient', itemId: 'metal_ore', amount: 1, chance: 0.5 }
-      );
+      rewards.push({ type: 'ingredient', itemId: 'metal_ore', amount: 1, chance: 0.5 });
     }
   }
 
-  // Air element: feathers, lightning shards
+  // Air element: lightning shards
   if (elements.air && elements.air > 0) {
     if (elements.air >= 5) {
-      rewards.push(
-        { type: 'ingredient', itemId: 'lightning_shard', amount: 1, chance: 0.3 }
-      );
+      rewards.push({ type: 'ingredient', itemId: 'lightning_shard', amount: 1, chance: 0.3 });
     }
   }
 
   // Nature/Plant element: wood, herbs
   if (elements.nature && elements.nature > 0) {
-    rewards.push(
-      { type: 'ingredient', itemId: 'wood', amount: Math.ceil(elements.nature / 2), chance: 1.0 }
-    );
-    rewards.push(
-      { type: 'ingredient', itemId: 'herb', amount: Math.ceil(elements.nature / 3), chance: 0.7 }
-    );
+    rewards.push({
+      type: 'ingredient',
+      itemId: 'wood',
+      amount: Math.ceil(elements.nature / 2),
+      chance: 1.0,
+    });
+    rewards.push({
+      type: 'ingredient',
+      itemId: 'herb',
+      amount: Math.ceil(elements.nature / 3),
+      chance: 0.7,
+    });
     if (elements.nature >= 5) {
-      rewards.push(
-        { type: 'ingredient', itemId: 'nature_essence', amount: 1, chance: 0.4 }
-      );
+      rewards.push({ type: 'ingredient', itemId: 'nature_essence', amount: 1, chance: 0.4 });
     }
   }
 
   // Ice element: ice crystals
   if (elements.ice && elements.ice > 0) {
-    rewards.push(
-      { type: 'ingredient', itemId: 'ice_crystal', amount: Math.ceil(elements.ice / 3), chance: 0.7 }
-    );
+    rewards.push({
+      type: 'ingredient',
+      itemId: 'ice_crystal',
+      amount: Math.ceil(elements.ice / 3),
+      chance: 0.7,
+    });
   }
 
   // Lightning element: lightning shards
   if (elements.lightning && elements.lightning > 0) {
-    rewards.push(
-      { type: 'ingredient', itemId: 'lightning_shard', amount: Math.ceil(elements.lightning / 4), chance: 0.6 }
-    );
+    rewards.push({
+      type: 'ingredient',
+      itemId: 'lightning_shard',
+      amount: Math.ceil(elements.lightning / 4),
+      chance: 0.6,
+    });
   }
 
   // Metal element: metal ore, equipment
   if (elements.metal && elements.metal > 0) {
-    rewards.push(
-      { type: 'ingredient', itemId: 'metal_ore', amount: Math.ceil(elements.metal / 2), chance: 0.8 }
-    );
+    rewards.push({
+      type: 'ingredient',
+      itemId: 'metal_ore',
+      amount: Math.ceil(elements.metal / 2),
+      chance: 0.8,
+    });
     if (elements.metal >= 5) {
-      rewards.push(
-        { type: 'equipment', itemId: 'sword', amount: 1, chance: 0.3 }
-      );
+      rewards.push({ type: 'equipment', itemId: 'sword', amount: 1, chance: 0.3 });
     }
   }
 
   // Shadow element: shadow essence
   if (elements.shadow && elements.shadow > 0) {
-    rewards.push(
-      { type: 'ingredient', itemId: 'shadow_essence', amount: Math.ceil(elements.shadow / 3), chance: 0.6 }
-    );
+    rewards.push({
+      type: 'ingredient',
+      itemId: 'shadow_essence',
+      amount: Math.ceil(elements.shadow / 3),
+      chance: 0.6,
+    });
   }
 
   // Light element: light crystals
   if (elements.light && elements.light > 0) {
-    rewards.push(
-      { type: 'ingredient', itemId: 'light_crystal', amount: Math.ceil(elements.light / 3), chance: 0.6 }
-    );
+    rewards.push({
+      type: 'ingredient',
+      itemId: 'light_crystal',
+      amount: Math.ceil(elements.light / 3),
+      chance: 0.6,
+    });
   }
 
   // Void element: void crystals
   if (elements.void && elements.void > 0) {
-    rewards.push(
-      { type: 'ingredient', itemId: 'void_crystal', amount: Math.ceil(elements.void / 4), chance: 0.5 }
-    );
+    rewards.push({
+      type: 'ingredient',
+      itemId: 'void_crystal',
+      amount: Math.ceil(elements.void / 4),
+      chance: 0.5,
+    });
   }
 
   // Arcane element: arcane dust
   if (elements.arcane && elements.arcane > 0) {
-    rewards.push(
-      { type: 'ingredient', itemId: 'arcane_dust', amount: Math.ceil(elements.arcane / 3), chance: 0.7 }
-    );
+    rewards.push({
+      type: 'ingredient',
+      itemId: 'arcane_dust',
+      amount: Math.ceil(elements.arcane / 3),
+      chance: 0.7,
+    });
   }
 
   // Time element: time sand
   if (elements.time && elements.time > 0) {
-    rewards.push(
-      { type: 'ingredient', itemId: 'time_sand', amount: Math.ceil(elements.time / 4), chance: 0.5 }
-    );
+    rewards.push({
+      type: 'ingredient',
+      itemId: 'time_sand',
+      amount: Math.ceil(elements.time / 4),
+      chance: 0.5,
+    });
   }
 
   // Chaos element: chaos ember
   if (elements.chaos && elements.chaos > 0) {
-    rewards.push(
-      { type: 'ingredient', itemId: 'chaos_ember', amount: Math.ceil(elements.chaos / 4), chance: 0.5 }
-    );
+    rewards.push({
+      type: 'ingredient',
+      itemId: 'chaos_ember',
+      amount: Math.ceil(elements.chaos / 4),
+      chance: 0.5,
+    });
   }
 
   // Life element: life essence
   if (elements.life && elements.life > 0) {
-    rewards.push(
-      { type: 'ingredient', itemId: 'life_essence', amount: Math.ceil(elements.life / 4), chance: 0.4 }
-    );
+    rewards.push({
+      type: 'ingredient',
+      itemId: 'life_essence',
+      amount: Math.ceil(elements.life / 4),
+      chance: 0.4,
+    });
   }
 
   // Death element: death shards
   if (elements.death && elements.death > 0) {
-    rewards.push(
-      { type: 'ingredient', itemId: 'death_shard', amount: Math.ceil(elements.death / 4), chance: 0.4 }
-    );
+    rewards.push({
+      type: 'ingredient',
+      itemId: 'death_shard',
+      amount: Math.ceil(elements.death / 4),
+      chance: 0.4,
+    });
   }
 
   // Base rewards: some gold based on portal level
   const goldAmount = portal.level * 20 + Math.floor(portal.manaInvested / 10);
   if (goldAmount > 0) {
-    rewards.push(
-      { type: 'gold', amount: goldAmount, chance: 0.8 }
-    );
+    rewards.push({ type: 'gold', amount: goldAmount, chance: 0.8 });
   }
 
   // High level portals can return mana
   if (portal.level >= 5) {
-    rewards.push(
-      { type: 'mana', amount: Math.floor(portal.manaInvested * 0.3), chance: 0.5 }
-    );
+    rewards.push({ type: 'mana', amount: Math.floor(portal.manaInvested * 0.3), chance: 0.5 });
   }
 
   return rewards;
@@ -213,7 +247,7 @@ export class ExpeditionSystem {
    * Check if an expedition is complete
    */
   public isExpeditionComplete(expeditionId: string): boolean {
-    const expedition = this.activeExpeditions.find(e => e.id === expeditionId);
+    const expedition = this.activeExpeditions.find((e) => e.id === expeditionId);
     if (!expedition) return false;
 
     const elapsed = Date.now() - expedition.startedAt;
@@ -224,11 +258,11 @@ export class ExpeditionSystem {
    * Complete an expedition and get rewards
    */
   public completeExpedition(expeditionId: string): ExpeditionReward[] | null {
-    const index = this.activeExpeditions.findIndex(e => e.id === expeditionId);
+    const index = this.activeExpeditions.findIndex((e) => e.id === expeditionId);
     if (index === -1) return null;
 
     const expedition = this.activeExpeditions[index];
-    
+
     // Check if expedition is actually complete
     if (!this.isExpeditionComplete(expeditionId)) {
       return null;
@@ -239,7 +273,7 @@ export class ExpeditionSystem {
 
     // Calculate rewards based on portal
     const allRewards = calculateExpeditionRewards(expedition.portalSnapshot);
-    
+
     // Apply probability to get actual rewards
     const actualRewards: ExpeditionReward[] = [];
     for (const reward of allRewards) {
@@ -255,7 +289,7 @@ export class ExpeditionSystem {
    * Get the time remaining for an expedition in seconds
    */
   public getTimeRemaining(expeditionId: string): number {
-    const expedition = this.activeExpeditions.find(e => e.id === expeditionId);
+    const expedition = this.activeExpeditions.find((e) => e.id === expeditionId);
     if (!expedition) return 0;
 
     const elapsed = (Date.now() - expedition.startedAt) / 1000;
