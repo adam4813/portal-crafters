@@ -64,9 +64,10 @@ export function calculatePortalLevel(
   elements: Partial<Record<ElementType, number>>
 ): number {
   const elementTotal = Object.values(elements).reduce((sum, val) => sum + (val || 0), 0);
-  const baseLevel = Math.floor(Math.sqrt(manaInvested / 10));
+  // Add 1 to make it 1-based (start at level 1, not 0)
+  const baseLevel = Math.floor(Math.sqrt(manaInvested / 10)) + 1;
   const elementBonus = Math.floor(elementTotal / 5);
-  return Math.max(1, baseLevel + elementBonus);
+  return baseLevel + elementBonus;
 }
 
 /**

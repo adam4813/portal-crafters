@@ -10,6 +10,7 @@ export class CraftingUI {
   private slotsContainer: HTMLElement | null;
   private craftButton: HTMLElement | null;
   private previewContainer: HTMLElement | null;
+  private levelProgressContainer: HTMLElement | null;
   private slotsInitialized: boolean = false;
 
   constructor(game: Game, uiManager: UIManager) {
@@ -18,6 +19,7 @@ export class CraftingUI {
     this.slotsContainer = document.getElementById('ingredient-slots');
     this.craftButton = document.getElementById('craft-button');
     this.previewContainer = document.getElementById('crafting-preview');
+    this.levelProgressContainer = document.getElementById('level-progress-container');
   }
 
   public initialize(): void {
@@ -111,6 +113,9 @@ export class CraftingUI {
 
     // Update preview
     this.updatePreview(crafting, hasItems, portalData);
+    
+    // Update level progress bar
+    this.updateLevelProgress(crafting, portalData);
   }
 
   private updatePreview(crafting: CraftingSystem, hasItems: boolean, portalData: any): void {
@@ -119,67 +124,136 @@ export class CraftingUI {
     const hasElements = Object.values(portalData.elements).some((v: any) => v && v > 0);
 
     if (!hasItems && !hasElements) {
-      this.previewContainer.innerHTML = '<p class="preview-empty">Add elements (aspect) or items (contents) to craft a portal</p>';
+      this.previewContainer.innerHTML = '<p class="preview-empty">Add elements or items to craft a portal</p>';
       return;
     }
 
-    // Get current portal elements (aspect)
-    let aspectHtml = '';
+    // Get current portal elements with interactive controls
+    let elementsHtml = '';
     for (const [element, amount] of Object.entries(portalData.elements)) {
       if (amount && (amount as number) > 0) {
-        aspectHtml += `
-          <span class="aspect-element ${element}" data-element="${element}" title="Click to remove 1 ${element}">
-            ${element}: ${amount}
-            <span class="remove-x">×</span>
-          </span>
+        const elementAmount = amount as number;
+        // Each element contributes 20% toward a level (5 elements = 1 level)
+        const percentPerElement = 20;
+        elementsHtml += `
+          <div class="element-control" data-element="${element}">
+            <span class="element-control-name ${element}">${element}</span>
+            <span class="element-control-percent">${percentPerElement}%</span>
+            <span class="element-control-amount">${elementAmount}</span>
+            <div class="element-control-buttons">
+              <button class="element-btn element-btn-sub" data-element="${element}" data-action="sub" title="Remove 1 ${element}">−</button>
+              <button class="element-btn element-btn-add" data-element="${element}" data-action="add" title="Add 1 ${element}">+</button>
+              <button class="element-btn element-btn-remove" data-element="${element}" data-action="remove" title="Remove all ${element}">×</button>
+            </div>
+          </div>
         `;
       }
     }
 
-    // Calculate item bonuses (contents)
+    // Calculate item display (contents)
     const slots = crafting.getSlots();
     let itemsHtml = '';
-    let bonusLevel = 0;
 
     for (const slot of slots) {
       if (slot.ingredient) {
         itemsHtml += `<span class="content-item">${slot.ingredient.icon} ${slot.ingredient.name}</span>`;
-        bonusLevel += Math.floor(slot.ingredient.baseValue / 10);
       }
       if (slot.equipment) {
         itemsHtml += `<span class="content-item">${slot.equipment.icon} ${slot.equipment.name}</span>`;
-        bonusLevel += slot.equipment.portalBonus;
       }
     }
 
-    const finalLevel = Math.max(1, portalData.level + bonusLevel);
+    let html = '';
+    
+    if (elementsHtml) {
+      html += `<div class="preview-elements">${elementsHtml}</div>`;
+    }
+    
+    if (itemsHtml) {
+      html += `<div class="preview-items-section"><div class="preview-label">Items:</div><div class="preview-contents">${itemsHtml}</div></div>`;
+    }
 
-    this.previewContainer.innerHTML = `
-      <div class="portal-preview">
-        <div class="preview-header">Portal Preview</div>
-        <div class="preview-section">
-          <div class="preview-label">Level: <strong>${finalLevel}</strong></div>
-        </div>
-        <div class="preview-section">
-          <div class="preview-label">Aspect (elements):</div>
-          <div class="preview-aspects">${aspectHtml || '<span class="none">None - click elements to add</span>'}</div>
-        </div>
-        <div class="preview-section">
-          <div class="preview-label">Contents (items):</div>
-          <div class="preview-contents">${itemsHtml || '<span class="none">None - add items to slots</span>'}</div>
-        </div>
-      </div>
-    `;
+    this.previewContainer.innerHTML = html;
 
-    // Add click handlers for removing elements
-    this.previewContainer.querySelectorAll('.aspect-element').forEach((el) => {
-      el.addEventListener('click', (e) => {
+    // Add click handlers for element control buttons
+    this.previewContainer.querySelectorAll('.element-btn').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
         e.stopPropagation();
-        const element = (el as HTMLElement).dataset.element;
-        if (element) {
-          this.game.removeElementFromPortal(element as ElementType, 1);
+        const element = (btn as HTMLElement).dataset.element as ElementType;
+        const action = (btn as HTMLElement).dataset.action;
+        if (element && action) {
+          this.handleElementAction(element, action, portalData.elements[element] || 0);
         }
       });
     });
+  }
+
+  private handleElementAction(element: ElementType, action: string, currentAmount: number): void {
+    const inventory = this.game.getInventory();
+    
+    switch (action) {
+      case 'sub':
+        if (currentAmount > 0) {
+          this.game.removeElementFromPortal(element, 1);
+        }
+        break;
+      case 'add':
+        if (inventory.hasElement(element, 1)) {
+          this.game.addElementToPortal(element, 1);
+        }
+        break;
+      case 'remove':
+        if (currentAmount > 0) {
+          this.game.removeElementFromPortal(element, currentAmount);
+        }
+        break;
+    }
+  }
+
+  private updateLevelProgress(crafting: CraftingSystem, portalData: any): void {
+    if (!this.levelProgressContainer) return;
+
+    // Calculate total elements
+    const elementTotal = Object.values(portalData.elements).reduce((sum: number, val: any) => sum + (val || 0), 0) as number;
+    
+    // Calculate item bonuses
+    const slots = crafting.getSlots();
+    let itemBonus = 0;
+    for (const slot of slots) {
+      if (slot.ingredient) {
+        itemBonus += Math.floor(slot.ingredient.baseValue / 10);
+      }
+      if (slot.equipment) {
+        itemBonus += slot.equipment.portalBonus;
+      }
+    }
+
+    // Level calculation: base from mana + element bonus (5 elements = 1 level) + item bonus
+    // Add 1 to make it 1-based (start at level 1, not 0)
+    const baseLevel = Math.floor(Math.sqrt(portalData.manaInvested / 10)) + 1;
+    const elementBonus = Math.floor(elementTotal / 5);
+    const currentLevel = baseLevel + elementBonus + itemBonus;
+    
+    // Progress toward next level (from elements)
+    // At 0 elements, you're at level 1 with 0% progress toward level 2
+    // At 5 elements, you hit level 2 with 0% progress toward level 3
+    const elementsTowardNextLevel = elementTotal % 5;
+    const progressPercent = (elementsTowardNextLevel / 5) * 100;
+    const nextLevel = currentLevel + 1;
+
+    this.levelProgressContainer.innerHTML = `
+      <div class="level-progress">
+        <div class="level-progress-header">
+          <span class="level-label">Portal Level</span>
+          <span class="level-value">${currentLevel}</span>
+        </div>
+        <div class="level-progress-bar">
+          <div class="level-progress-fill" style="width: ${progressPercent}%"></div>
+        </div>
+        <div class="level-progress-footer">
+          <span class="level-progress-text">${elementsTowardNextLevel}/5 elements to level ${nextLevel}</span>
+        </div>
+      </div>
+    `;
   }
 }

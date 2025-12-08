@@ -1143,74 +1143,163 @@ body {
 }
 
 /* Crafting Preview Styles */
-.portal-preview {
-  background-color: var(--background-light);
-  border-radius: 6px;
-  padding: 0.75rem;
+.preview-empty {
+  color: var(--text-secondary);
+  font-style: italic;
+  text-align: center;
+  padding: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.preview-elements {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.preview-items-section {
   margin-top: 0.5rem;
-  border: 1px solid var(--primary-color);
 }
 
-.preview-header {
-  color: var(--primary-color);
-  font-weight: bold;
-  margin-bottom: 0.5rem;
-  font-size: 0.9rem;
-  border-bottom: 1px solid var(--background-medium);
-  padding-bottom: 0.25rem;
-}
-
-.preview-section {
-  margin-bottom: 0.5rem;
-}
-
-.preview-label {
+.preview-items-section .preview-label {
   font-size: 0.85rem;
   color: var(--text-secondary);
   margin-bottom: 0.25rem;
 }
 
-.preview-label strong {
+/* Element Control Styles */
+.element-control {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.5rem;
+  background-color: var(--background-medium);
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.element-control-name {
+  text-transform: capitalize;
+  font-weight: 500;
+  min-width: 70px;
+}
+
+.element-control-name.fire { color: var(--fire-color); }
+.element-control-name.water { color: var(--water-color); }
+.element-control-name.earth { color: var(--earth-color); }
+.element-control-name.air { color: var(--air-color); }
+.element-control-name.lightning { color: var(--lightning-color); }
+
+.element-control-percent {
+  color: var(--success-color);
+  font-size: 0.75rem;
+  min-width: 30px;
+}
+
+.element-control-amount {
+  color: var(--text-primary);
+  font-weight: bold;
+  min-width: 25px;
+  text-align: center;
+}
+
+.element-control-buttons {
+  display: flex;
+  gap: 0.25rem;
+  margin-left: auto;
+}
+
+.element-btn {
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.element-btn-sub {
+  background-color: var(--secondary-color);
+  color: var(--text-primary);
+}
+
+.element-btn-sub:hover {
+  background-color: var(--warning-color);
+  color: var(--background-dark);
+}
+
+.element-btn-add {
+  background-color: var(--success-color);
+  color: var(--background-dark);
+}
+
+.element-btn-add:hover {
+  background-color: #38a169;
+}
+
+.element-btn-remove {
+  background-color: var(--danger-color);
+  color: var(--text-primary);
+}
+
+.element-btn-remove:hover {
+  background-color: #c53030;
+}
+
+/* Level Progress Bar Styles */
+.level-progress {
+  background-color: var(--background-light);
+  border-radius: 6px;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.level-progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.level-label {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.level-value {
+  font-size: 1.25rem;
+  font-weight: bold;
   color: var(--accent-color);
 }
 
-.preview-aspects {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.aspect-element {
-  padding: 0.2rem 0.5rem;
+.level-progress-bar {
+  height: 8px;
+  background-color: var(--background-dark);
   border-radius: 4px;
-  font-size: 0.8rem;
-  text-transform: capitalize;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
+  overflow: hidden;
 }
 
-.aspect-element:hover {
-  opacity: 0.8;
+.level-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+  border-radius: 4px;
+  transition: width 0.3s ease;
 }
 
-.aspect-element .remove-x {
-  font-size: 0.9rem;
-  opacity: 0.6;
+.level-progress-footer {
+  margin-top: 0.35rem;
 }
 
-.aspect-element:hover .remove-x {
-  opacity: 1;
-  color: var(--danger-color);
+.level-progress-text {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
 }
-
-.aspect-element.fire { background-color: rgba(245, 101, 101, 0.4); }
-.aspect-element.water { background-color: rgba(66, 153, 225, 0.4); }
-.aspect-element.earth { background-color: rgba(104, 211, 145, 0.4); }
-.aspect-element.air { background-color: rgba(226, 232, 240, 0.4); }
-.aspect-element.lightning { background-color: rgba(250, 240, 137, 0.4); }
 
 .preview-contents {
   display: flex;
