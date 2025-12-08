@@ -2,26 +2,57 @@ import type { Game } from '../game/Game';
 import type { CraftingSystem } from '../game/CraftingSystem';
 import type { InventorySystem } from '../game/Inventory';
 import type { UIManager } from './UIManager';
-import type { ElementType } from '../types';
+import type { ElementType, CraftingSlot } from '../types';
 import { getLevelProgress } from '../utils/helpers';
 import { getElementDefinition } from '../data/elements';
+
+interface EffectTotals {
+  goldMult: number;
+  manaMult: number;
+  ingredientChance: number;
+  equipmentChance: number;
+  rarityBonus: number;
+}
+
+function calculateTotalEffects(slots: CraftingSlot[]): EffectTotals {
+  let goldMult = 1.0;
+  let manaMult = 1.0;
+  let ingredientChance = 0;
+  let equipmentChance = 0;
+  let rarityBonus = 0;
+
+  for (const slot of slots) {
+    if (slot.ingredient) {
+      if (slot.ingredient.goldMultiplier) goldMult *= slot.ingredient.goldMultiplier;
+      if (slot.ingredient.manaMultiplier) manaMult *= slot.ingredient.manaMultiplier;
+      if (slot.ingredient.ingredientChance) ingredientChance += slot.ingredient.ingredientChance;
+      if (slot.ingredient.equipmentChance) equipmentChance += slot.ingredient.equipmentChance;
+      if (slot.ingredient.rarityBonus) rarityBonus += slot.ingredient.rarityBonus;
+    }
+  }
+
+  return { goldMult, manaMult, ingredientChance, equipmentChance, rarityBonus };
+}
 
 export class CraftingUI {
   private game: Game;
   private uiManager: UIManager;
   private slotsContainer: HTMLElement | null;
   private craftButton: HTMLElement | null;
-  private previewContainer: HTMLElement | null;
+  private portalResourcesContainer: HTMLElement | null;
   private levelProgressContainer: HTMLElement | null;
+  private itemEffectsContainer: HTMLElement | null;
   private slotsInitialized: boolean = false;
+  private hoveredSlotIndex: number | null = null;
 
   constructor(game: Game, uiManager: UIManager) {
     this.game = game;
     this.uiManager = uiManager;
     this.slotsContainer = document.getElementById('ingredient-slots');
     this.craftButton = document.getElementById('craft-button');
-    this.previewContainer = document.getElementById('crafting-preview');
+    this.portalResourcesContainer = document.getElementById('portal-resources');
     this.levelProgressContainer = document.getElementById('level-progress-container');
+    this.itemEffectsContainer = document.getElementById('item-effects');
   }
 
   public initialize(): void {
@@ -52,6 +83,16 @@ export class CraftingUI {
 
       slot.addEventListener('click', () => {
         this.handleSlotClick(i);
+      });
+
+      slot.addEventListener('mouseenter', () => {
+        this.hoveredSlotIndex = i;
+        this.updateItemEffects();
+      });
+
+      slot.addEventListener('mouseleave', () => {
+        this.hoveredSlotIndex = null;
+        this.updateItemEffects();
       });
 
       this.slotsContainer.appendChild(slot);
@@ -114,15 +155,81 @@ export class CraftingUI {
       (this.craftButton as HTMLButtonElement).disabled = !hasItems && !hasElements && !hasMana;
     }
 
-    // Update preview
-    this.updatePreview(crafting, hasItems, portalData);
-    
-    // Update level progress bar
+    // Update level progress bar (now at top)
     this.updateLevelProgress(crafting, portalData);
+    
+    // Update portal resources (mana and elements)
+    this.updatePortalResources(crafting, portalData);
+    
+    // Update item effects display
+    this.updateItemEffects();
   }
 
-  private updatePreview(crafting: CraftingSystem, _hasItems: boolean, portalData: any): void {
-    if (!this.previewContainer) return;
+  private updateItemEffects(): void {
+    if (!this.itemEffectsContainer) return;
+
+    const crafting = this.game.getCrafting();
+    const slots = crafting.getSlots();
+    const totals = calculateTotalEffects(slots);
+    const hoveredSlot = this.hoveredSlotIndex !== null ? slots[this.hoveredSlotIndex] : null;
+    const hoveredIngredient = hoveredSlot?.ingredient || null;
+
+    // Check if we have any effects to show
+    const hasEffects = totals.goldMult > 1 || totals.manaMult > 1 || 
+                       totals.ingredientChance > 0 || totals.equipmentChance > 0 || 
+                       totals.rarityBonus > 0;
+
+    if (!hasEffects) {
+      this.itemEffectsContainer.innerHTML = '';
+      return;
+    }
+
+    let html = '<div class="item-effects-list">';
+
+    // Helper to render an effect line with highlighting
+    const renderEffect = (
+      icon: string, 
+      label: string, 
+      thisVal: number, 
+      totalVal: number, 
+      isPercent: boolean
+    ): string => {
+      if (totalVal === 0) return '';
+      
+      const suffix = isPercent ? '%' : '';
+      const isHighlighted = hoveredIngredient && thisVal > 0;
+      const isFullContribution = thisVal === totalVal;
+      
+      if (isHighlighted) {
+        if (isFullContribution) {
+          return `<div class="effect-line highlighted full"><span class="effect-icon">${icon}</span><strong>+${totalVal}${suffix} ${label}</strong></div>`;
+        } else {
+          return `<div class="effect-line highlighted"><span class="effect-icon">${icon}</span>+<strong>${thisVal}</strong>/${totalVal}${suffix} ${label}</div>`;
+        }
+      } else {
+        return `<div class="effect-line"><span class="effect-icon">${icon}</span>+${totalVal}${suffix} ${label}</div>`;
+      }
+    };
+
+    // Calculate hovered ingredient's contributions
+    const hoveredGold = hoveredIngredient?.goldMultiplier ? Math.round((hoveredIngredient.goldMultiplier - 1) * 100) : 0;
+    const hoveredMana = hoveredIngredient?.manaMultiplier ? Math.round((hoveredIngredient.manaMultiplier - 1) * 100) : 0;
+    const hoveredIngr = hoveredIngredient?.ingredientChance ? Math.round(hoveredIngredient.ingredientChance * 100) : 0;
+    const hoveredEquip = hoveredIngredient?.equipmentChance ? Math.round(hoveredIngredient.equipmentChance * 100) : 0;
+    const hoveredRarity = hoveredIngredient?.rarityBonus || 0;
+
+    html += renderEffect('💰', 'Gold', hoveredGold, Math.round((totals.goldMult - 1) * 100), true);
+    html += renderEffect('✨', 'Mana', hoveredMana, Math.round((totals.manaMult - 1) * 100), true);
+    html += renderEffect('🧪', 'Ingredients', hoveredIngr, Math.round(totals.ingredientChance * 100), true);
+    html += renderEffect('⚔️', 'Equipment', hoveredEquip, Math.round(totals.equipmentChance * 100), true);
+    html += renderEffect('⭐', 'Rarity', hoveredRarity, totals.rarityBonus, false);
+
+    html += '</div>';
+    this.itemEffectsContainer.innerHTML = html;
+  }
+
+  private updatePortalResources(crafting: CraftingSystem, portalData: any): void {
+    if (!this.portalResourcesContainer) return;
 
     let html = '';
 
@@ -172,30 +279,39 @@ export class CraftingUI {
     }
     
     if (elementsHtml) {
-      html += `<div class="preview-elements">${elementsHtml}</div>`;
+      html += `<div class="portal-elements">${elementsHtml}</div>`;
     }
 
-    // Calculate item display (contents)
+    // Show element bonuses from ingredients (element affinity bonuses only, no level bonuses)
     const slots = crafting.getSlots();
-    let itemsHtml = '';
+    const elementBonuses: Partial<Record<ElementType, number>> = {};
 
     for (const slot of slots) {
       if (slot.ingredient) {
-        itemsHtml += `<span class="content-item">${slot.ingredient.icon} ${slot.ingredient.name}</span>`;
-      }
-      if (slot.equipment) {
-        itemsHtml += `<span class="content-item">${slot.equipment.icon} ${slot.equipment.name}</span>`;
+        if (slot.ingredient.elementAffinity) {
+          elementBonuses[slot.ingredient.elementAffinity] = 
+            (elementBonuses[slot.ingredient.elementAffinity] || 0) + 5;
+        }
       }
     }
     
-    if (itemsHtml) {
-      html += `<div class="preview-items-section"><div class="preview-label">Items:</div><div class="preview-contents">${itemsHtml}</div></div>`;
+    // Show element bonuses only
+    if (Object.keys(elementBonuses).length > 0) {
+      html += '<div class="ingredient-bonuses">';
+      
+      for (const [element, amount] of Object.entries(elementBonuses)) {
+        const elementDef = getElementDefinition(element as ElementType);
+        const icon = elementDef?.icon || '?';
+        html += `<span class="bonus-item">${icon} +${amount} ${element}</span>`;
+      }
+      
+      html += '</div>';
     }
 
-    this.previewContainer.innerHTML = html;
+    this.portalResourcesContainer.innerHTML = html;
 
     // Add click handlers for mana control buttons
-    this.previewContainer.querySelectorAll('[data-action^="mana-"]').forEach((btn) => {
+    this.portalResourcesContainer.querySelectorAll('[data-action^="mana-"]').forEach((btn) => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         const action = (btn as HTMLElement).dataset.action;
@@ -206,7 +322,7 @@ export class CraftingUI {
     });
 
     // Add click handlers for element control buttons
-    this.previewContainer.querySelectorAll('.element-btn[data-element]').forEach((btn) => {
+    this.portalResourcesContainer.querySelectorAll('.element-btn[data-element]').forEach((btn) => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         const element = (btn as HTMLElement).dataset.element as ElementType;
@@ -260,24 +376,13 @@ export class CraftingUI {
     }
   }
 
-  private updateLevelProgress(crafting: CraftingSystem, portalData: any): void {
+  private updateLevelProgress(_crafting: CraftingSystem, portalData: any): void {
     if (!this.levelProgressContainer) return;
 
-    // Calculate item bonuses
-    const slots = crafting.getSlots();
-    let itemBonus = 0;
-    for (const slot of slots) {
-      if (slot.ingredient) {
-        itemBonus += Math.floor(slot.ingredient.baseValue / 10);
-      }
-      if (slot.equipment) {
-        itemBonus += slot.equipment.portalBonus;
-      }
-    }
-
     // Get level progress from helper (uses curve-based thresholds)
+    // Item bonuses removed - level is determined purely by mana and elements
     const progress = getLevelProgress(portalData.manaInvested, portalData.elements);
-    const currentLevel = progress.currentLevel + itemBonus;
+    const currentLevel = progress.currentLevel;
     const nextLevel = currentLevel + 1;
     
     // Calculate power needed for display

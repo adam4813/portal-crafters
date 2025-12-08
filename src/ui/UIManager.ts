@@ -198,9 +198,12 @@ export class UIManager {
     ];
 
     const shopItems = [
-      { id: 'health_potion', name: 'Health Potion', description: 'A basic healing potion', cost: 25, goldReward: 0 },
-      { id: 'mana_crystal', name: 'Mana Crystal', description: 'A small crystal infused with mana', cost: 50, goldReward: 0 },
-      { id: 'lucky_charm', name: 'Lucky Charm', description: 'Brings good fortune to the bearer', cost: 75, goldReward: 0 },
+      { id: 'health_potion', name: 'Health Potion', description: '+10% gold from portals', cost: 25, goldReward: 0 },
+      { id: 'mana_crystal', name: 'Mana Crystal', description: '+15% mana from portals', cost: 40, goldReward: 0 },
+      { id: 'lucky_charm', name: 'Lucky Charm', description: '+10% ingredient drop chance', cost: 50, goldReward: 0 },
+      { id: 'treasure_map', name: 'Treasure Map', description: '+25% gold from portals', cost: 75, goldReward: 0 },
+      { id: 'enchanted_lens', name: 'Enchanted Lens', description: '+10% equipment chance, +1 rarity', cost: 100, goldReward: 0 },
+      { id: 'philosophers_stone', name: "Philosopher's Stone", description: '+20% gold/mana, +5% ingredients, +2 rarity', cost: 250, goldReward: 0 },
       { id: 'debug_gold_grant', name: '[DEBUG] Gold Grant', description: 'Gives 1000 gold for testing', cost: 0, goldReward: 1000 },
       { id: 'debug_gold_sink', name: '[DEBUG] Gold Sink', description: 'Burns 100 gold for testing', cost: 100, goldReward: 0 },
     ];

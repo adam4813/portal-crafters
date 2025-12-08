@@ -1,6 +1,32 @@
 import type { Game } from '../game/Game';
 import type { InventorySystem } from '../game/Inventory';
 import type { ElementSystem } from '../game/ElementSystem';
+import type { Ingredient } from '../types';
+
+function buildIngredientTooltip(ingredient: Ingredient): string {
+  const lines: string[] = [ingredient.name, ingredient.description];
+  
+  if (ingredient.elementAffinity) {
+    lines.push(`+5 ${ingredient.elementAffinity}`);
+  }
+  if (ingredient.goldMultiplier && ingredient.goldMultiplier > 1) {
+    lines.push(`+${Math.round((ingredient.goldMultiplier - 1) * 100)}% Gold`);
+  }
+  if (ingredient.manaMultiplier && ingredient.manaMultiplier > 1) {
+    lines.push(`+${Math.round((ingredient.manaMultiplier - 1) * 100)}% Mana`);
+  }
+  if (ingredient.ingredientChance && ingredient.ingredientChance > 0) {
+    lines.push(`+${Math.round(ingredient.ingredientChance * 100)}% Ingredient Chance`);
+  }
+  if (ingredient.equipmentChance && ingredient.equipmentChance > 0) {
+    lines.push(`+${Math.round(ingredient.equipmentChance * 100)}% Equipment Chance`);
+  }
+  if (ingredient.rarityBonus && ingredient.rarityBonus > 0) {
+    lines.push(`+${ingredient.rarityBonus} Rarity`);
+  }
+  
+  return lines.join('\n');
+}
 
 export class InventoryUI {
   private game: Game;
@@ -52,8 +78,9 @@ export class InventoryUI {
           ? `+5 ${ingredient.elementAffinity}` 
           : '';
         const isSelected = this.selectedItem?.type === 'ingredient' && this.selectedItem?.id === ingredient.id;
+        const tooltip = buildIngredientTooltip(ingredient);
         html += `
-          <div class="inventory-item ${isSelected ? 'selected' : ''}" data-type="ingredient" data-id="${ingredient.id}" title="${ingredient.description}${elementInfo ? '\n' + elementInfo : ''}">
+          <div class="inventory-item ${isSelected ? 'selected' : ''}" data-type="ingredient" data-id="${ingredient.id}" title="${tooltip}">
             <span class="item-icon">${ingredient.icon}</span>
             <span class="item-name">${ingredient.name}</span>
             ${elementInfo ? `<span class="element-bonus">${elementInfo}</span>` : ''}

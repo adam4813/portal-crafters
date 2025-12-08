@@ -42,6 +42,12 @@ export interface Ingredient {
   description: string;
   elementAffinity?: ElementType;
   baseValue: number;
+  // Portal effect modifiers (optional)
+  goldMultiplier?: number;
+  manaMultiplier?: number;
+  ingredientChance?: number;
+  equipmentChance?: number;
+  rarityBonus?: number;
 }
 
 // Equipment rarity levels
@@ -187,11 +193,20 @@ export interface GameState {
   customerQueue: Customer[];
   currentPortal: Portal | null;
   storedPortals: Portal[];
+  craftingSlots: CraftingSlotState[];
   totalPortalsCreated: number;
   totalCustomersServed: number;
   totalGoldEarned: number;
   playTime: number;
   lastSaveTime: number;
+}
+
+// Serializable crafting slot state (stores IDs instead of full objects)
+export interface CraftingSlotState {
+  index: number;
+  ingredientId: string | null;
+  equipmentId: string | null;
+  isGenerated: boolean;
 }
 
 // UI Event types

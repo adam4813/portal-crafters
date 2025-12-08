@@ -1,6 +1,7 @@
 import type {
   Recipe,
   CraftingSlot,
+  CraftingSlotState,
   Ingredient,
   ElementType,
   AnyEquipment,
@@ -275,5 +276,63 @@ export class CraftingSystem {
 
   public getSlotContents(): (Ingredient | AnyEquipment | null)[] {
     return this.slots.map((s) => s.ingredient || s.equipment);
+  }
+
+  public getSlotsState(): CraftingSlotState[] {
+    return this.slots.map((slot) => {
+      let equipmentId: string | null = null;
+      let isGenerated = false;
+      
+      if (slot.equipment) {
+        equipmentId = slot.equipment.id;
+        isGenerated = isGeneratedEquipment(slot.equipment);
+      }
+      
+      return {
+        index: slot.index,
+        ingredientId: slot.ingredient?.id || null,
+        equipmentId,
+        isGenerated,
+      };
+    });
+  }
+
+  public loadSlotsState(slotsState: CraftingSlotState[], getGeneratedEquipment: (id: string) => GeneratedEquipment | undefined): void {
+    this.initializeSlots();
+    
+    for (const slotState of slotsState) {
+      if (slotState.index < 0 || slotState.index >= this.maxSlots) continue;
+      
+      if (slotState.ingredientId) {
+        const ingredient = getIngredientById(slotState.ingredientId);
+        if (ingredient) {
+          this.slots[slotState.index] = {
+            index: slotState.index,
+            ingredient,
+            equipment: null,
+          };
+        }
+      } else if (slotState.equipmentId) {
+        if (slotState.isGenerated) {
+          const genEquip = getGeneratedEquipment(slotState.equipmentId);
+          if (genEquip) {
+            this.slots[slotState.index] = {
+              index: slotState.index,
+              ingredient: null,
+              equipment: genEquip,
+            };
+          }
+        } else {
+          const equipment = getEquipmentById(slotState.equipmentId);
+          if (equipment) {
+            this.slots[slotState.index] = {
+              index: slotState.index,
+              ingredient: null,
+              equipment,
+            };
+          }
+        }
+      }
+    }
   }
 }

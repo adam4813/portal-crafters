@@ -152,6 +152,14 @@ export class Game {
     // Load stored portals
     this.storedPortals = state.storedPortals ? [...state.storedPortals] : [];
 
+    // Load crafting slots (items that were placed in slots before save)
+    if (state.craftingSlots) {
+      this.craftingSystem.loadSlotsState(
+        state.craftingSlots,
+        (id) => this.inventorySystem.getGeneratedEquipmentById(id)
+      );
+    }
+
     // Apply conversion rate upgrades based on saved upgrade levels
     const fireConversionLevel = this.upgradeSystem.getLevel('mana_conversion_fire');
     if (fireConversionLevel > 0) {
@@ -178,6 +186,7 @@ export class Game {
       customerQueue: this.customerSystem.saveQueue(),
       currentPortal: this.portal.getData(),
       storedPortals: [...this.storedPortals],
+      craftingSlots: this.craftingSystem.getSlotsState(),
       totalPortalsCreated: this.gameState.totalPortalsCreated,
       totalCustomersServed: this.gameState.totalCustomersServed,
       totalGoldEarned: this.gameState.totalGoldEarned,

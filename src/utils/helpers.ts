@@ -253,6 +253,7 @@ export function createInitialGameState(): GameState {
     customerQueue: [],
     currentPortal: null,
     storedPortals: [],
+    craftingSlots: [],
     totalPortalsCreated: 0,
     totalCustomersServed: 0,
     totalGoldEarned: 0,
