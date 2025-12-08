@@ -6,52 +6,47 @@ import { formatNumber } from '../utils/helpers';
 
 export class ManaConversionUI {
   private game: Game;
-  private container: HTMLElement | null;
   private selectedElement: ElementType | null = null;
   private conversionAmount: number = 1;
 
   constructor(game: Game) {
     this.game = game;
-    this.container = document.getElementById('mana-conversion');
   }
 
   public initialize(): void {
-    this.render();
+    // No longer needs standalone container
   }
 
-  private render(): void {
-    if (!this.container) return;
+  public update(_inventory: InventorySystem, _elements: ElementSystem): void {
+    // Updates are handled by modal rendering
+  }
 
-    let html = '<h4>Convert Mana to Elements</h4>';
-    html += '<div class="mana-conversion-info">';
-    html +=
-      '<p class="info-text">Transform your mana into elemental energy for crafting portals.</p>';
+  public renderToElement(container: HTMLElement, inventory: InventorySystem, elements: ElementSystem): void {
+    let html = '<div class="mana-conversion-info">';
+    html += '<p class="info-text">Transform your mana into elemental energy for crafting portals.</p>';
     html += '</div>';
     html += '<div id="element-selector"></div>';
     html += '<div id="conversion-controls"></div>';
 
-    this.container.innerHTML = html;
-  }
+    container.innerHTML = html;
 
-  public update(inventory: InventorySystem, elements: ElementSystem): void {
-    if (!this.container) return;
-
-    const elementSelector = this.container.querySelector('#element-selector');
-    const conversionControls = this.container.querySelector('#conversion-controls');
+    const elementSelector = container.querySelector('#element-selector');
+    const conversionControls = container.querySelector('#conversion-controls');
 
     if (elementSelector) {
-      this.renderElementSelector(elementSelector as HTMLElement, elements, inventory);
+      this.renderElementSelector(elementSelector as HTMLElement, elements, inventory, container);
     }
 
     if (conversionControls) {
-      this.renderConversionControls(conversionControls as HTMLElement, inventory, elements);
+      this.renderConversionControls(conversionControls as HTMLElement, inventory, elements, container);
     }
   }
 
   private renderElementSelector(
-    container: HTMLElement,
+    selectorContainer: HTMLElement,
     elements: ElementSystem,
-    inventory: InventorySystem
+    inventory: InventorySystem,
+    parentContainer: HTMLElement
   ): void {
     const unlockedElements = elements.getUnlockedElements();
     const currentMana = inventory.getMana();
@@ -77,27 +72,28 @@ export class ManaConversionUI {
     }
 
     html += '</div>';
-    container.innerHTML = html;
+    selectorContainer.innerHTML = html;
 
     // Add click handlers
-    container.querySelectorAll('.element-option').forEach((option) => {
+    selectorContainer.querySelectorAll('.element-option').forEach((option) => {
       option.addEventListener('click', () => {
         const element = (option as HTMLElement).dataset.element as ElementType;
         if (!option.classList.contains('disabled')) {
           this.selectedElement = element;
-          this.update(inventory, elements);
+          this.renderToElement(parentContainer, inventory, elements);
         }
       });
     });
   }
 
   private renderConversionControls(
-    container: HTMLElement,
+    controlsContainer: HTMLElement,
     inventory: InventorySystem,
-    elements: ElementSystem
+    elements: ElementSystem,
+    parentContainer: HTMLElement
   ): void {
     if (!this.selectedElement) {
-      container.innerHTML =
+      controlsContainer.innerHTML =
         '<p class="conversion-prompt">Select an element above to begin conversion</p>';
       return;
     }
@@ -161,21 +157,21 @@ export class ManaConversionUI {
     </button>`;
 
     html += '</div>';
-    container.innerHTML = html;
+    controlsContainer.innerHTML = html;
 
     // Add event handlers
-    const amountInput = container.querySelector('#conversion-amount') as HTMLInputElement;
+    const amountInput = controlsContainer.querySelector('#conversion-amount') as HTMLInputElement;
     if (amountInput) {
       amountInput.addEventListener('change', () => {
         const value = parseInt(amountInput.value, 10);
         if (!isNaN(value) && value >= 1 && value <= maxConversion) {
           this.conversionAmount = value;
-          this.update(inventory, elements);
+          this.renderToElement(parentContainer, inventory, elements);
         }
       });
     }
 
-    container.querySelectorAll('.btn-amount').forEach((btn) => {
+    controlsContainer.querySelectorAll('.btn-amount').forEach((btn) => {
       btn.addEventListener('click', () => {
         const action = (btn as HTMLElement).dataset.action;
         switch (action) {
@@ -192,11 +188,11 @@ export class ManaConversionUI {
             this.conversionAmount = maxConversion;
             break;
         }
-        this.update(inventory, elements);
+        this.renderToElement(parentContainer, inventory, elements);
       });
     });
 
-    const convertBtn = container.querySelector('.btn-convert');
+    const convertBtn = controlsContainer.querySelector('.btn-convert');
     if (convertBtn) {
       convertBtn.addEventListener('click', () => {
         if (this.selectedElement && canAfford) {

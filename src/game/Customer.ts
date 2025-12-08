@@ -15,6 +15,8 @@ export class CustomerSystem {
   private lastSpawnTime: number = 0;
   private unlockedElements: ElementType[] = ['fire', 'water'];
   private difficultyLevel: number = 1;
+  private isPaused: boolean = false;
+  private pauseStartTime: number = 0;
 
   constructor() {
     this.lastSpawnTime = Date.now();
@@ -27,7 +29,25 @@ export class CustomerSystem {
     this.spawnCustomer();
   }
 
+  public setPaused(paused: boolean): void {
+    if (paused && !this.isPaused) {
+      // Starting pause - record when we paused
+      this.pauseStartTime = Date.now();
+      this.isPaused = true;
+    } else if (!paused && this.isPaused) {
+      // Ending pause - adjust all arrival times by pause duration
+      const pauseDuration = Date.now() - this.pauseStartTime;
+      for (const customer of this.queue) {
+        customer.arrivedAt += pauseDuration;
+      }
+      this.lastSpawnTime += pauseDuration;
+      this.isPaused = false;
+    }
+  }
+
   public update(_deltaTime: number): void {
+    if (this.isPaused) return;
+    
     const now = Date.now();
 
     // Spawn new customers periodically

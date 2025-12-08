@@ -219,4 +219,72 @@ export class ResearchUI {
       );
     }
   }
+
+  public renderRecipesToElement(container: HTMLElement, inventory: InventorySystem): void {
+    const crafting = this.game.getCrafting();
+    const recipes = crafting.getDiscoveredRecipes();
+
+    if (recipes.length === 0) {
+      container.innerHTML =
+        '<p class="empty-message">No recipes discovered yet. Try combining ingredients!</p>';
+      return;
+    }
+
+    let html = '';
+
+    for (const recipe of recipes) {
+      const ingredientStatuses = recipe.ingredientIds.map((id) => {
+        const ingredient = getIngredientById(id);
+        const owned = inventory.hasIngredient(id);
+        return { id, ingredient, owned };
+      });
+
+      const allOwned = ingredientStatuses.every((status) => status.owned);
+      const someOwned = ingredientStatuses.some((status) => status.owned);
+
+      const ingredientDisplay = ingredientStatuses
+        .map((status) => {
+          const icon = status.ingredient?.icon || '?';
+          const name = status.ingredient?.name || status.id;
+          const cssClass = status.owned ? 'recipe-ingredient-owned' : 'recipe-ingredient-missing';
+          return `<span class="${cssClass}" title="${name}">${icon}</span>`;
+        })
+        .join(' + ');
+
+      const elementList = Object.entries(recipe.resultingElements)
+        .filter(([, amount]) => amount && amount > 0)
+        .map(([element, amount]) => `${element}: +${amount}`)
+        .join(', ');
+
+      const clickableClass = allOwned ? 'recipe-clickable' : '';
+      const tooltip = allOwned
+        ? 'Click to auto-fill crafting slots'
+        : someOwned
+          ? 'Some ingredients missing'
+          : 'All ingredients missing';
+
+      html += `
+        <div class="recipe-entry ${clickableClass}" data-recipe-id="${recipe.id}" title="${tooltip}">
+          <div class="recipe-ingredients">
+            ${ingredientDisplay}
+          </div>
+          <div class="recipe-result">
+            → ${elementList || 'No elements'} (+${recipe.bonusLevel} level)
+          </div>
+        </div>
+      `;
+    }
+
+    container.innerHTML = html;
+
+    // Add click handlers to recipes
+    container.querySelectorAll('.recipe-clickable').forEach((recipeEl) => {
+      recipeEl.addEventListener('click', () => {
+        const recipeId = (recipeEl as HTMLElement).dataset.recipeId;
+        if (recipeId) {
+          this.handleRecipeClick(recipeId);
+        }
+      });
+    });
+  }
 }

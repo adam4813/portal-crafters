@@ -10,6 +10,11 @@
     <div id="app">
       <header class="game-header">
         <h1>Portal Crafters</h1>
+        <div class="header-buttons">
+          <button id="shop-btn" class="btn-header">🛒 Shop</button>
+          <button id="upgrades-btn" class="btn-header">⬆️ Upgrades</button>
+          <button id="research-btn" class="btn-header">🔬 Research</button>
+        </div>
         <div id="resources">
           <span id="money-display">Gold: 100</span>
           <span id="mana-display">Mana: 0</span>
@@ -19,26 +24,28 @@
       <main class="game-main">
         <aside class="sidebar left-sidebar">
           <section id="customer-panel" class="panel">
-            <h2>Customer Requests</h2>
-            <div id="customer-queue"></div>
-          </section>
-          
-          <section id="inventory-panel" class="panel">
-            <h2>Inventory</h2>
-            <div id="inventory-items"></div>
-            <div id="inventory-elements"></div>
+            <h2>Contracts</h2>
+            <div class="panel-body" id="customer-queue"></div>
           </section>
           
           <section id="portal-inventory-panel" class="panel">
             <h2>Crafted Portals</h2>
-            <div id="portal-inventory"></div>
+            <div class="panel-body" id="portal-inventory"></div>
+          </section>
+          
+          <section id="tutorial-panel" class="panel">
+            <h2>Getting Started</h2>
+            <div class="panel-body" id="tutorial-content"></div>
           </section>
         </aside>
         
         <section class="game-canvas-container">
           <div id="portal-canvas"></div>
           <div id="crafting-panel" class="panel">
-            <h3>Portal Crafting</h3>
+            <div class="panel-header-with-action">
+              <h3>Portal Crafting</h3>
+              <button id="recipes-btn" class="btn-header-small">📖 Recipes</button>
+            </div>
             <div class="flex-container">
               <div id="crafting-preview"></div>
               <div>
@@ -52,30 +59,31 @@
         </section>
         
         <aside class="sidebar right-sidebar">
-          <section id="shop-panel" class="panel">
-            <h2>Shop</h2>
-            <div id="mana-shop"></div>
-            <div id="mana-conversion"></div>
-            <div id="upgrade-shop"></div>
-          </section>
-          
-          <section id="tutorial-panel" class="panel">
-            <h2>Getting Started</h2>
-            <div id="tutorial-content"></div>
-          </section>
-          
-          <section id="research-panel" class="panel">
-            <h2>Research</h2>
-            <div id="research-tree"></div>
-          </section>
-          
-          <section id="recipes-panel" class="panel">
-            <h2>Recipe Book</h2>
-            <div id="discovered-recipes"></div>
+          <section id="inventory-panel" class="panel">
+            <h2>Inventory</h2>
+            <div class="panel-body">
+              <div id="inventory-items"></div>
+              <div id="inventory-elements"></div>
+            </div>
+            <div class="panel-footer">
+              <button id="mana-converter-btn" class="btn-secondary mana-converter-btn">✨ Mana Converter</button>
+            </div>
           </section>
         </aside>
       </main>
     </div>
+    
+    <!-- Modals -->
+    <div id="modal-overlay" class="modal-overlay hidden">
+      <div id="modal-container" class="modal-container">
+        <div class="modal-header">
+          <h2 id="modal-title"></h2>
+          <button id="modal-close" class="modal-close">&times;</button>
+        </div>
+        <div id="modal-content" class="modal-content"></div>
+      </div>
+    </div>
+    
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

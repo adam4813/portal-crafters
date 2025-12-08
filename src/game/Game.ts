@@ -37,6 +37,7 @@ export class Game {
   private gameState: GameState;
   private storedPortals: PortalType[] = [];
   private isRunning: boolean = false;
+  private isPaused: boolean = false;
   private lastTime: number = 0;
   private animationFrameId: number | null = null;
 
@@ -221,8 +222,10 @@ export class Game {
     // Update portal animation
     this.portal.update(deltaTime);
 
-    // Update customer system (handles patience/expiration)
-    this.customerSystem.update(deltaTime);
+    // Update customer system (handles patience/expiration) - only when not paused
+    if (!this.isPaused) {
+      this.customerSystem.update(deltaTime);
+    }
   }
 
   private render(): void {
@@ -662,6 +665,16 @@ export class Game {
 
   public getCustomers(): CustomerSystem {
     return this.customerSystem;
+  }
+
+  public pauseCustomerTimers(): void {
+    this.isPaused = true;
+    this.customerSystem.setPaused(true);
+  }
+
+  public resumeCustomerTimers(): void {
+    this.isPaused = false;
+    this.customerSystem.setPaused(false);
   }
 
   public getElements(): ElementSystem {

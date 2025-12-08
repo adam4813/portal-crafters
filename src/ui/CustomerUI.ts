@@ -7,6 +7,7 @@ export class CustomerUI {
   private game: Game;
   private queueContainer: HTMLElement | null;
   private timerInterval: number | null = null;
+  private isPaused: boolean = false;
 
   constructor(game: Game) {
     this.game = game;
@@ -16,8 +17,14 @@ export class CustomerUI {
   public initialize(): void {
     // Start timer interval for updating countdowns (every second)
     this.timerInterval = window.setInterval(() => {
-      this.updateTimers();
+      if (!this.isPaused) {
+        this.updateTimers();
+      }
     }, 1000);
+  }
+
+  public setPaused(paused: boolean): void {
+    this.isPaused = paused;
   }
 
   public dispose(): void {
