@@ -1720,3 +1720,142 @@ body {
 .guide-step strong {
   color: var(--accent-color);
 }
+
+/* ============================================
+   Expedition Panel Styles
+   ============================================ */
+
+.expeditions-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.expeditions-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.expeditions-section h3 {
+  color: var(--primary-color);
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+  border-bottom: 2px solid var(--primary-color);
+  padding-bottom: 0.5rem;
+}
+
+.available-expeditions-list,
+.active-expeditions-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.expedition-card {
+  background-color: var(--background-light);
+  border: 1px solid var(--secondary-color);
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  transition: all 0.2s ease;
+}
+
+.expedition-card:hover {
+  border-color: var(--primary-color);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.expedition-card.active-expedition {
+  border-color: var(--primary-color);
+  background: linear-gradient(135deg, rgba(107, 70, 193, 0.1), var(--background-light));
+}
+
+.expedition-card.active-expedition.complete {
+  border-color: var(--success-color);
+  background: linear-gradient(135deg, rgba(72, 187, 120, 0.1), var(--background-light));
+  animation: pulse-success 2s ease-in-out infinite;
+}
+
+@keyframes pulse-success {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(72, 187, 120, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(72, 187, 120, 0.5);
+  }
+}
+
+.expedition-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.expedition-header h4 {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+.expedition-timer,
+.expedition-duration {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-weight: bold;
+}
+
+.expedition-timer.complete {
+  color: var(--success-color);
+}
+
+.expedition-description {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.expedition-cost {
+  font-size: 0.85rem;
+  color: var(--warning-color);
+}
+
+.expedition-rewards {
+  font-size: 0.85rem;
+}
+
+.expedition-rewards strong {
+  color: var(--primary-color);
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.reward-list {
+  margin: 0;
+  padding-left: 1.5rem;
+  color: var(--text-secondary);
+}
+
+.reward-list li {
+  margin: 0.15rem 0;
+}
+
+.start-expedition-btn,
+.collect-expedition-btn {
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.collect-expedition-btn {
+  background-color: var(--success-color);
+  border-color: var(--success-color);
+}
+
+.collect-expedition-btn:hover {
+  background-color: #38a169;
+}

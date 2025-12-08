@@ -15,6 +15,7 @@ import { ShopUI } from './ShopUI';
 import { ResearchUI } from './ResearchUI';
 import { ManaConversionUI } from './ManaConversionUI';
 import { PortalInventoryUI } from './PortalInventoryUI';
+import { ExpeditionUI } from './ExpeditionUI';
 import { formatNumber } from '../utils/helpers';
 
 export interface UIUpdateData {
@@ -30,7 +31,7 @@ export interface UIUpdateData {
   expeditions: ExpeditionSystem;
 }
 
-type ModalType = 'shop' | 'upgrades' | 'research' | 'mana-converter' | 'recipes' | 'guide' | null;
+type ModalType = 'shop' | 'upgrades' | 'research' | 'mana-converter' | 'recipes' | 'guide' | 'expeditions' | null;
 
 export class UIManager {
   private game: Game;
@@ -41,6 +42,7 @@ export class UIManager {
   private researchUI: ResearchUI;
   private manaConversionUI: ManaConversionUI;
   private portalInventoryUI: PortalInventoryUI;
+  private expeditionUI: ExpeditionUI;
 
   // DOM elements
   private moneyDisplay: HTMLElement | null;
@@ -67,6 +69,7 @@ export class UIManager {
     this.researchUI = new ResearchUI(game);
     this.manaConversionUI = new ManaConversionUI(game);
     this.portalInventoryUI = new PortalInventoryUI(game);
+    this.expeditionUI = new ExpeditionUI(game);
 
     this.moneyDisplay = document.getElementById('money-display');
     this.manaDisplay = document.getElementById('mana-display');
@@ -86,6 +89,7 @@ export class UIManager {
     this.researchUI.initialize();
     this.manaConversionUI.initialize();
     this.portalInventoryUI.initialize();
+    this.expeditionUI.initialize();
     
     this.setupModalHandlers();
   }
@@ -93,6 +97,7 @@ export class UIManager {
   private setupModalHandlers(): void {
     // Header buttons
     document.getElementById('guide-btn')?.addEventListener('click', () => this.openModal('guide'));
+    document.getElementById('expeditions-btn')?.addEventListener('click', () => this.openModal('expeditions'));
     document.getElementById('shop-btn')?.addEventListener('click', () => this.openModal('shop'));
     document.getElementById('upgrades-btn')?.addEventListener('click', () => this.openModal('upgrades'));
     document.getElementById('research-btn')?.addEventListener('click', () => this.openModal('research'));
@@ -127,6 +132,7 @@ export class UIManager {
     // Set modal title
     const titles: Record<string, string> = {
       'guide': '📚 Game Guide',
+      'expeditions': '🗺️ Expeditions',
       'shop': '🛒 Mana Shop',
       'upgrades': '⬆️ Upgrades',
       'research': '🔬 Research',
@@ -170,6 +176,9 @@ export class UIManager {
       case 'guide':
         this.renderGuideModal();
         break;
+      case 'expeditions':
+        this.renderExpeditionsModal();
+        break;
       case 'shop':
         this.renderShopModal();
         break;
@@ -186,6 +195,17 @@ export class UIManager {
         this.renderRecipesModal();
         break;
     }
+  }
+
+  private renderExpeditionsModal(): void {
+    if (!this.modalContent || !this.lastUpdateData) return;
+    
+    const { expeditions, inventory } = this.lastUpdateData;
+    const gold = inventory.getGold();
+    const mana = inventory.getMana();
+    
+    this.modalContent.innerHTML = this.expeditionUI.render(expeditions, { gold, mana });
+    this.expeditionUI.attachEventListeners();
   }
 
   private renderShopModal(): void {
