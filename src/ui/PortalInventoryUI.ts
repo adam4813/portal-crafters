@@ -7,6 +7,15 @@ import { getEquipmentById } from '../data/equipment';
 function buildPortalTooltip(portal: PortalType): string {
   const lines: string[] = [];
 
+  // Portal type name and affinity (if available)
+  if (portal.typeName) {
+    lines.push(`${portal.typeName}`);
+    if (portal.affinity) {
+      lines.push(`Affinity: ${portal.affinity}`);
+    }
+    lines.push('');
+  }
+
   lines.push(`Level ${portal.level} Portal`);
   lines.push('');
 
@@ -28,6 +37,20 @@ function buildPortalTooltip(portal: PortalType): string {
       const potency = elementDef?.properties.powerMultiplier || 1.0;
       const potencyStr = potency !== 1.0 ? ` (${potency}x)` : '';
       lines.push(`  ${icon} ${element}: ${amount}${potencyStr}`);
+    }
+  }
+
+  // Portal attributes (if available)
+  if (portal.attributes && Object.keys(portal.attributes).length > 0) {
+    lines.push('');
+    lines.push('Attributes:');
+    for (const [attr, value] of Object.entries(portal.attributes)) {
+      // Format attribute name: capitalize first letter and convert camelCase to spaces
+      const formattedAttr = attr
+        .replace(/([A-Z])/g, ' $1')
+        .replace(/^./, (str) => str.toUpperCase())
+        .trim();
+      lines.push(`  ${formattedAttr}: ${value}`);
     }
   }
 
@@ -107,10 +130,13 @@ export class PortalInventoryUI {
 
       const tooltip = buildPortalTooltip(portal);
 
+      // Display portal type name if available, otherwise show level
+      const displayName = portal.typeName || `Level ${portal.level} Portal`;
+
       html += `
         <div class="stored-portal" data-portal-id="${portal.id}" title="${tooltip}">
           <div class="portal-info">
-            <span class="portal-level-badge">Lv ${portal.level}</span>
+            <span class="portal-name">${displayName}</span>
             <span class="portal-elements-preview">${elementsStr || 'No elements'}</span>
           </div>
           <div class="portal-actions">

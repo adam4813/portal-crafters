@@ -48,6 +48,8 @@ export interface Ingredient {
   ingredientChance?: number;
   equipmentChance?: number;
   rarityBonus?: number;
+  // Tags for portal type matching (e.g., 'bone', 'magical', 'rare')
+  tags?: string[];
 }
 
 // Equipment rarity levels
@@ -66,6 +68,8 @@ export interface Equipment {
   description: string;
   portalBonus: number;
   elementBonus?: Partial<Record<ElementType, number>>;
+  // Tags for portal type matching (e.g., 'bone', 'dragon', 'magical')
+  tags?: string[];
 }
 
 // Portal level and properties
@@ -84,6 +88,19 @@ export interface Portal {
    * Stored for use in calculating portal effects and rewards.
    */
   generatedEquipmentAttributes?: GeneratedEquipment[];
+  /**
+   * Portal type name (e.g., "Graveyard", "Inferno")
+   * Determined by the combination of elements and ingredients used
+   */
+  typeName?: string;
+  /**
+   * Portal affinity/category (e.g., "Death", "Fire", "Creation")
+   */
+  affinity?: string;
+  /**
+   * Special attributes granted by the portal type
+   */
+  attributes?: Record<string, number>;
 }
 
 // Customer contract requirements
@@ -257,6 +274,8 @@ export interface EquipmentAttribute {
   levelRange: { min: number; max: number };
   elementAffinity?: ElementType;
   description?: string;
+  // Tags that this attribute contributes (e.g., 'bone', 'dragon', 'undead')
+  tags?: string[];
 }
 
 /**
