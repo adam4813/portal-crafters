@@ -359,19 +359,14 @@ export interface ProgressionState {
 }
 
 /**
- * Expedition - party sent to gather resources
+ * Expedition - party sent through a portal to gather resources
  */
 export interface Expedition {
   id: string;
-  name: string;
-  description: string;
-  duration: number; // Duration in seconds
+  portalId: string; // ID of the portal used for this expedition
+  portalSnapshot: Portal; // Snapshot of the portal at expedition start
   startedAt: number; // Timestamp when expedition started
-  rewards: ExpeditionReward[];
-  requirements?: {
-    gold?: number;
-    mana?: number;
-  };
+  duration: number; // Duration in seconds (based on portal properties)
 }
 
 /**

@@ -1,95 +1,178 @@
-import type { Expedition, ExpeditionReward } from '../types';
+import type { Expedition, ExpeditionReward, Portal } from '../types';
 
 /**
- * Available expedition templates
- * These expeditions allow players to gather specific ingredients/items
+ * Calculate expedition duration based on portal properties
+ * Higher level portals = faster expeditions
+ * More mana invested = faster expeditions
  */
-const EXPEDITION_TEMPLATES: Omit<Expedition, 'id' | 'startedAt'>[] = [
-  {
-    name: 'Forest Gathering',
-    description: 'Send a party to gather herbs and wood from the nearby forest',
-    duration: 300, // 5 minutes
-    requirements: {
-      gold: 20,
-    },
-    rewards: [
-      { type: 'ingredient', itemId: 'wood', amount: 3, chance: 1.0 },
-      { type: 'ingredient', itemId: 'herb', amount: 2, chance: 0.8 },
-      { type: 'ingredient', itemId: 'nature_essence', amount: 1, chance: 0.3 },
-    ],
-  },
-  {
-    name: 'Cave Expedition',
-    description: 'Explore dark caves to mine crystals and rare minerals',
-    duration: 600, // 10 minutes
-    requirements: {
-      gold: 50,
-    },
-    rewards: [
-      { type: 'ingredient', itemId: 'stone', amount: 5, chance: 1.0 },
-      { type: 'ingredient', itemId: 'crystal', amount: 2, chance: 0.6 },
-      { type: 'ingredient', itemId: 'metal_ore', amount: 1, chance: 0.4 },
-    ],
-  },
-  {
-    name: 'Elemental Hunt',
-    description: 'Hunt elemental creatures to extract their essence',
-    duration: 900, // 15 minutes
-    requirements: {
-      gold: 100,
-      mana: 50,
-    },
-    rewards: [
-      { type: 'ingredient', itemId: 'fire_crystal', amount: 2, chance: 0.7 },
-      { type: 'ingredient', itemId: 'water_essence', amount: 2, chance: 0.7 },
-      { type: 'ingredient', itemId: 'lightning_shard', amount: 1, chance: 0.4 },
-    ],
-  },
-  {
-    name: 'Dungeon Crawl',
-    description: 'Delve into dangerous dungeons for equipment and treasures',
-    duration: 1200, // 20 minutes
-    requirements: {
-      gold: 150,
-    },
-    rewards: [
-      { type: 'gold', amount: 200, chance: 1.0 },
-      { type: 'equipment', itemId: 'sword', amount: 1, chance: 0.5 },
-      { type: 'equipment', itemId: 'shield', amount: 1, chance: 0.5 },
-      { type: 'ingredient', itemId: 'shadow_essence', amount: 1, chance: 0.3 },
-    ],
-  },
-  {
-    name: 'Ancient Ruins',
-    description: 'Search ancient ruins for powerful artifacts and rare ingredients',
-    duration: 1800, // 30 minutes
-    requirements: {
-      gold: 250,
-      mana: 100,
-    },
-    rewards: [
-      { type: 'ingredient', itemId: 'arcane_dust', amount: 3, chance: 0.8 },
-      { type: 'ingredient', itemId: 'void_crystal', amount: 1, chance: 0.5 },
-      { type: 'mana', amount: 150, chance: 0.6 },
-      { type: 'gold', amount: 300, chance: 0.7 },
-    ],
-  },
-  {
-    name: 'Temporal Rift',
-    description: 'Brave the dangers of time itself to gather cosmic ingredients',
-    duration: 2400, // 40 minutes
-    requirements: {
-      gold: 500,
-      mana: 200,
-    },
-    rewards: [
-      { type: 'ingredient', itemId: 'time_sand', amount: 2, chance: 0.6 },
-      { type: 'ingredient', itemId: 'chaos_ember', amount: 2, chance: 0.6 },
-      { type: 'ingredient', itemId: 'life_essence', amount: 1, chance: 0.3 },
-      { type: 'ingredient', itemId: 'death_shard', amount: 1, chance: 0.3 },
-    ],
-  },
-];
+function calculateExpeditionDuration(portal: Portal): number {
+  const baseTime = 1800; // 30 minutes base
+  const levelReduction = Math.min(portal.level * 60, 600); // Max 10 minutes reduction
+  const manaReduction = Math.min(Math.floor(portal.manaInvested / 10), 300); // Max 5 minutes reduction
+  return Math.max(300, baseTime - levelReduction - manaReduction); // Minimum 5 minutes
+}
+
+/**
+ * Calculate rewards based on portal's elemental composition
+ */
+function calculateExpeditionRewards(portal: Portal): ExpeditionReward[] {
+  const rewards: ExpeditionReward[] = [];
+  const elements = portal.elements;
+
+  // Fire element: fire crystals, metal ore
+  if (elements.fire && elements.fire > 0) {
+    rewards.push(
+      { type: 'ingredient', itemId: 'fire_crystal', amount: Math.ceil(elements.fire / 3), chance: 0.8 }
+    );
+    if (elements.fire >= 5) {
+      rewards.push(
+        { type: 'ingredient', itemId: 'metal_ore', amount: 1, chance: 0.4 }
+      );
+    }
+  }
+
+  // Water element: water essence, fish
+  if (elements.water && elements.water > 0) {
+    rewards.push(
+      { type: 'ingredient', itemId: 'water_essence', amount: Math.ceil(elements.water / 3), chance: 0.8 }
+    );
+  }
+
+  // Earth element: stone, metal ore
+  if (elements.earth && elements.earth > 0) {
+    rewards.push(
+      { type: 'ingredient', itemId: 'stone', amount: Math.ceil(elements.earth / 2), chance: 0.9 }
+    );
+    if (elements.earth >= 5) {
+      rewards.push(
+        { type: 'ingredient', itemId: 'metal_ore', amount: 1, chance: 0.5 }
+      );
+    }
+  }
+
+  // Air element: feathers, lightning shards
+  if (elements.air && elements.air > 0) {
+    if (elements.air >= 5) {
+      rewards.push(
+        { type: 'ingredient', itemId: 'lightning_shard', amount: 1, chance: 0.3 }
+      );
+    }
+  }
+
+  // Nature/Plant element: wood, herbs
+  if (elements.nature && elements.nature > 0) {
+    rewards.push(
+      { type: 'ingredient', itemId: 'wood', amount: Math.ceil(elements.nature / 2), chance: 1.0 }
+    );
+    rewards.push(
+      { type: 'ingredient', itemId: 'herb', amount: Math.ceil(elements.nature / 3), chance: 0.7 }
+    );
+    if (elements.nature >= 5) {
+      rewards.push(
+        { type: 'ingredient', itemId: 'nature_essence', amount: 1, chance: 0.4 }
+      );
+    }
+  }
+
+  // Ice element: ice crystals
+  if (elements.ice && elements.ice > 0) {
+    rewards.push(
+      { type: 'ingredient', itemId: 'ice_crystal', amount: Math.ceil(elements.ice / 3), chance: 0.7 }
+    );
+  }
+
+  // Lightning element: lightning shards
+  if (elements.lightning && elements.lightning > 0) {
+    rewards.push(
+      { type: 'ingredient', itemId: 'lightning_shard', amount: Math.ceil(elements.lightning / 4), chance: 0.6 }
+    );
+  }
+
+  // Metal element: metal ore, equipment
+  if (elements.metal && elements.metal > 0) {
+    rewards.push(
+      { type: 'ingredient', itemId: 'metal_ore', amount: Math.ceil(elements.metal / 2), chance: 0.8 }
+    );
+    if (elements.metal >= 5) {
+      rewards.push(
+        { type: 'equipment', itemId: 'sword', amount: 1, chance: 0.3 }
+      );
+    }
+  }
+
+  // Shadow element: shadow essence
+  if (elements.shadow && elements.shadow > 0) {
+    rewards.push(
+      { type: 'ingredient', itemId: 'shadow_essence', amount: Math.ceil(elements.shadow / 3), chance: 0.6 }
+    );
+  }
+
+  // Light element: light crystals
+  if (elements.light && elements.light > 0) {
+    rewards.push(
+      { type: 'ingredient', itemId: 'light_crystal', amount: Math.ceil(elements.light / 3), chance: 0.6 }
+    );
+  }
+
+  // Void element: void crystals
+  if (elements.void && elements.void > 0) {
+    rewards.push(
+      { type: 'ingredient', itemId: 'void_crystal', amount: Math.ceil(elements.void / 4), chance: 0.5 }
+    );
+  }
+
+  // Arcane element: arcane dust
+  if (elements.arcane && elements.arcane > 0) {
+    rewards.push(
+      { type: 'ingredient', itemId: 'arcane_dust', amount: Math.ceil(elements.arcane / 3), chance: 0.7 }
+    );
+  }
+
+  // Time element: time sand
+  if (elements.time && elements.time > 0) {
+    rewards.push(
+      { type: 'ingredient', itemId: 'time_sand', amount: Math.ceil(elements.time / 4), chance: 0.5 }
+    );
+  }
+
+  // Chaos element: chaos ember
+  if (elements.chaos && elements.chaos > 0) {
+    rewards.push(
+      { type: 'ingredient', itemId: 'chaos_ember', amount: Math.ceil(elements.chaos / 4), chance: 0.5 }
+    );
+  }
+
+  // Life element: life essence
+  if (elements.life && elements.life > 0) {
+    rewards.push(
+      { type: 'ingredient', itemId: 'life_essence', amount: Math.ceil(elements.life / 4), chance: 0.4 }
+    );
+  }
+
+  // Death element: death shards
+  if (elements.death && elements.death > 0) {
+    rewards.push(
+      { type: 'ingredient', itemId: 'death_shard', amount: Math.ceil(elements.death / 4), chance: 0.4 }
+    );
+  }
+
+  // Base rewards: some gold based on portal level
+  const goldAmount = portal.level * 20 + Math.floor(portal.manaInvested / 10);
+  if (goldAmount > 0) {
+    rewards.push(
+      { type: 'gold', amount: goldAmount, chance: 0.8 }
+    );
+  }
+
+  // High level portals can return mana
+  if (portal.level >= 5) {
+    rewards.push(
+      { type: 'mana', amount: Math.floor(portal.manaInvested * 0.3), chance: 0.5 }
+    );
+  }
+
+  return rewards;
+}
 
 export class ExpeditionSystem {
   private activeExpeditions: Expedition[] = [];
@@ -104,13 +187,6 @@ export class ExpeditionSystem {
   }
 
   /**
-   * Get all available expedition templates
-   */
-  public getAvailableExpeditions(): Omit<Expedition, 'id' | 'startedAt'>[] {
-    return [...EXPEDITION_TEMPLATES];
-  }
-
-  /**
    * Get all active expeditions
    */
   public getActiveExpeditions(): Expedition[] {
@@ -118,18 +194,15 @@ export class ExpeditionSystem {
   }
 
   /**
-   * Start a new expedition
+   * Start a new expedition using a portal
    */
-  public startExpedition(templateIndex: number): Expedition | null {
-    if (templateIndex < 0 || templateIndex >= EXPEDITION_TEMPLATES.length) {
-      return null;
-    }
-
-    const template = EXPEDITION_TEMPLATES[templateIndex];
+  public startExpedition(portal: Portal): Expedition {
     const expedition: Expedition = {
-      ...template,
       id: `expedition-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+      portalId: portal.id,
+      portalSnapshot: { ...portal },
       startedAt: Date.now(),
+      duration: calculateExpeditionDuration(portal),
     };
 
     this.activeExpeditions.push(expedition);
@@ -164,9 +237,12 @@ export class ExpeditionSystem {
     // Remove from active expeditions
     this.activeExpeditions.splice(index, 1);
 
-    // Calculate actual rewards based on chance
+    // Calculate rewards based on portal
+    const allRewards = calculateExpeditionRewards(expedition.portalSnapshot);
+    
+    // Apply probability to get actual rewards
     const actualRewards: ExpeditionReward[] = [];
-    for (const reward of expedition.rewards) {
+    for (const reward of allRewards) {
       if (Math.random() < reward.chance) {
         actualRewards.push({ ...reward });
       }
@@ -185,6 +261,20 @@ export class ExpeditionSystem {
     const elapsed = (Date.now() - expedition.startedAt) / 1000;
     const remaining = expedition.duration - elapsed;
     return Math.max(0, remaining);
+  }
+
+  /**
+   * Get a description of what rewards an expedition might yield
+   */
+  public getExpectedRewards(portal: Portal): ExpeditionReward[] {
+    return calculateExpeditionRewards(portal);
+  }
+
+  /**
+   * Get the expected duration for a portal expedition
+   */
+  public getExpectedDuration(portal: Portal): number {
+    return calculateExpeditionDuration(portal);
   }
 
   /**

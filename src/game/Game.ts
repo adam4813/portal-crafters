@@ -825,52 +825,24 @@ export class Game {
     return this.expeditionSystem;
   }
 
-  public startExpedition(templateIndex: number): void {
-    const templates = this.expeditionSystem.getAvailableExpeditions();
-    if (templateIndex < 0 || templateIndex >= templates.length) {
-      showToast('Invalid expedition!', 'error');
+  public startExpedition(portalId: string): void {
+    // Find the portal
+    const portalIndex = this.storedPortals.findIndex(p => p.id === portalId);
+    if (portalIndex === -1) {
+      showToast('Portal not found!', 'error');
       return;
     }
 
-    const template = templates[templateIndex];
+    const portal = this.storedPortals[portalIndex];
     
-    // Check if player can afford expedition
-    if (template.requirements?.gold && !this.inventorySystem.canAfford(template.requirements.gold)) {
-      showToast('Not enough gold!', 'error');
-      return;
-    }
-    
-    if (template.requirements?.mana && !this.inventorySystem.hasMana(template.requirements.mana)) {
-      showToast('Not enough mana!', 'error');
-      return;
-    }
-
-    // Deduct costs
-    if (template.requirements?.gold) {
-      const success = this.inventorySystem.spendGold(template.requirements.gold);
-      if (!success) {
-        showToast('Failed to deduct gold!', 'error');
-        return;
-      }
-    }
-    if (template.requirements?.mana) {
-      const success = this.inventorySystem.spendMana(template.requirements.mana);
-      if (!success) {
-        showToast('Failed to deduct mana!', 'error');
-        // Refund gold if mana deduction failed
-        if (template.requirements?.gold) {
-          this.inventorySystem.addGold(template.requirements.gold);
-        }
-        return;
-      }
-    }
+    // Remove portal from storage (it's consumed by the expedition)
+    this.storedPortals.splice(portalIndex, 1);
 
     // Start expedition
-    const expedition = this.expeditionSystem.startExpedition(templateIndex);
-    if (expedition) {
-      showToast(`Expedition started: ${expedition.name}`, 'success');
-      this.updateUI();
-    }
+    const expedition = this.expeditionSystem.startExpedition(portal);
+    const duration = Math.floor(expedition.duration / 60);
+    showToast(`Expedition started! Party sent through portal. Returns in ${duration} minutes.`, 'success');
+    this.updateUI();
   }
 
   public completeExpedition(expeditionId: string): void {

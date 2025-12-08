@@ -200,11 +200,9 @@ export class UIManager {
   private renderExpeditionsModal(): void {
     if (!this.modalContent || !this.lastUpdateData) return;
     
-    const { expeditions, inventory } = this.lastUpdateData;
-    const gold = inventory.getGold();
-    const mana = inventory.getMana();
+    const { expeditions, storedPortals } = this.lastUpdateData;
     
-    this.modalContent.innerHTML = this.expeditionUI.render(expeditions, { gold, mana });
+    this.modalContent.innerHTML = this.expeditionUI.render(expeditions, storedPortals);
     this.expeditionUI.attachEventListeners();
   }
 
