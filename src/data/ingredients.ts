@@ -56,6 +56,7 @@ export const INGREDIENTS: Ingredient[] = [
     icon: '🔩',
     description: 'Raw iron ore',
     baseValue: 10,
+    tags: ['metal', 'common'],
   },
   {
     id: 'copper_wire',
@@ -64,6 +65,7 @@ export const INGREDIENTS: Ingredient[] = [
     icon: '🔌',
     description: 'Conductive copper wire',
     baseValue: 8,
+    tags: ['metal', 'conductive'],
   },
   {
     id: 'glass_lens',
@@ -72,6 +74,7 @@ export const INGREDIENTS: Ingredient[] = [
     icon: '🔍',
     description: 'A precisely ground glass lens',
     baseValue: 15,
+    tags: ['glass', 'clarity'],
   },
   {
     id: 'enchanted_ink',
@@ -80,6 +83,16 @@ export const INGREDIENTS: Ingredient[] = [
     icon: '🖋️',
     description: 'Ink infused with magical properties',
     baseValue: 20,
+    tags: ['magical', 'writing'],
+  },
+  {
+    id: 'bone',
+    name: 'Bone',
+    category: 'mundane',
+    icon: '🦴',
+    description: 'A skeletal remnant, useful for dark rituals',
+    baseValue: 15,
+    tags: ['bone', 'undead', 'death'],
   },
   {
     id: 'moon_dust',
@@ -88,6 +101,7 @@ export const INGREDIENTS: Ingredient[] = [
     icon: '✨',
     description: 'Shimmering dust from the moon',
     baseValue: 30,
+    tags: ['magical', 'celestial', 'rare'],
   },
   {
     id: 'ancient_rune',
@@ -96,6 +110,7 @@ export const INGREDIENTS: Ingredient[] = [
     icon: '🔮',
     description: 'A stone carved with ancient symbols',
     baseValue: 40,
+    tags: ['magical', 'ancient', 'stone'],
   },
   {
     id: 'phoenix_feather',
@@ -105,6 +120,7 @@ export const INGREDIENTS: Ingredient[] = [
     description: 'A feather from a mythical phoenix',
     elementAffinity: 'fire',
     baseValue: 50,
+    tags: ['phoenix', 'rebirth', 'fire', 'rare'],
   },
   {
     id: 'dragon_scale',
@@ -113,6 +129,7 @@ export const INGREDIENTS: Ingredient[] = [
     icon: '🐉',
     description: 'A scale from a mighty dragon',
     baseValue: 75,
+    tags: ['dragon', 'rare', 'protective'],
   },
 
   // Shop Items

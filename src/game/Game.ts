@@ -17,6 +17,7 @@ import { createInitialGameState, showToast } from '../utils/helpers';
 import { calculatePortalEffects } from './PortalEffectSystem';
 import { getEquipmentById } from '../data/equipment';
 import { calculateAdjustedPayment } from '../data/customers';
+import { matchPortalType } from '../data/portalTypes';
 
 export class Game {
   // Three.js components
@@ -319,6 +320,14 @@ export class Game {
       return;
     }
 
+    // Match portal type based on elements, ingredients, and equipment
+    const portalType = matchPortalType(
+      portalData.elements,
+      result?.ingredientIds || [],
+      result?.equipmentIds || [],
+      result?.generatedEquipmentUsed || []
+    );
+
     // Create a new portal - level is already calculated in portalData
     const newPortal: PortalType = {
       id: `portal-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
@@ -327,10 +336,15 @@ export class Game {
       elements: { ...portalData.elements },
       ingredients: result?.ingredientIds || [],
       equipment: result?.equipmentIds || [],
-      visualColor: 0x6b46c1,
+      visualColor: portalType?.visualColor || 0x6b46c1,
       visualIntensity: 0.5,
       createdAt: Date.now(),
       generatedEquipmentAttributes: result?.generatedEquipmentUsed || [],
+      typeName: portalType?.name,
+      affinity: portalType?.affinity,
+      attributes: portalType?.attributes ? Object.fromEntries(
+        Object.entries(portalType.attributes).filter(([_, v]) => v !== undefined)
+      ) as Record<string, number> : undefined,
     };
 
     this.storedPortals.push(newPortal);
@@ -344,10 +358,14 @@ export class Game {
 
     if (result?.isNewRecipe) {
       showToast('New recipe discovered! Portal crafted and stored.', 'success');
+    } else if (portalType) {
+      showToast(`${portalType.name} portal crafted and stored!`, 'success');
     } else {
       showToast('Portal crafted and stored!', 'success');
     }
 
+    // Invalidate portal types cache since we crafted a new portal
+    this.uiManager.invalidatePortalTypesCache();
     this.updateUI();
   }
 
