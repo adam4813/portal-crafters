@@ -13,6 +13,7 @@ import { SaveSystem } from './SaveSystem';
 import { UIManager } from '../ui/UIManager';
 import { createInitialGameState, showToast } from '../utils/helpers';
 import { calculatePortalEffects } from './PortalEffectSystem';
+import { matchPortalType } from '../data/portalTypes';
 
 export class Game {
   // Three.js components
@@ -270,6 +271,12 @@ export class Game {
       return;
     }
 
+    // Match portal type based on elements and ingredients
+    const portalType = matchPortalType(
+      portalData.elements,
+      result?.ingredientIds || []
+    );
+
     // Create a new portal - level is already calculated in portalData
     const newPortal: PortalType = {
       id: `portal-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
@@ -278,10 +285,13 @@ export class Game {
       elements: { ...portalData.elements },
       ingredients: result?.ingredientIds || [],
       equipment: result?.equipmentIds || [],
-      visualColor: 0x6b46c1,
+      visualColor: portalType?.visualColor || 0x6b46c1,
       visualIntensity: 0.5,
       createdAt: Date.now(),
       generatedEquipmentAttributes: result?.generatedEquipmentUsed || [],
+      typeName: portalType?.name,
+      affinity: portalType?.affinity,
+      attributes: portalType?.attributes,
     };
 
     this.storedPortals.push(newPortal);
@@ -295,6 +305,8 @@ export class Game {
 
     if (result?.isNewRecipe) {
       showToast('New recipe discovered! Portal crafted and stored.', 'success');
+    } else if (portalType) {
+      showToast(`${portalType.name} portal crafted and stored!`, 'success');
     } else {
       showToast('Portal crafted and stored!', 'success');
     }

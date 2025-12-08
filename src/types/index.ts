@@ -84,6 +84,19 @@ export interface Portal {
    * Stored for use in calculating portal effects and rewards.
    */
   generatedEquipmentAttributes?: GeneratedEquipment[];
+  /**
+   * Portal type name (e.g., "Graveyard", "Inferno")
+   * Determined by the combination of elements and ingredients used
+   */
+  typeName?: string;
+  /**
+   * Portal affinity/category (e.g., "Death", "Fire", "Creation")
+   */
+  affinity?: string;
+  /**
+   * Special attributes granted by the portal type
+   */
+  attributes?: Record<string, number>;
 }
 
 // Customer contract requirements
