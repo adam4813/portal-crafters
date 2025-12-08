@@ -21,9 +21,14 @@ export class ManaConversionUI {
     // Updates are handled by modal rendering
   }
 
-  public renderToElement(container: HTMLElement, inventory: InventorySystem, elements: ElementSystem): void {
+  public renderToElement(
+    container: HTMLElement,
+    inventory: InventorySystem,
+    elements: ElementSystem
+  ): void {
     let html = '<div class="mana-conversion-info">';
-    html += '<p class="info-text">Transform your mana into elemental energy for crafting portals.</p>';
+    html +=
+      '<p class="info-text">Transform your mana into elemental energy for crafting portals.</p>';
     html += '</div>';
     html += '<div id="element-selector"></div>';
     html += '<div id="conversion-controls"></div>';
@@ -38,7 +43,12 @@ export class ManaConversionUI {
     }
 
     if (conversionControls) {
-      this.renderConversionControls(conversionControls as HTMLElement, inventory, elements, container);
+      this.renderConversionControls(
+        conversionControls as HTMLElement,
+        inventory,
+        elements,
+        container
+      );
     }
   }
 

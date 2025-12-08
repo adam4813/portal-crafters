@@ -24,11 +24,41 @@ export class ShopUI {
   ];
 
   private shopItems: ShopItem[] = [
-    { id: 'health_potion', name: 'Health Potion', description: 'A basic healing potion', cost: 25, goldReward: 0 },
-    { id: 'mana_crystal', name: 'Mana Crystal', description: 'A small crystal infused with mana', cost: 50, goldReward: 0 },
-    { id: 'lucky_charm', name: 'Lucky Charm', description: 'Brings good fortune to the bearer', cost: 75, goldReward: 0 },
-    { id: 'debug_gold_grant', name: '[DEBUG] Gold Grant', description: 'Gives 1000 gold for testing', cost: 0, goldReward: 1000 },
-    { id: 'debug_gold_sink', name: '[DEBUG] Gold Sink', description: 'Burns 100 gold for testing', cost: 100, goldReward: 0 },
+    {
+      id: 'health_potion',
+      name: 'Health Potion',
+      description: 'A basic healing potion',
+      cost: 25,
+      goldReward: 0,
+    },
+    {
+      id: 'mana_crystal',
+      name: 'Mana Crystal',
+      description: 'A small crystal infused with mana',
+      cost: 50,
+      goldReward: 0,
+    },
+    {
+      id: 'lucky_charm',
+      name: 'Lucky Charm',
+      description: 'Brings good fortune to the bearer',
+      cost: 75,
+      goldReward: 0,
+    },
+    {
+      id: 'debug_gold_grant',
+      name: '[DEBUG] Gold Grant',
+      description: 'Gives 1000 gold for testing',
+      cost: 0,
+      goldReward: 1000,
+    },
+    {
+      id: 'debug_gold_sink',
+      name: '[DEBUG] Gold Sink',
+      description: 'Burns 100 gold for testing',
+      cost: 100,
+      goldReward: 0,
+    },
   ];
 
   constructor(game: Game) {

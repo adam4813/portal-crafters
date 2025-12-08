@@ -105,7 +105,7 @@ export function calculatePortalLevel(
   elements: Partial<Record<ElementType, number>>
 ): number {
   const totalPower = calculateTotalPower(manaInvested, elements);
-  
+
   // Find the highest level we've reached
   let level = 1;
   for (let i = 1; i < LEVEL_THRESHOLDS.length; i++) {
@@ -115,13 +115,13 @@ export function calculatePortalLevel(
       break;
     }
   }
-  
+
   // Cap at level 10, but allow exceeding with extra power
   if (level >= 10 && totalPower > LEVEL_THRESHOLDS[10]) {
     // Each additional 25 power beyond level 10 = 1 more level
     level = 10 + Math.floor((totalPower - LEVEL_THRESHOLDS[10]) / 25);
   }
-  
+
   return level;
 }
 
@@ -140,7 +140,10 @@ export function getLevelThreshold(level: number): number {
 /**
  * Get progress info toward the next level
  */
-export function getLevelProgress(manaInvested: number, elements: Partial<Record<ElementType, number>>): {
+export function getLevelProgress(
+  manaInvested: number,
+  elements: Partial<Record<ElementType, number>>
+): {
   currentLevel: number;
   currentPower: number;
   powerForCurrentLevel: number;
@@ -149,16 +152,15 @@ export function getLevelProgress(manaInvested: number, elements: Partial<Record<
 } {
   const currentPower = calculateTotalPower(manaInvested, elements);
   const currentLevel = calculatePortalLevel(manaInvested, elements);
-  
+
   const powerForCurrentLevel = getLevelThreshold(currentLevel);
   const powerForNextLevel = getLevelThreshold(currentLevel + 1);
-  
+
   const powerIntoCurrentLevel = currentPower - powerForCurrentLevel;
   const powerNeededForNext = powerForNextLevel - powerForCurrentLevel;
-  const progressPercent = powerNeededForNext > 0 
-    ? (powerIntoCurrentLevel / powerNeededForNext) * 100 
-    : 0;
-  
+  const progressPercent =
+    powerNeededForNext > 0 ? (powerIntoCurrentLevel / powerNeededForNext) * 100 : 0;
+
   return {
     currentLevel,
     currentPower,

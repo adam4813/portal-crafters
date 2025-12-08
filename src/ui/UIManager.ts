@@ -26,7 +26,15 @@ export interface UIUpdateData {
   storedPortals: PortalType[];
 }
 
-type ModalType = 'shop' | 'upgrades' | 'research' | 'mana-converter' | 'recipes' | 'guide' | null;
+type ModalType =
+  | 'shop'
+  | 'upgrades'
+  | 'research'
+  | 'mana-converter'
+  | 'recipes'
+  | 'guide'
+  | 'pause'
+  | null;
 
 export class UIManager {
   private game: Game;
@@ -41,7 +49,7 @@ export class UIManager {
   // DOM elements
   private moneyDisplay: HTMLElement | null;
   private manaDisplay: HTMLElement | null;
-  
+
   // Modal elements
   private modalOverlay: HTMLElement | null;
   private modalTitle: HTMLElement | null;
@@ -66,7 +74,7 @@ export class UIManager {
 
     this.moneyDisplay = document.getElementById('money-display');
     this.manaDisplay = document.getElementById('mana-display');
-    
+
     // Modal elements
     this.modalOverlay = document.getElementById('modal-overlay');
     this.modalTitle = document.getElementById('modal-title');
@@ -82,29 +90,38 @@ export class UIManager {
     this.researchUI.initialize();
     this.manaConversionUI.initialize();
     this.portalInventoryUI.initialize();
-    
+
     this.setupModalHandlers();
   }
 
   private setupModalHandlers(): void {
     // Header buttons
+    document.getElementById('pause-btn')?.addEventListener('click', () => this.openModal('pause'));
     document.getElementById('guide-btn')?.addEventListener('click', () => this.openModal('guide'));
     document.getElementById('shop-btn')?.addEventListener('click', () => this.openModal('shop'));
-    document.getElementById('upgrades-btn')?.addEventListener('click', () => this.openModal('upgrades'));
-    document.getElementById('research-btn')?.addEventListener('click', () => this.openModal('research'));
-    document.getElementById('mana-converter-btn')?.addEventListener('click', () => this.openModal('mana-converter'));
-    document.getElementById('recipes-btn')?.addEventListener('click', () => this.openModal('recipes'));
-    
+    document
+      .getElementById('upgrades-btn')
+      ?.addEventListener('click', () => this.openModal('upgrades'));
+    document
+      .getElementById('research-btn')
+      ?.addEventListener('click', () => this.openModal('research'));
+    document
+      .getElementById('mana-converter-btn')
+      ?.addEventListener('click', () => this.openModal('mana-converter'));
+    document
+      .getElementById('recipes-btn')
+      ?.addEventListener('click', () => this.openModal('recipes'));
+
     // Close button
     this.modalClose?.addEventListener('click', () => this.closeModal());
-    
+
     // Click outside to close
     this.modalOverlay?.addEventListener('click', (e) => {
       if (e.target === this.modalOverlay) {
         this.closeModal();
       }
     });
-    
+
     // Escape key to close
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && this.currentModal) {
@@ -115,22 +132,23 @@ export class UIManager {
 
   private openModal(type: ModalType): void {
     if (!this.modalOverlay || !this.modalTitle || !this.modalContent) return;
-    
+
     this.currentModal = type;
     this.game.pauseCustomerTimers();
     this.customerUI.setPaused(true);
-    
+
     // Set modal title
     const titles: Record<string, string> = {
-      'guide': '📚 Game Guide',
-      'shop': '🛒 Mana Shop',
-      'upgrades': '⬆️ Upgrades',
-      'research': '🔬 Research',
+      pause: '⏸️ Game Paused',
+      guide: '📚 Game Guide',
+      shop: '🛒 Mana Shop',
+      upgrades: '⬆️ Upgrades',
+      research: '🔬 Research',
       'mana-converter': '✨ Mana Converter',
-      'recipes': '📖 Recipe Book'
+      recipes: '📖 Recipe Book',
     };
     this.modalTitle.textContent = titles[type || ''] || '';
-    
+
     // Apply modal size classes
     const modalContainer = this.modalOverlay.querySelector('.modal-container');
     if (modalContainer) {
@@ -139,30 +157,33 @@ export class UIManager {
         modalContainer.classList.add('guide-modal');
       }
     }
-    
+
     // Render modal content
     this.renderModalContent();
-    
+
     // Show modal
     this.modalOverlay.classList.remove('hidden');
   }
 
   private closeModal(): void {
     if (!this.modalOverlay) return;
-    
+
     this.currentModal = null;
     this.game.resumeCustomerTimers();
     this.customerUI.setPaused(false);
     this.modalOverlay.classList.add('hidden');
-    
+
     // Force UI refresh to update customer cards with adjusted arrivedAt times
     this.game.refreshUI();
   }
 
   private renderModalContent(): void {
     if (!this.modalContent || !this.lastUpdateData) return;
-    
+
     switch (this.currentModal) {
+      case 'pause':
+        this.renderPauseModal();
+        break;
       case 'guide':
         this.renderGuideModal();
         break;
@@ -186,7 +207,7 @@ export class UIManager {
 
   private renderShopModal(): void {
     if (!this.modalContent || !this.lastUpdateData) return;
-    
+
     const { inventory } = this.lastUpdateData;
     const manaSystem = this.game.getManaSystem();
     const exchangeRate = manaSystem.getExchangeRate();
@@ -199,22 +220,95 @@ export class UIManager {
     ];
 
     const shopItems = [
-      { id: 'health_potion', name: 'Health Potion', description: '+10% gold from portals', cost: 25, goldReward: 0 },
-      { id: 'mana_crystal', name: 'Mana Crystal', description: '+15% mana from portals', cost: 40, goldReward: 0 },
-      { id: 'lucky_charm', name: 'Lucky Charm', description: '+10% ingredient drop chance', cost: 50, goldReward: 0 },
-      { id: 'treasure_map', name: 'Treasure Map', description: '+25% gold from portals', cost: 75, goldReward: 0 },
-      { id: 'enchanted_lens', name: 'Enchanted Lens', description: '+10% equipment chance, +1 rarity', cost: 100, goldReward: 0 },
-      { id: 'philosophers_stone', name: "Philosopher's Stone", description: '+20% gold/mana, +5% ingredients, +2 rarity', cost: 250, goldReward: 0 },
-      { id: 'debug_gold_grant', name: '[DEBUG] Gold Grant', description: 'Gives 1000 gold for testing', cost: 0, goldReward: 1000 },
-      { id: 'debug_gold_sink', name: '[DEBUG] Gold Sink', description: 'Burns 100 gold for testing', cost: 100, goldReward: 0 },
+      {
+        id: 'health_potion',
+        name: 'Health Potion',
+        description: '+10% gold from portals',
+        cost: 25,
+        goldReward: 0,
+      },
+      {
+        id: 'mana_crystal',
+        name: 'Mana Crystal',
+        description: '+15% mana from portals',
+        cost: 40,
+        goldReward: 0,
+      },
+      {
+        id: 'lucky_charm',
+        name: 'Lucky Charm',
+        description: '+10% ingredient drop chance',
+        cost: 50,
+        goldReward: 0,
+      },
+      {
+        id: 'treasure_map',
+        name: 'Treasure Map',
+        description: '+25% gold from portals',
+        cost: 75,
+        goldReward: 0,
+      },
+      {
+        id: 'enchanted_lens',
+        name: 'Enchanted Lens',
+        description: '+10% equipment chance, +1 rarity',
+        cost: 100,
+        goldReward: 0,
+      },
+      {
+        id: 'philosophers_stone',
+        name: "Philosopher's Stone",
+        description: '+20% gold/mana, +5% ingredients, +2 rarity',
+        cost: 250,
+        goldReward: 0,
+      },
+      {
+        id: 'debug_gold_grant',
+        name: '[DEBUG] Gold Grant',
+        description: 'Gives 1000 gold for testing',
+        cost: 0,
+        goldReward: 1000,
+      },
+      {
+        id: 'debug_gold_sink',
+        name: '[DEBUG] Gold Sink',
+        description: 'Burns 100 gold for testing',
+        cost: 100,
+        goldReward: 0,
+      },
     ];
 
     const shopEquipment = [
-      { id: 'rusty_sword', name: '🗡️ Rusty Sword', description: 'Common weapon, +5 portal bonus', cost: 50 },
-      { id: 'leather_armor', name: '🥋 Leather Armor', description: 'Common armor, +3 portal bonus', cost: 40 },
-      { id: 'copper_ring', name: '💍 Copper Ring', description: 'Common accessory, +2 portal bonus', cost: 30 },
-      { id: 'iron_sword', name: '⚔️ Iron Sword', description: 'Uncommon weapon, +10 portal bonus, +2 earth', cost: 120 },
-      { id: 'chainmail', name: '🛡️ Chainmail', description: 'Uncommon armor, +8 portal bonus', cost: 100 },
+      {
+        id: 'rusty_sword',
+        name: '🗡️ Rusty Sword',
+        description: 'Common weapon, +5 portal bonus',
+        cost: 50,
+      },
+      {
+        id: 'leather_armor',
+        name: '🥋 Leather Armor',
+        description: 'Common armor, +3 portal bonus',
+        cost: 40,
+      },
+      {
+        id: 'copper_ring',
+        name: '💍 Copper Ring',
+        description: 'Common accessory, +2 portal bonus',
+        cost: 30,
+      },
+      {
+        id: 'iron_sword',
+        name: '⚔️ Iron Sword',
+        description: 'Uncommon weapon, +10 portal bonus, +2 earth',
+        cost: 120,
+      },
+      {
+        id: 'chainmail',
+        name: '🛡️ Chainmail',
+        description: 'Uncommon armor, +8 portal bonus',
+        cost: 100,
+      },
     ];
 
     // Build tabs
@@ -338,7 +432,7 @@ export class UIManager {
 
   private renderUpgradesModal(): void {
     if (!this.modalContent || !this.lastUpdateData) return;
-    
+
     const { inventory, upgrades } = this.lastUpdateData;
     const allUpgrades = upgrades.getAllUpgrades();
     const gold = inventory.getGold();
@@ -394,7 +488,7 @@ export class UIManager {
 
   private renderResearchModal(): void {
     if (!this.modalContent || !this.lastUpdateData) return;
-    
+
     const { elements, inventory } = this.lastUpdateData;
     const allNodes = elements.getAllResearchNodes();
     const gold = inventory.getGold();
@@ -448,13 +542,17 @@ export class UIManager {
 
   private renderManaConverterModal(): void {
     if (!this.modalContent || !this.lastUpdateData) return;
-    
-    this.manaConversionUI.renderToElement(this.modalContent, this.lastUpdateData.inventory, this.lastUpdateData.elements);
+
+    this.manaConversionUI.renderToElement(
+      this.modalContent,
+      this.lastUpdateData.inventory,
+      this.lastUpdateData.elements
+    );
   }
 
   private renderRecipesModal(): void {
     if (!this.modalContent || !this.lastUpdateData) return;
-    
+
     this.researchUI.renderRecipesToElement(this.modalContent, this.lastUpdateData.inventory);
   }
 
@@ -528,7 +626,7 @@ export class UIManager {
           <li><strong>Convert to Elements</strong> - Transform into elemental energy using the Mana Converter</li>
         </ul>
       `,
-      'shop': `
+      shop: `
         <h4>Shop</h4>
         <p><strong>Mana Packs:</strong> Exchange gold for mana.</p>
         <ul>
@@ -547,7 +645,7 @@ export class UIManager {
         </ul>
         <p>Items go to your inventory and can be placed in crafting slots.</p>
       `,
-      'upgrades': `
+      upgrades: `
         <h4>Upgrades</h4>
         <p>Upgrades permanently improve your crafting abilities:</p>
         <ul>
@@ -556,7 +654,7 @@ export class UIManager {
         </ul>
         <p>Each upgrade can be leveled up multiple times for stronger effects.</p>
       `,
-      'research': `
+      research: `
         <h4>Research</h4>
         <p>Research unlocks new elements for your portals:</p>
         <ul>
@@ -568,7 +666,7 @@ export class UIManager {
         <p>Some elements require prerequisites before they can be researched.</p>
         <p>Each element has a <strong>potency multiplier</strong> that affects how much power it contributes.</p>
       `,
-      'recipes': `
+      recipes: `
         <h4>Recipe Book</h4>
         <p>Recipes are discovered by combining ingredients in the crafting slots.</p>
         <ul>
@@ -578,7 +676,7 @@ export class UIManager {
         </ul>
         <p>Bright icons mean you own the ingredient, faded icons mean you're missing it.</p>
       `,
-      'crafting': `
+      crafting: `
         <h4>Portal Crafting</h4>
         <p><strong>Portal Level</strong> is determined by:</p>
         <ul>
@@ -593,7 +691,7 @@ export class UIManager {
         </ul>
         <p><strong>Element Affinity:</strong> Some ingredients add bonus elements when crafted (e.g., Fire Crystal adds +5 fire).</p>
       `,
-      'elements': `
+      elements: `
         <h4>Elements</h4>
         <p>Elements define the magical aspect of your portals:</p>
         <ul>
@@ -606,7 +704,7 @@ export class UIManager {
         <p><strong>Element Potency:</strong> Each element has a power multiplier (shown as 1x, 1.2x, etc.) that affects how much it contributes to portal level.</p>
         <p>Use the +/- buttons next to each element in the crafting area to adjust amounts.</p>
       `,
-      'contracts': `
+      contracts: `
         <h4>Contracts</h4>
         <p>Customers arrive with portal requests. Each contract shows:</p>
         <ul>
@@ -634,6 +732,68 @@ export class UIManager {
     return content[sectionId] || '<p>Section not found.</p>';
   }
 
+  private renderPauseModal(): void {
+    if (!this.modalContent) return;
+
+    const html = `
+      <div class="pause-menu-content">
+        <p class="pause-message">The game is paused. Customer timers and spawns are frozen.</p>
+        
+        <div class="pause-actions">
+          <button id="resume-game-btn" class="btn-primary pause-action-btn">▶️ Resume Game</button>
+          <button id="save-game-btn" class="btn-secondary pause-action-btn">💾 Save Game</button>
+        </div>
+        
+        <div class="pause-info">
+          <h4>Game Statistics</h4>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <span class="stat-label">Portals Crafted:</span>
+              <span class="stat-value">${formatNumber(this.lastUpdateData?.gameState.totalPortalsCreated || 0)}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Customers Served:</span>
+              <span class="stat-value">${formatNumber(this.lastUpdateData?.gameState.totalCustomersServed || 0)}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Total Gold Earned:</span>
+              <span class="stat-value">${formatNumber(this.lastUpdateData?.gameState.totalGoldEarned || 0)}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Play Time:</span>
+              <span class="stat-value">${this.formatPlayTime(this.lastUpdateData?.gameState.playTime || 0)}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    this.modalContent.innerHTML = html;
+
+    // Add event listeners
+    document.getElementById('resume-game-btn')?.addEventListener('click', () => {
+      this.closeModal();
+    });
+
+    document.getElementById('save-game-btn')?.addEventListener('click', () => {
+      this.game.saveGame();
+    });
+  }
+
+  private formatPlayTime(seconds: number): string {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = Math.floor(seconds % 60);
+
+    if (hours > 0) {
+      return `${hours}h ${minutes}m ${secs}s`;
+    } else if (minutes > 0) {
+      return `${minutes}m ${secs}s`;
+    } else {
+      return `${secs}s`;
+    }
+  }
+
   public getSelectedItem(): { type: 'ingredient' | 'equipment'; id: string } | null {
     return this.inventoryUI.getSelectedItem();
   }
@@ -644,7 +804,7 @@ export class UIManager {
 
   public update(data: UIUpdateData): void {
     this.lastUpdateData = data;
-    
+
     // Update resource displays
     if (this.moneyDisplay) {
       this.moneyDisplay.textContent = `Gold: ${formatNumber(data.inventory.getGold())}`;
@@ -659,7 +819,7 @@ export class UIManager {
     this.customerUI.update(data.customers, data.storedPortals);
     this.researchUI.update(data.elements, data.inventory);
     this.portalInventoryUI.update(data.storedPortals);
-    
+
     // Update modal content if open
     if (this.currentModal) {
       this.renderModalContent();

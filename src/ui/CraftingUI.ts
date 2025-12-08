@@ -148,19 +148,19 @@ export class CraftingUI {
     // Update craft button state - can craft if has items OR has elements OR has mana in portal
     const hasItems = crafting.getFilledSlotCount() > 0;
     const portalData = this.game.getPortal().getData();
-    const hasElements = Object.values(portalData.elements).some(v => v && v > 0);
+    const hasElements = Object.values(portalData.elements).some((v) => v && v > 0);
     const hasMana = portalData.manaInvested > 0;
-    
+
     if (this.craftButton) {
       (this.craftButton as HTMLButtonElement).disabled = !hasItems && !hasElements && !hasMana;
     }
 
     // Update level progress bar (now at top)
     this.updateLevelProgress(crafting, portalData);
-    
+
     // Update portal resources (mana and elements)
     this.updatePortalResources(crafting, portalData);
-    
+
     // Update item effects display
     this.updateItemEffects();
   }
@@ -175,9 +175,12 @@ export class CraftingUI {
     const hoveredIngredient = hoveredSlot?.ingredient || null;
 
     // Check if we have any effects to show
-    const hasEffects = totals.goldMult > 1 || totals.manaMult > 1 || 
-                       totals.ingredientChance > 0 || totals.equipmentChance > 0 || 
-                       totals.rarityBonus > 0;
+    const hasEffects =
+      totals.goldMult > 1 ||
+      totals.manaMult > 1 ||
+      totals.ingredientChance > 0 ||
+      totals.equipmentChance > 0 ||
+      totals.rarityBonus > 0;
 
     if (!hasEffects) {
       this.itemEffectsContainer.innerHTML = '';
@@ -188,18 +191,18 @@ export class CraftingUI {
 
     // Helper to render an effect line with highlighting
     const renderEffect = (
-      icon: string, 
-      label: string, 
-      thisVal: number, 
-      totalVal: number, 
+      icon: string,
+      label: string,
+      thisVal: number,
+      totalVal: number,
       isPercent: boolean
     ): string => {
       if (totalVal === 0) return '';
-      
+
       const suffix = isPercent ? '%' : '';
       const isHighlighted = hoveredIngredient && thisVal > 0;
       const isFullContribution = thisVal === totalVal;
-      
+
       if (isHighlighted) {
         if (isFullContribution) {
           return `<div class="effect-line highlighted full"><span class="effect-icon">${icon}</span><strong>+${totalVal}${suffix} ${label}</strong></div>`;
@@ -212,16 +215,36 @@ export class CraftingUI {
     };
 
     // Calculate hovered ingredient's contributions
-    const hoveredGold = hoveredIngredient?.goldMultiplier ? Math.round((hoveredIngredient.goldMultiplier - 1) * 100) : 0;
-    const hoveredMana = hoveredIngredient?.manaMultiplier ? Math.round((hoveredIngredient.manaMultiplier - 1) * 100) : 0;
-    const hoveredIngr = hoveredIngredient?.ingredientChance ? Math.round(hoveredIngredient.ingredientChance * 100) : 0;
-    const hoveredEquip = hoveredIngredient?.equipmentChance ? Math.round(hoveredIngredient.equipmentChance * 100) : 0;
+    const hoveredGold = hoveredIngredient?.goldMultiplier
+      ? Math.round((hoveredIngredient.goldMultiplier - 1) * 100)
+      : 0;
+    const hoveredMana = hoveredIngredient?.manaMultiplier
+      ? Math.round((hoveredIngredient.manaMultiplier - 1) * 100)
+      : 0;
+    const hoveredIngr = hoveredIngredient?.ingredientChance
+      ? Math.round(hoveredIngredient.ingredientChance * 100)
+      : 0;
+    const hoveredEquip = hoveredIngredient?.equipmentChance
+      ? Math.round(hoveredIngredient.equipmentChance * 100)
+      : 0;
     const hoveredRarity = hoveredIngredient?.rarityBonus || 0;
 
     html += renderEffect('💰', 'Gold', hoveredGold, Math.round((totals.goldMult - 1) * 100), true);
     html += renderEffect('✨', 'Mana', hoveredMana, Math.round((totals.manaMult - 1) * 100), true);
-    html += renderEffect('🧪', 'Ingredients', hoveredIngr, Math.round(totals.ingredientChance * 100), true);
-    html += renderEffect('⚔️', 'Equipment', hoveredEquip, Math.round(totals.equipmentChance * 100), true);
+    html += renderEffect(
+      '🧪',
+      'Ingredients',
+      hoveredIngr,
+      Math.round(totals.ingredientChance * 100),
+      true
+    );
+    html += renderEffect(
+      '⚔️',
+      'Equipment',
+      hoveredEquip,
+      Math.round(totals.equipmentChance * 100),
+      true
+    );
     html += renderEffect('⭐', 'Rarity', hoveredRarity, totals.rarityBonus, false);
 
     html += '</div>';
@@ -237,7 +260,7 @@ export class CraftingUI {
     const inventory = this.game.getInventory();
     const availableMana = inventory.getMana();
     const portalMana = portalData.manaInvested;
-    
+
     html += `
       <div class="mana-control">
         <span class="mana-control-icon">✨</span>
@@ -261,7 +284,7 @@ export class CraftingUI {
         const potency = elementDef?.properties.powerMultiplier || 1.0;
         const potencyDisplay = potency === 1.0 ? '1x' : `${potency}x`;
         const canAddMore = inventory.hasElement(element as ElementType, 1);
-        
+
         elementsHtml += `
           <div class="element-control ${element}" data-element="${element}">
             <span class="element-control-icon">${icon}</span>
@@ -277,7 +300,7 @@ export class CraftingUI {
         `;
       }
     }
-    
+
     if (elementsHtml) {
       html += `<div class="portal-elements">${elementsHtml}</div>`;
     }
@@ -289,22 +312,22 @@ export class CraftingUI {
     for (const slot of slots) {
       if (slot.ingredient) {
         if (slot.ingredient.elementAffinity) {
-          elementBonuses[slot.ingredient.elementAffinity] = 
+          elementBonuses[slot.ingredient.elementAffinity] =
             (elementBonuses[slot.ingredient.elementAffinity] || 0) + 5;
         }
       }
     }
-    
+
     // Show element bonuses only
     if (Object.keys(elementBonuses).length > 0) {
       html += '<div class="ingredient-bonuses">';
-      
+
       for (const [element, amount] of Object.entries(elementBonuses)) {
         const elementDef = getElementDefinition(element as ElementType);
         const icon = elementDef?.icon || '?';
         html += `<span class="bonus-item">${icon} +${amount} ${element}</span>`;
       }
-      
+
       html += '</div>';
     }
 
@@ -356,7 +379,7 @@ export class CraftingUI {
 
   private handleElementAction(element: ElementType, action: string, currentAmount: number): void {
     const inventory = this.game.getInventory();
-    
+
     switch (action) {
       case 'sub':
         if (currentAmount > 0) {
@@ -384,7 +407,7 @@ export class CraftingUI {
     const progress = getLevelProgress(portalData.manaInvested, portalData.elements);
     const currentLevel = progress.currentLevel;
     const nextLevel = currentLevel + 1;
-    
+
     // Calculate power needed for display
     const powerNeeded = progress.powerForNextLevel - progress.powerForCurrentLevel;
     const powerProgress = progress.currentPower - progress.powerForCurrentLevel;

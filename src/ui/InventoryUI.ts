@@ -5,7 +5,7 @@ import type { Ingredient } from '../types';
 
 function buildIngredientTooltip(ingredient: Ingredient): string {
   const lines: string[] = [ingredient.name, ingredient.description];
-  
+
   if (ingredient.elementAffinity) {
     lines.push(`+5 ${ingredient.elementAffinity}`);
   }
@@ -24,7 +24,7 @@ function buildIngredientTooltip(ingredient: Ingredient): string {
   if (ingredient.rarityBonus && ingredient.rarityBonus > 0) {
     lines.push(`+${ingredient.rarityBonus} Rarity`);
   }
-  
+
   return lines.join('\n');
 }
 
@@ -74,10 +74,9 @@ export class InventoryUI {
     } else {
       for (const ingredient of ownedIngredients) {
         const count = ingredients[ingredient.id] || 0;
-        const elementInfo = ingredient.elementAffinity 
-          ? `+5 ${ingredient.elementAffinity}` 
-          : '';
-        const isSelected = this.selectedItem?.type === 'ingredient' && this.selectedItem?.id === ingredient.id;
+        const elementInfo = ingredient.elementAffinity ? `+5 ${ingredient.elementAffinity}` : '';
+        const isSelected =
+          this.selectedItem?.type === 'ingredient' && this.selectedItem?.id === ingredient.id;
         const tooltip = buildIngredientTooltip(ingredient);
         html += `
           <div class="inventory-item ${isSelected ? 'selected' : ''}" data-type="ingredient" data-id="${ingredient.id}" title="${tooltip}">
@@ -99,7 +98,8 @@ export class InventoryUI {
     } else {
       for (const equip of ownedEquipment) {
         const count = equipment[equip.id] || 0;
-        const isSelected = this.selectedItem?.type === 'equipment' && this.selectedItem?.id === equip.id;
+        const isSelected =
+          this.selectedItem?.type === 'equipment' && this.selectedItem?.id === equip.id;
         html += `
           <div class="inventory-item ${isSelected ? 'selected' : ''}" data-type="equipment" data-id="${equip.id}" title="${equip.description}">
             <span class="item-icon">${equip.icon}</span>
