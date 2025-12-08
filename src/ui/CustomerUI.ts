@@ -1,17 +1,21 @@
 import type { Game } from '../game/Game';
 import type { CustomerSystem } from '../game/Customer';
+import type { ProgressionSystem } from '../game/ProgressionSystem';
+import type { ElementSystem } from '../game/ElementSystem';
 import type { Portal as PortalType, Customer } from '../types';
 import { formatTime } from '../utils/helpers';
 
 export class CustomerUI {
   private game: Game;
   private queueContainer: HTMLElement | null;
+  private progressionContainer: HTMLElement | null;
   private timerInterval: number | null = null;
   private isPaused: boolean = false;
 
   constructor(game: Game) {
     this.game = game;
     this.queueContainer = document.getElementById('customer-queue');
+    this.progressionContainer = document.getElementById('progression-status');
   }
 
   public initialize(): void {
@@ -67,8 +71,65 @@ export class CustomerUI {
     }
   }
 
-  public update(customers: CustomerSystem, storedPortals: PortalType[]): void {
+  public update(
+    customers: CustomerSystem, 
+    storedPortals: PortalType[], 
+    progression?: ProgressionSystem, 
+    elements?: ElementSystem
+  ): void {
+    this.renderProgressionStatus(progression, elements);
     this.renderQueue(customers, storedPortals);
+  }
+
+  private renderProgressionStatus(progression?: ProgressionSystem, elements?: ElementSystem): void {
+    if (!this.progressionContainer || !progression || !elements) return;
+
+    const currentTier = progression.getCurrentTier();
+    const nextTier = progression.getNextTier();
+    const contractsCompleted = progression.getContractsCompletedThisTier();
+    const miniBossCompleted = progression.isMiniBossCompleted(currentTier.tier);
+
+    let html = '<div class="progression-info">';
+    html += `<div class="tier-name">🏆 ${currentTier.name} (Tier ${currentTier.tier})</div>`;
+    html += `<div class="tier-progress">`;
+    html += `<span class="contracts-count">Contracts: ${contractsCompleted}</span>`;
+    html += `<span class="miniboss-status ${miniBossCompleted ? 'complete' : 'incomplete'}">`;
+    html += miniBossCompleted ? '✅ Mini-boss Complete' : '⚔️ Mini-boss Pending';
+    html += `</span>`;
+    html += `</div>`;
+
+    // Show next tier unlock requirements if available
+    if (nextTier) {
+      const unlockStatus = progression.getNextTierUnlockStatus(elements.getUnlockedElements());
+      html += `<div class="next-tier-info">`;
+      html += `<div class="next-tier-name">Next: ${nextTier.name}</div>`;
+      html += `<div class="unlock-requirements">`;
+      
+      // Mini-boss requirement
+      html += `<div class="requirement ${unlockStatus.miniBossCompleted ? 'met' : 'unmet'}">`;
+      html += `${unlockStatus.miniBossCompleted ? '✅' : '❌'} Complete mini-boss`;
+      html += `</div>`;
+      
+      // Contracts requirement
+      html += `<div class="requirement ${unlockStatus.contractsCompleted ? 'met' : 'unmet'}">`;
+      html += `${unlockStatus.contractsCompleted ? '✅' : '❌'} ${contractsCompleted}/${unlockStatus.contractsNeeded} contracts`;
+      html += `</div>`;
+      
+      // Element requirement
+      if (unlockStatus.elementNeeded) {
+        html += `<div class="requirement ${unlockStatus.elementUnlocked ? 'met' : 'unmet'}">`;
+        html += `${unlockStatus.elementUnlocked ? '✅' : '❌'} Research ${unlockStatus.elementNeeded}`;
+        html += `</div>`;
+      }
+      
+      html += `</div>`;
+      html += `</div>`;
+    } else {
+      html += `<div class="next-tier-info">🎉 Max tier reached!</div>`;
+    }
+
+    html += '</div>';
+    this.progressionContainer.innerHTML = html;
   }
 
   private renderQueue(customers: CustomerSystem, storedPortals: PortalType[]): void {

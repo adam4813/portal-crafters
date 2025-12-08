@@ -411,6 +411,90 @@ body {
   font-weight: bold;
 }
 
+/* Progression Status Display */
+.progression-status {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--primary-color);
+}
+
+.progression-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.tier-name {
+  font-size: 1rem;
+  font-weight: bold;
+  color: var(--accent-color);
+}
+
+.tier-progress {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.contracts-count {
+  color: var(--text-secondary);
+}
+
+.miniboss-status {
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+
+.miniboss-status.complete {
+  background-color: rgba(72, 187, 120, 0.2);
+  color: var(--success-color);
+}
+
+.miniboss-status.incomplete {
+  background-color: rgba(245, 101, 101, 0.2);
+  color: var(--danger-color);
+}
+
+.next-tier-info {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background-color: rgba(107, 70, 193, 0.1);
+  border-radius: 4px;
+  border-left: 3px solid var(--primary-color);
+}
+
+.next-tier-name {
+  font-weight: bold;
+  color: var(--primary-color);
+  margin-bottom: 0.25rem;
+}
+
+.unlock-requirements {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.requirement {
+  font-size: 0.75rem;
+  padding: 0.15rem 0.3rem;
+  border-radius: 3px;
+}
+
+.requirement.met {
+  color: var(--success-color);
+  background-color: rgba(72, 187, 120, 0.1);
+}
+
+.requirement.unmet {
+  color: var(--text-secondary);
+  background-color: rgba(160, 174, 192, 0.1);
+}
+
 .customer-requirements {
   font-size: 0.85rem;
   color: var(--text-secondary);

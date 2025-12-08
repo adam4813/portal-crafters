@@ -680,7 +680,7 @@ export class UIManager {
     // Update all UI components
     this.craftingUI.update(data.crafting, data.inventory);
     this.inventoryUI.update(data.inventory, data.elements);
-    this.customerUI.update(data.customers, data.storedPortals);
+    this.customerUI.update(data.customers, data.storedPortals, data.progression, data.elements);
     this.researchUI.update(data.elements, data.inventory);
     this.portalInventoryUI.update(data.storedPortals);
     
