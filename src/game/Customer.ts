@@ -1,10 +1,19 @@
-import type { Customer, CustomerTemplate, ContractRequirements, ElementType } from '../types';
+import type {
+  Customer,
+  CustomerTemplate,
+  ContractRequirements,
+  ElementType,
+  EquipmentSlot,
+} from '../types';
 import {
   CUSTOMER_TEMPLATES,
   generateCustomerName,
   generateCustomerIcon,
   generatePayment,
   selectElementRequirements,
+  generateContractModifiers,
+  generateSpecialReward,
+  determineRewardTier,
 } from '../data/customers';
 import { generateId } from '../utils/helpers';
 
@@ -71,13 +80,18 @@ export class CustomerSystem {
       return null;
     }
 
-    const templateIndex = Math.min(
-      Math.floor(Math.random() * this.difficultyLevel),
-      CUSTOMER_TEMPLATES.length - 1
-    );
-    const template = CUSTOMER_TEMPLATES[templateIndex];
+    // Select template based on difficulty level and tier
+    // Allow special customers to appear occasionally (5% chance at higher difficulties)
+    const template = this.selectTemplate();
 
     const requirements = this.generateRequirements(template);
+    const modifiers = generateContractModifiers(template, this.difficultyLevel);
+    const specialReward = generateSpecialReward(template, this.difficultyLevel);
+    const rewardTier = determineRewardTier(template, modifiers);
+
+    // Apply modifier effects to requirements
+    this.applyModifierEffects(requirements, modifiers, template);
+
     const customer: Customer = {
       id: generateId(),
       name: generateCustomerName(template),
@@ -86,10 +100,92 @@ export class CustomerSystem {
       payment: generatePayment(template),
       patience: template.basePatience + Math.floor(Math.random() * 30),
       arrivedAt: Date.now(),
+      specialReward,
+      rewardTier,
+      isSpecial: template.isSpecial,
     };
 
     this.queue.push(customer);
     return customer;
+  }
+
+  /**
+   * Select a customer template based on difficulty and special customer probability
+   */
+  private selectTemplate(): CustomerTemplate {
+    // Separate regular and special customers
+    const regularTemplates = CUSTOMER_TEMPLATES.filter((t) => !t.isSpecial);
+    const specialTemplates = CUSTOMER_TEMPLATES.filter((t) => t.isSpecial);
+
+    // 5% base chance for special customers, increases with difficulty
+    const specialChance = Math.min(0.05 + this.difficultyLevel * 0.02, 0.2);
+
+    if (specialTemplates.length > 0 && Math.random() < specialChance) {
+      // Select a special customer appropriate for current difficulty
+      const appropriateSpecials = specialTemplates.filter(
+        (t) => (t.tier || 1) <= this.difficultyLevel + 1
+      );
+      if (appropriateSpecials.length > 0) {
+        return appropriateSpecials[Math.floor(Math.random() * appropriateSpecials.length)];
+      }
+    }
+
+    // Select regular template based on difficulty
+    const templateIndex = Math.min(
+      Math.floor(Math.random() * this.difficultyLevel),
+      regularTemplates.length - 1
+    );
+    return regularTemplates[templateIndex];
+  }
+
+  /**
+   * Apply modifier effects to contract requirements
+   */
+  private applyModifierEffects(
+    requirements: ContractRequirements,
+    modifiers: import('../types').ContractModifier[],
+    template: CustomerTemplate
+  ): void {
+    for (const modifier of modifiers) {
+      switch (modifier) {
+        case 'urgent':
+          // Reduce patience significantly but increase payment
+          // Payment adjustment will be handled in UI display
+          break;
+        case 'bonus':
+          // Increase payment (handled in payment calculation)
+          break;
+        case 'perfectionist':
+          // Increase minimum level and element amount
+          requirements.minLevel = Math.floor(requirements.minLevel * 1.3);
+          if (requirements.minElementAmount) {
+            requirements.minElementAmount = Math.ceil(requirements.minElementAmount * 1.2);
+          }
+          break;
+        case 'bulk_order':
+          // Significantly increase element and mana requirements
+          if (requirements.minElementAmount) {
+            requirements.minElementAmount = Math.ceil(requirements.minElementAmount * 1.5);
+          }
+          if (requirements.minMana) {
+            requirements.minMana = Math.floor(requirements.minMana * 1.5);
+          }
+          break;
+        case 'experimental':
+          // Add equipment requirements
+          if (!requirements.requiredEquipmentSlots && Math.random() < 0.7) {
+            const slots: EquipmentSlot[] = ['weapon', 'armor', 'accessory'];
+            const slotCount = Math.ceil(1 + template.difficultyMultiplier * 0.5);
+            requirements.requiredEquipmentSlots = [];
+            for (let i = 0; i < slotCount; i++) {
+              requirements.requiredEquipmentSlots.push(
+                slots[Math.floor(Math.random() * slots.length)]
+              );
+            }
+          }
+          break;
+      }
+    }
   }
 
   private generateRequirements(template: CustomerTemplate): ContractRequirements {

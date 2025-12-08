@@ -15,6 +15,7 @@ import { ExpeditionSystem } from './ExpeditionSystem';
 import { UIManager } from '../ui/UIManager';
 import { createInitialGameState, showToast } from '../utils/helpers';
 import { calculatePortalEffects } from './PortalEffectSystem';
+import { getEquipmentById } from '../data/equipment';
 
 export class Game {
   // Three.js components
@@ -378,10 +379,46 @@ export class Game {
     const isMiniBoss = customer.id.startsWith('miniboss-');
 
     // Complete the contract
-    const payment = this.customerSystem.completeContract(customer.id);
+    let payment = this.customerSystem.completeContract(customer.id);
+
+    // Apply modifier bonuses to payment
+    if (customer.requirements.modifiers) {
+      for (const modifier of customer.requirements.modifiers) {
+        switch (modifier) {
+          case 'urgent':
+            payment = Math.floor(payment * 1.3); // 30% bonus for urgent contracts
+            break;
+          case 'bonus':
+            payment = Math.floor(payment * 1.2); // 20% bonus
+            break;
+          case 'perfectionist':
+            payment = Math.floor(payment * 1.25); // 25% bonus for meeting strict requirements
+            break;
+          case 'bulk_order':
+            payment = Math.floor(payment * 1.4); // 40% bonus for bulk orders
+            break;
+          case 'experimental':
+            payment = Math.floor(payment * 1.15); // 15% bonus for experimental contracts
+            break;
+        }
+      }
+    }
+
     this.inventorySystem.addGold(payment);
     this.gameState.totalCustomersServed++;
     this.gameState.totalGoldEarned += payment;
+
+    // Apply special reward if customer offered one
+    if (customer.specialReward) {
+      const specialMessage = this.rewardSystem.applyReward(customer.specialReward, {
+        addGold: (amount) => this.inventorySystem.addGold(amount),
+        addMana: (amount) => this.inventorySystem.addMana(amount),
+        addIngredient: (id, amount) => this.inventorySystem.addIngredient(id, amount),
+        addEquipment: (id, amount) => this.inventorySystem.addEquipment(id, amount),
+        addGeneratedEquipment: (equipment) => this.inventorySystem.addGeneratedEquipment(equipment),
+      });
+      showToast(`Special Reward: ${specialMessage}`, 'success');
+    }
 
     // Track progression
     if (isMiniBoss) {
@@ -419,7 +456,11 @@ export class Game {
     }
 
     if (!isMiniBoss) {
-      showToast(`Contract complete! Received ${payment} gold!`, 'success');
+      const modifierText =
+        customer.requirements.modifiers && customer.requirements.modifiers.length > 0
+          ? ` (${customer.requirements.modifiers.join(', ')})`
+          : '';
+      showToast(`Contract complete! Received ${payment} gold!${modifierText}`, 'success');
     }
     this.updateUI();
   }
@@ -484,6 +525,67 @@ export class Game {
       }
     }
     // If reqElements is undefined, any combination is allowed
+
+    // Check equipment requirements
+    if (customer.requirements.requiredEquipmentSlots) {
+      const equipmentSlots = customer.requirements.requiredEquipmentSlots;
+      const requiredCount = customer.requirements.minEquipmentCount || equipmentSlots.length;
+
+      // Count how many required slots are filled in the portal
+      let filledCount = 0;
+      for (const slot of equipmentSlots) {
+        // Check if portal has equipment in this slot
+        // We need to check both portal.equipment (static) and portal.generatedEquipmentAttributes
+        const hasStaticEquipment = portal.equipment.some((eqId) => {
+          const eq = getEquipmentById(eqId);
+          return eq && eq.slot === slot;
+        });
+        const hasGeneratedEquipment = (portal.generatedEquipmentAttributes || []).some(
+          (genEq) => genEq.slot === slot
+        );
+
+        if (hasStaticEquipment || hasGeneratedEquipment) {
+          filledCount++;
+        }
+      }
+
+      if (filledCount < requiredCount) {
+        return false;
+      }
+    }
+
+    // Check minimum equipment rarity (if specified)
+    if (customer.requirements.minEquipmentRarity) {
+      const rarityOrder = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
+      const minRarityIndex = rarityOrder.indexOf(customer.requirements.minEquipmentRarity);
+
+      // Check all equipment in portal meets minimum rarity
+      let hasEquipment = false;
+      for (const eqId of portal.equipment) {
+        const eq = getEquipmentById(eqId);
+        if (eq) {
+          hasEquipment = true;
+          const eqRarityIndex = rarityOrder.indexOf(eq.rarity);
+          if (eqRarityIndex < minRarityIndex) {
+            return false;
+          }
+        }
+      }
+
+      // Also check generated equipment
+      for (const genEq of portal.generatedEquipmentAttributes || []) {
+        hasEquipment = true;
+        const eqRarityIndex = rarityOrder.indexOf(genEq.rarity);
+        if (eqRarityIndex < minRarityIndex) {
+          return false;
+        }
+      }
+
+      // Must have at least one piece of equipment if rarity is required
+      if (!hasEquipment) {
+        return false;
+      }
+    }
 
     return true;
   }
