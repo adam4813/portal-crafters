@@ -1698,3 +1698,156 @@ body {
 .guide-step strong {
   color: var(--accent-color);
 }
+
+/* Portal Types in Recipe Modal */
+.recipes-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid var(--background-light);
+}
+
+.recipe-tab {
+  background-color: var(--background-light);
+  color: var(--text-secondary);
+  border: none;
+  padding: 0.75rem 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 6px 6px 0 0;
+  font-size: 1rem;
+}
+
+.recipe-tab:hover {
+  background-color: var(--background-medium);
+  color: var(--text-primary);
+}
+
+.recipe-tab.active {
+  background-color: var(--primary-color);
+  color: var(--text-primary);
+}
+
+.recipes-content {
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.recipe-tab-content {
+  animation: fadeIn 0.3s ease;
+}
+
+.recipe-tab-content.hidden {
+  display: none;
+}
+
+.portal-types-tier {
+  margin-bottom: 2rem;
+}
+
+.tier-header {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  border-radius: 6px;
+  text-transform: capitalize;
+}
+
+.tier-common {
+  background-color: rgba(160, 174, 192, 0.2);
+  color: #a0aec0;
+}
+
+.tier-uncommon {
+  background-color: rgba(72, 187, 120, 0.2);
+  color: #48bb78;
+}
+
+.tier-rare {
+  background-color: rgba(66, 153, 225, 0.2);
+  color: #4299e1;
+}
+
+.tier-epic {
+  background-color: rgba(159, 122, 234, 0.2);
+  color: #9f7aea;
+}
+
+.tier-legendary {
+  background-color: rgba(237, 137, 54, 0.2);
+  color: #ed8936;
+}
+
+.portal-type-entry {
+  background-color: var(--background-medium);
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--background-light);
+  transition: all 0.2s ease;
+}
+
+.portal-type-clickable {
+  cursor: pointer;
+}
+
+.portal-type-clickable:hover {
+  background-color: var(--background-light);
+  border-color: var(--primary-color);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.portal-type-locked {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.portal-type-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.portal-type-icon {
+  font-size: 1.5rem;
+}
+
+.portal-type-name {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+.portal-type-affinity {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-left: auto;
+  padding: 0.25rem 0.75rem;
+  background-color: var(--background-light);
+  border-radius: 12px;
+}
+
+.portal-type-description {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-bottom: 0.75rem;
+  font-style: italic;
+}
+
+.portal-type-requirements {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--background-light);
+}
+
+.portal-type-requirements strong {
+  color: var(--text-primary);
+}
+
+.portal-name {
+  font-weight: bold;
+  color: var(--primary-color);
+}

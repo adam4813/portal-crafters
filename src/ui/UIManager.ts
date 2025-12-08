@@ -455,7 +455,201 @@ export class UIManager {
   private renderRecipesModal(): void {
     if (!this.modalContent || !this.lastUpdateData) return;
     
-    this.researchUI.renderRecipesToElement(this.modalContent, this.lastUpdateData.inventory);
+    const { inventory } = this.lastUpdateData;
+    const storedPortals = this.game.getStoredPortals();
+
+    // Import portal type functions dynamically
+    import('../data/portalTypes').then(({ getDiscoveredPortalTypes, getAllPortalTypes }) => {
+      // Get discovered portal types based on crafted portals
+      const discovered = getDiscoveredPortalTypes(
+        storedPortals.map(p => ({ elements: p.elements, ingredients: p.ingredients }))
+      );
+      const allTypes = getAllPortalTypes();
+
+      let html = `
+        <div class="recipes-tabs">
+          <button class="recipe-tab active" data-tab="ingredient-recipes">🧪 Ingredient Recipes</button>
+          <button class="recipe-tab" data-tab="portal-types">🌀 Portal Types</button>
+        </div>
+        <div class="recipes-content">
+          <div id="ingredient-recipes-tab" class="recipe-tab-content active"></div>
+          <div id="portal-types-tab" class="recipe-tab-content hidden"></div>
+        </div>
+      `;
+
+      this.modalContent!.innerHTML = html;
+
+      // Render ingredient recipes
+      const ingredientTab = this.modalContent!.querySelector('#ingredient-recipes-tab') as HTMLElement;
+      if (ingredientTab) {
+        this.researchUI.renderRecipesToElement(ingredientTab, inventory);
+      }
+
+      // Render portal types
+      const portalTypesTab = this.modalContent!.querySelector('#portal-types-tab') as HTMLElement;
+      if (portalTypesTab) {
+        this.renderPortalTypesTab(portalTypesTab, allTypes, discovered, inventory);
+      }
+
+      // Setup tab switching
+      this.modalContent!.querySelectorAll('.recipe-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          const tabName = (tab as HTMLElement).dataset.tab;
+          this.modalContent!.querySelectorAll('.recipe-tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          
+          this.modalContent!.querySelectorAll('.recipe-tab-content').forEach(content => {
+            content.classList.add('hidden');
+            content.classList.remove('active');
+          });
+          
+          const targetTab = this.modalContent!.querySelector(`#${tabName}-tab`);
+          if (targetTab) {
+            targetTab.classList.remove('hidden');
+            targetTab.classList.add('active');
+          }
+        });
+      });
+    });
+  }
+
+  private renderPortalTypesTab(
+    container: HTMLElement,
+    allTypes: any[],
+    discovered: Set<string>,
+    inventory: any
+  ): void {
+    if (discovered.size === 0) {
+      container.innerHTML = `
+        <p class="empty-message">No portal types discovered yet.</p>
+        <p class="info-text">Craft portals with different element and ingredient combinations to discover portal types!</p>
+      `;
+      return;
+    }
+
+    // Group by tier
+    const tiers = ['legendary', 'epic', 'rare', 'uncommon', 'common'];
+    let html = '';
+
+    for (const tier of tiers) {
+      const tierTypes = allTypes.filter(t => t.tier === tier && discovered.has(t.id));
+      if (tierTypes.length === 0) continue;
+
+      html += `<div class="portal-types-tier">`;
+      html += `<h4 class="tier-header tier-${tier}">${tier.charAt(0).toUpperCase() + tier.slice(1)} Portals</h4>`;
+
+      for (const portalType of tierTypes) {
+        // Check if player has required elements
+        const hasElements = this.checkHasElements(portalType.requiredElements, inventory);
+        const hasIngredients = this.checkHasIngredients(portalType.requiredIngredients, inventory);
+        const canCraft = hasElements && hasIngredients;
+
+        // Build requirements display
+        const elementReqs = Object.entries(portalType.requiredElements)
+          .map(([element, amount]) => `${element}: ${amount}`)
+          .join(', ');
+        
+        const ingredientReqs = portalType.requiredIngredients 
+          ? portalType.requiredIngredients.map((id: string) => {
+              const ing = this.getIngredientName(id);
+              return ing;
+            }).join(' OR ')
+          : 'None';
+
+        const clickableClass = canCraft ? 'portal-type-clickable' : 'portal-type-locked';
+        const tooltip = canCraft ? 'Click to pre-fill crafting slots' : 'Missing required resources';
+
+        html += `
+          <div class="portal-type-entry ${clickableClass}" data-portal-type-id="${portalType.id}" title="${tooltip}">
+            <div class="portal-type-header">
+              <span class="portal-type-icon">${portalType.icon}</span>
+              <span class="portal-type-name">${portalType.name}</span>
+              <span class="portal-type-affinity">${portalType.affinity}</span>
+            </div>
+            <div class="portal-type-description">${portalType.description}</div>
+            <div class="portal-type-requirements">
+              <strong>Elements:</strong> ${elementReqs || 'None'}
+              ${portalType.requiredIngredients ? `<br><strong>Items:</strong> ${ingredientReqs}` : ''}
+            </div>
+          </div>
+        `;
+      }
+
+      html += `</div>`;
+    }
+
+    container.innerHTML = html;
+
+    // Add click handlers for clickable portal types
+    container.querySelectorAll('.portal-type-clickable').forEach(typeEl => {
+      typeEl.addEventListener('click', () => {
+        const typeId = (typeEl as HTMLElement).dataset.portalTypeId;
+        if (typeId) {
+          this.handlePortalTypeClick(typeId);
+        }
+      });
+    });
+  }
+
+  private checkHasElements(requiredElements: any, inventory: any): boolean {
+    for (const [element, amount] of Object.entries(requiredElements)) {
+      if (!inventory.hasElement(element, amount as number)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private checkHasIngredients(requiredIngredients: string[] | undefined, inventory: any): boolean {
+    if (!requiredIngredients || requiredIngredients.length === 0) return true;
+    return requiredIngredients.some(id => inventory.hasIngredient(id));
+  }
+
+  private getIngredientName(id: string): string {
+    // Import and use getIngredientById
+    import('../data/ingredients').then(({ getIngredientById }) => {
+      const ingredient = getIngredientById(id);
+      return ingredient?.name || id;
+    });
+    return id; // Return id as fallback for synchronous call
+  }
+
+  private handlePortalTypeClick(typeId: string): void {
+    import('../data/portalTypes').then(({ getPortalTypeById }) => {
+      const portalType = getPortalTypeById(typeId);
+      if (!portalType) return;
+
+      // Add required elements to portal
+      for (const [element, amount] of Object.entries(portalType.requiredElements)) {
+        this.game.addElementToPortal(element as any, amount as number);
+      }
+
+      // Try to add at least one required ingredient to a crafting slot
+      if (portalType.requiredIngredients && portalType.requiredIngredients.length > 0) {
+        const crafting = this.game.getCrafting();
+        const inventory = this.game.getInventory();
+        
+        // Find first available ingredient and slot
+        for (const ingredientId of portalType.requiredIngredients) {
+          if (inventory.hasIngredient(ingredientId)) {
+            const slots = crafting.getSlots();
+            const emptySlot = slots.find(s => !s.ingredient && !s.equipment);
+            if (emptySlot) {
+              crafting.addIngredientToSlot(emptySlot.index, ingredientId);
+              inventory.removeIngredient(ingredientId, 1);
+              break;
+            }
+          }
+        }
+      }
+
+      this.closeModal();
+      this.game.refreshUI();
+      
+      import('../utils/helpers').then(({ showToast }) => {
+        showToast(`Pre-filled crafting with ${portalType.name} recipe!`, 'success');
+      });
+    });
   }
 
   private renderGuideModal(): void {
