@@ -44,7 +44,7 @@ export class UIManager {
   // DOM elements
   private moneyDisplay: HTMLElement | null;
   private manaDisplay: HTMLElement | null;
-  
+
   // Modal elements
   private modalOverlay: HTMLElement | null;
   private modalTitle: HTMLElement | null;
@@ -56,7 +56,7 @@ export class UIManager {
 
   // Last update data for modal re-renders
   private lastUpdateData: UIUpdateData | null = null;
-  
+
   // Cache for discovered portal types (invalidated on portal craft)
   private discoveredPortalTypesCache: Set<string> | null = null;
 
@@ -72,7 +72,7 @@ export class UIManager {
 
     this.moneyDisplay = document.getElementById('money-display');
     this.manaDisplay = document.getElementById('mana-display');
-    
+
     // Modal elements
     this.modalOverlay = document.getElementById('modal-overlay');
     this.modalTitle = document.getElementById('modal-title');
@@ -88,7 +88,7 @@ export class UIManager {
     this.researchUI.initialize();
     this.manaConversionUI.initialize();
     this.portalInventoryUI.initialize();
-    
+
     this.setupModalHandlers();
   }
 
@@ -96,21 +96,29 @@ export class UIManager {
     // Header buttons
     document.getElementById('guide-btn')?.addEventListener('click', () => this.openModal('guide'));
     document.getElementById('shop-btn')?.addEventListener('click', () => this.openModal('shop'));
-    document.getElementById('upgrades-btn')?.addEventListener('click', () => this.openModal('upgrades'));
-    document.getElementById('research-btn')?.addEventListener('click', () => this.openModal('research'));
-    document.getElementById('mana-converter-btn')?.addEventListener('click', () => this.openModal('mana-converter'));
-    document.getElementById('recipes-btn')?.addEventListener('click', () => this.openModal('recipes'));
-    
+    document
+      .getElementById('upgrades-btn')
+      ?.addEventListener('click', () => this.openModal('upgrades'));
+    document
+      .getElementById('research-btn')
+      ?.addEventListener('click', () => this.openModal('research'));
+    document
+      .getElementById('mana-converter-btn')
+      ?.addEventListener('click', () => this.openModal('mana-converter'));
+    document
+      .getElementById('recipes-btn')
+      ?.addEventListener('click', () => this.openModal('recipes'));
+
     // Close button
     this.modalClose?.addEventListener('click', () => this.closeModal());
-    
+
     // Click outside to close
     this.modalOverlay?.addEventListener('click', (e) => {
       if (e.target === this.modalOverlay) {
         this.closeModal();
       }
     });
-    
+
     // Escape key to close
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && this.currentModal) {
@@ -121,22 +129,22 @@ export class UIManager {
 
   private openModal(type: ModalType): void {
     if (!this.modalOverlay || !this.modalTitle || !this.modalContent) return;
-    
+
     this.currentModal = type;
     this.game.pauseCustomerTimers();
     this.customerUI.setPaused(true);
-    
+
     // Set modal title
     const titles: Record<string, string> = {
-      'guide': '📚 Game Guide',
-      'shop': '🛒 Mana Shop',
-      'upgrades': '⬆️ Upgrades',
-      'research': '🔬 Research',
+      guide: '📚 Game Guide',
+      shop: '🛒 Mana Shop',
+      upgrades: '⬆️ Upgrades',
+      research: '🔬 Research',
       'mana-converter': '✨ Mana Converter',
-      'recipes': '📖 Recipe Book'
+      recipes: '📖 Recipe Book',
     };
     this.modalTitle.textContent = titles[type || ''] || '';
-    
+
     // Apply modal size classes
     const modalContainer = this.modalOverlay.querySelector('.modal-container');
     if (modalContainer) {
@@ -145,29 +153,29 @@ export class UIManager {
         modalContainer.classList.add('guide-modal');
       }
     }
-    
+
     // Render modal content
     this.renderModalContent();
-    
+
     // Show modal
     this.modalOverlay.classList.remove('hidden');
   }
 
   private closeModal(): void {
     if (!this.modalOverlay) return;
-    
+
     this.currentModal = null;
     this.game.resumeCustomerTimers();
     this.customerUI.setPaused(false);
     this.modalOverlay.classList.add('hidden');
-    
+
     // Force UI refresh to update customer cards with adjusted arrivedAt times
     this.game.refreshUI();
   }
 
   private renderModalContent(): void {
     if (!this.modalContent || !this.lastUpdateData) return;
-    
+
     switch (this.currentModal) {
       case 'guide':
         this.renderGuideModal();
@@ -192,7 +200,7 @@ export class UIManager {
 
   private renderShopModal(): void {
     if (!this.modalContent || !this.lastUpdateData) return;
-    
+
     const { inventory } = this.lastUpdateData;
     const manaSystem = this.game.getManaSystem();
     const exchangeRate = manaSystem.getExchangeRate();
@@ -205,22 +213,95 @@ export class UIManager {
     ];
 
     const shopItems = [
-      { id: 'health_potion', name: 'Health Potion', description: '+10% gold from portals', cost: 25, goldReward: 0 },
-      { id: 'mana_crystal', name: 'Mana Crystal', description: '+15% mana from portals', cost: 40, goldReward: 0 },
-      { id: 'lucky_charm', name: 'Lucky Charm', description: '+10% ingredient drop chance', cost: 50, goldReward: 0 },
-      { id: 'treasure_map', name: 'Treasure Map', description: '+25% gold from portals', cost: 75, goldReward: 0 },
-      { id: 'enchanted_lens', name: 'Enchanted Lens', description: '+10% equipment chance, +1 rarity', cost: 100, goldReward: 0 },
-      { id: 'philosophers_stone', name: "Philosopher's Stone", description: '+20% gold/mana, +5% ingredients, +2 rarity', cost: 250, goldReward: 0 },
-      { id: 'debug_gold_grant', name: '[DEBUG] Gold Grant', description: 'Gives 1000 gold for testing', cost: 0, goldReward: 1000 },
-      { id: 'debug_gold_sink', name: '[DEBUG] Gold Sink', description: 'Burns 100 gold for testing', cost: 100, goldReward: 0 },
+      {
+        id: 'health_potion',
+        name: 'Health Potion',
+        description: '+10% gold from portals',
+        cost: 25,
+        goldReward: 0,
+      },
+      {
+        id: 'mana_crystal',
+        name: 'Mana Crystal',
+        description: '+15% mana from portals',
+        cost: 40,
+        goldReward: 0,
+      },
+      {
+        id: 'lucky_charm',
+        name: 'Lucky Charm',
+        description: '+10% ingredient drop chance',
+        cost: 50,
+        goldReward: 0,
+      },
+      {
+        id: 'treasure_map',
+        name: 'Treasure Map',
+        description: '+25% gold from portals',
+        cost: 75,
+        goldReward: 0,
+      },
+      {
+        id: 'enchanted_lens',
+        name: 'Enchanted Lens',
+        description: '+10% equipment chance, +1 rarity',
+        cost: 100,
+        goldReward: 0,
+      },
+      {
+        id: 'philosophers_stone',
+        name: "Philosopher's Stone",
+        description: '+20% gold/mana, +5% ingredients, +2 rarity',
+        cost: 250,
+        goldReward: 0,
+      },
+      {
+        id: 'debug_gold_grant',
+        name: '[DEBUG] Gold Grant',
+        description: 'Gives 1000 gold for testing',
+        cost: 0,
+        goldReward: 1000,
+      },
+      {
+        id: 'debug_gold_sink',
+        name: '[DEBUG] Gold Sink',
+        description: 'Burns 100 gold for testing',
+        cost: 100,
+        goldReward: 0,
+      },
     ];
 
     const shopEquipment = [
-      { id: 'rusty_sword', name: '🗡️ Rusty Sword', description: 'Common weapon, +5 portal bonus', cost: 50 },
-      { id: 'leather_armor', name: '🥋 Leather Armor', description: 'Common armor, +3 portal bonus', cost: 40 },
-      { id: 'copper_ring', name: '💍 Copper Ring', description: 'Common accessory, +2 portal bonus', cost: 30 },
-      { id: 'iron_sword', name: '⚔️ Iron Sword', description: 'Uncommon weapon, +10 portal bonus, +2 earth', cost: 120 },
-      { id: 'chainmail', name: '🛡️ Chainmail', description: 'Uncommon armor, +8 portal bonus', cost: 100 },
+      {
+        id: 'rusty_sword',
+        name: '🗡️ Rusty Sword',
+        description: 'Common weapon, +5 portal bonus',
+        cost: 50,
+      },
+      {
+        id: 'leather_armor',
+        name: '🥋 Leather Armor',
+        description: 'Common armor, +3 portal bonus',
+        cost: 40,
+      },
+      {
+        id: 'copper_ring',
+        name: '💍 Copper Ring',
+        description: 'Common accessory, +2 portal bonus',
+        cost: 30,
+      },
+      {
+        id: 'iron_sword',
+        name: '⚔️ Iron Sword',
+        description: 'Uncommon weapon, +10 portal bonus, +2 earth',
+        cost: 120,
+      },
+      {
+        id: 'chainmail',
+        name: '🛡️ Chainmail',
+        description: 'Uncommon armor, +8 portal bonus',
+        cost: 100,
+      },
     ];
 
     // Build tabs
@@ -344,7 +425,7 @@ export class UIManager {
 
   private renderUpgradesModal(): void {
     if (!this.modalContent || !this.lastUpdateData) return;
-    
+
     const { inventory, upgrades } = this.lastUpdateData;
     const allUpgrades = upgrades.getAllUpgrades();
     const gold = inventory.getGold();
@@ -400,7 +481,7 @@ export class UIManager {
 
   private renderResearchModal(): void {
     if (!this.modalContent || !this.lastUpdateData) return;
-    
+
     const { elements, inventory } = this.lastUpdateData;
     const allNodes = elements.getAllResearchNodes();
     const gold = inventory.getGold();
@@ -454,27 +535,32 @@ export class UIManager {
 
   private renderManaConverterModal(): void {
     if (!this.modalContent || !this.lastUpdateData) return;
-    
-    this.manaConversionUI.renderToElement(this.modalContent, this.lastUpdateData.inventory, this.lastUpdateData.elements);
+
+    this.manaConversionUI.renderToElement(
+      this.modalContent,
+      this.lastUpdateData.inventory,
+      this.lastUpdateData.elements
+    );
   }
 
   private async renderRecipesModal(): Promise<void> {
     if (!this.modalContent || !this.lastUpdateData) return;
-    
+
     const { inventory } = this.lastUpdateData;
     const storedPortals = this.game.getStoredPortals();
 
     try {
       // Import portal type functions dynamically
       const { getDiscoveredPortalTypes, getAllPortalTypes } = await import('../data/portalTypes');
-      
+
       // Use cached discovered types if available, otherwise calculate
       if (!this.discoveredPortalTypesCache) {
         this.discoveredPortalTypesCache = getDiscoveredPortalTypes(
-          storedPortals.map(p => ({ 
-            elements: p.elements, 
-            ingredients: p.ingredients, 
-            equipment: p.equipment || [] 
+          storedPortals.map((p) => ({
+            elements: p.elements,
+            ingredients: p.ingredients,
+            equipment: p.equipment || [],
+            generatedEquipmentAttributes: p.generatedEquipmentAttributes || [],
           }))
         );
       }
@@ -495,7 +581,9 @@ export class UIManager {
       this.modalContent!.innerHTML = html;
 
       // Render ingredient recipes
-      const ingredientTab = this.modalContent!.querySelector('#ingredient-recipes-tab') as HTMLElement;
+      const ingredientTab = this.modalContent!.querySelector(
+        '#ingredient-recipes-tab'
+      ) as HTMLElement;
       if (ingredientTab) {
         this.researchUI.renderRecipesToElement(ingredientTab, inventory);
       }
@@ -507,17 +595,19 @@ export class UIManager {
       }
 
       // Setup tab switching
-      this.modalContent!.querySelectorAll('.recipe-tab').forEach(tab => {
+      this.modalContent!.querySelectorAll('.recipe-tab').forEach((tab) => {
         tab.addEventListener('click', () => {
           const tabName = (tab as HTMLElement).dataset.tab;
-          this.modalContent!.querySelectorAll('.recipe-tab').forEach(t => t.classList.remove('active'));
+          this.modalContent!.querySelectorAll('.recipe-tab').forEach((t) =>
+            t.classList.remove('active')
+          );
           tab.classList.add('active');
-          
-          this.modalContent!.querySelectorAll('.recipe-tab-content').forEach(content => {
+
+          this.modalContent!.querySelectorAll('.recipe-tab-content').forEach((content) => {
             content.classList.add('hidden');
             content.classList.remove('active');
           });
-          
+
           const targetTab = this.modalContent!.querySelector(`#${tabName}-tab`);
           if (targetTab) {
             targetTab.classList.remove('hidden');
@@ -527,10 +617,11 @@ export class UIManager {
       });
     } catch (error) {
       console.error('Failed to load portal types:', error);
-      this.modalContent!.innerHTML = '<p class="error-message">Failed to load recipe book. Please try again.</p>';
+      this.modalContent!.innerHTML =
+        '<p class="error-message">Failed to load recipe book. Please try again.</p>';
     }
   }
-  
+
   // Method to invalidate cache when a new portal is crafted
   public invalidatePortalTypesCache(): void {
     this.discoveredPortalTypesCache = null;
@@ -545,17 +636,23 @@ export class UIManager {
     if (discovered.size === 0) {
       container.innerHTML = `
         <p class="empty-message">No portal types discovered yet.</p>
-        <p class="info-text">Craft portals with different element and ingredient combinations to discover portal types!</p>
+        <p class="info-text">Craft portals with different element, ingredient, and equipment combinations to discover portal types!</p>
       `;
       return;
     }
 
     // Group by tier
-    const tiers: Array<'legendary' | 'epic' | 'rare' | 'uncommon' | 'common'> = ['legendary', 'epic', 'rare', 'uncommon', 'common'];
+    const tiers: Array<'legendary' | 'epic' | 'rare' | 'uncommon' | 'common'> = [
+      'legendary',
+      'epic',
+      'rare',
+      'uncommon',
+      'common',
+    ];
     let html = '';
 
     for (const tier of tiers) {
-      const tierTypes = allTypes.filter(t => t.tier === tier && discovered.has(t.id));
+      const tierTypes = allTypes.filter((t) => t.tier === tier && discovered.has(t.id));
       if (tierTypes.length === 0) continue;
 
       html += `<div class="portal-types-tier">`;
@@ -571,13 +668,15 @@ export class UIManager {
         const elementReqs = Object.entries(portalType.requiredElements)
           .map(([element, amount]) => `${element}: ${amount}`)
           .join(', ');
-        
-        const tagReqs = portalType.requiredTags 
-          ? portalType.requiredTags.map(tag => this.capitalizeFirst(tag)).join(' OR ')
+
+        const tagReqs = portalType.requiredTags
+          ? portalType.requiredTags.map((tag) => this.capitalizeFirst(tag)).join(' OR ')
           : 'None';
 
         const clickableClass = canCraft ? 'portal-type-clickable' : 'portal-type-locked';
-        const tooltip = canCraft ? 'Click to pre-fill crafting slots' : 'Missing required resources';
+        const tooltip = canCraft
+          ? 'Click to pre-fill crafting slots'
+          : 'Missing required resources';
 
         html += `
           <div class="portal-type-entry ${clickableClass}" data-portal-type-id="${portalType.id}" title="${tooltip}">
@@ -601,7 +700,7 @@ export class UIManager {
     container.innerHTML = html;
 
     // Add click handlers for clickable portal types
-    container.querySelectorAll('.portal-type-clickable').forEach(typeEl => {
+    container.querySelectorAll('.portal-type-clickable').forEach((typeEl) => {
       typeEl.addEventListener('click', () => {
         const typeId = (typeEl as HTMLElement).dataset.portalTypeId;
         if (typeId) {
@@ -611,7 +710,10 @@ export class UIManager {
     });
   }
 
-  private checkHasElements(requiredElements: Partial<Record<ElementType, number>>, inventory: InventorySystem): boolean {
+  private checkHasElements(
+    requiredElements: Partial<Record<ElementType, number>>,
+    inventory: InventorySystem
+  ): boolean {
     for (const [element, amount] of Object.entries(requiredElements)) {
       if (!inventory.hasElement(element as ElementType, amount as number)) {
         return false;
@@ -622,10 +724,10 @@ export class UIManager {
 
   private checkHasTags(requiredTags: string[] | undefined, inventory: InventorySystem): boolean {
     if (!requiredTags || requiredTags.length === 0) return true;
-    
+
     // Check if any ingredient or equipment in inventory has one of the required tags
     const inventoryState = inventory.getState();
-    
+
     // Check ingredients
     for (const ingredientId of Object.keys(inventoryState.ingredients)) {
       if (inventoryState.ingredients[ingredientId] > 0) {
@@ -639,7 +741,7 @@ export class UIManager {
         }
       }
     }
-    
+
     // Check equipment (basic items)
     for (const equipmentId of Object.keys(inventoryState.equipment)) {
       if (inventoryState.equipment[equipmentId] > 0) {
@@ -653,10 +755,46 @@ export class UIManager {
         }
       }
     }
-    
+
+    // Check generated equipment
+    if (inventoryState.generatedEquipment) {
+      for (const generatedId of Object.keys(inventoryState.generatedEquipment)) {
+        const generated = inventoryState.generatedEquipment[generatedId];
+        // Check if generated equipment has tags directly
+        if (generated.tags && Array.isArray(generated.tags)) {
+          for (const tag of requiredTags) {
+            if (generated.tags.includes(tag)) {
+              return true;
+            }
+          }
+        }
+        // Also check attributes for tags
+        if (generated.attributes) {
+          const attrs = generated.attributes;
+          const attrTags: string[] = [];
+          // Collect tags from all attribute types
+          if (attrs.prefix?.tags) attrTags.push(...attrs.prefix.tags);
+          if (attrs.material?.tags) attrTags.push(...attrs.material.tags);
+          if (attrs.suffix?.tags) attrTags.push(...attrs.suffix.tags);
+          if (attrs.gearType && 'tags' in attrs.gearType) {
+            const gearTypeTags = (attrs.gearType as any).tags;
+            if (Array.isArray(gearTypeTags)) {
+              attrTags.push(...gearTypeTags);
+            }
+          }
+
+          for (const tag of requiredTags) {
+            if (attrTags.includes(tag)) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+
     return false;
   }
-  
+
   private capitalizeFirst(str: string): string {
     return str.charAt(0).toUpperCase() + str.slice(1);
   }
@@ -669,11 +807,11 @@ export class UIManager {
       if (!portalType) return;
 
       const inventory = this.game.getInventory();
-      
+
       // Validate resources before adding
       const hasElements = this.checkHasElements(portalType.requiredElements, inventory);
       const hasTags = this.checkHasTags(portalType.requiredTags, inventory);
-      
+
       if (!hasElements || !hasTags) {
         showToast('Missing required resources to pre-fill this recipe!', 'error');
         return;
@@ -688,26 +826,85 @@ export class UIManager {
       if (portalType.requiredTags && portalType.requiredTags.length > 0) {
         const crafting = this.game.getCrafting();
         const inventoryState = inventory.getState();
-        
-        // Find first available ingredient with required tag and empty slot
+
+        // Find first available item (ingredient, equipment, or generated equipment) with required tag and empty slot
         let itemAdded = false;
-        for (const ingredientId of Object.keys(inventoryState.ingredients)) {
-          if (inventoryState.ingredients[ingredientId] > 0) {
-            const ingredient = getIngredientById(ingredientId);
-            if (ingredient?.tags) {
-              for (const tag of portalType.requiredTags) {
-                if (ingredient.tags.includes(tag)) {
-                  const slots = crafting.getSlots();
-                  const emptySlot = slots.find(s => !s.ingredient && !s.equipment);
-                  if (emptySlot) {
-                    crafting.addIngredientToSlot(emptySlot.index, ingredientId);
-                    inventory.removeIngredient(ingredientId, 1);
-                    itemAdded = true;
-                    break;
-                  }
+
+        for (const tag of portalType.requiredTags) {
+          if (itemAdded) break;
+
+          // Try ingredients first
+          for (const ingredientId of Object.keys(inventoryState.ingredients)) {
+            if (inventoryState.ingredients[ingredientId] > 0) {
+              const ingredient = getIngredientById(ingredientId);
+              if (ingredient?.tags && ingredient.tags.includes(tag)) {
+                const slots = crafting.getSlots();
+                const emptySlot = slots.find((s) => !s.ingredient && !s.equipment);
+                if (emptySlot) {
+                  crafting.addIngredientToSlot(emptySlot.index, ingredientId);
+                  inventory.removeIngredient(ingredientId, 1);
+                  itemAdded = true;
+                  break;
                 }
               }
-              if (itemAdded) break;
+            }
+          }
+          if (itemAdded) break;
+
+          // Try basic equipment next
+          for (const equipmentId of Object.keys(inventoryState.equipment)) {
+            if (inventoryState.equipment[equipmentId] > 0) {
+              const equipment = getEquipmentById(equipmentId);
+              if (equipment?.tags && equipment.tags.includes(tag)) {
+                const slots = crafting.getSlots();
+                const emptySlot = slots.find((s) => !s.ingredient && !s.equipment);
+                if (emptySlot) {
+                  crafting.addEquipmentToSlot(emptySlot.index, equipmentId);
+                  inventory.removeEquipment(equipmentId, 1);
+                  itemAdded = true;
+                  break;
+                }
+              }
+            }
+          }
+          if (itemAdded) break;
+
+          // Try generated equipment last
+          if (inventoryState.generatedEquipment) {
+            for (const generatedId of Object.keys(inventoryState.generatedEquipment)) {
+              const generated = inventoryState.generatedEquipment[generatedId];
+              let hasTags = false;
+
+              // Check direct tags
+              if (generated.tags && Array.isArray(generated.tags) && generated.tags.includes(tag)) {
+                hasTags = true;
+              }
+
+              // Check attribute tags
+              if (!hasTags && generated.attributes) {
+                const attrs = generated.attributes;
+                const attrTags: string[] = [];
+                if (attrs.prefix?.tags) attrTags.push(...attrs.prefix.tags);
+                if (attrs.material?.tags) attrTags.push(...attrs.material.tags);
+                if (attrs.suffix?.tags) attrTags.push(...attrs.suffix.tags);
+                if (attrs.gearType && 'tags' in attrs.gearType) {
+                  const gearTypeTags = (attrs.gearType as any).tags;
+                  if (Array.isArray(gearTypeTags)) {
+                    attrTags.push(...gearTypeTags);
+                  }
+                }
+                hasTags = attrTags.includes(tag);
+              }
+
+              if (hasTags) {
+                const slots = crafting.getSlots();
+                const emptySlot = slots.find((s) => !s.ingredient && !s.equipment);
+                if (emptySlot) {
+                  this.game.addGeneratedEquipmentToSlot(emptySlot.index, generatedId);
+                  itemAdded = true;
+                  break;
+                }
+              }
             }
           }
         }
@@ -793,7 +990,7 @@ export class UIManager {
           <li><strong>Convert to Elements</strong> - Transform into elemental energy using the Mana Converter</li>
         </ul>
       `,
-      'shop': `
+      shop: `
         <h4>Shop</h4>
         <p><strong>Mana Packs:</strong> Exchange gold for mana.</p>
         <ul>
@@ -812,7 +1009,7 @@ export class UIManager {
         </ul>
         <p>Items go to your inventory and can be placed in crafting slots.</p>
       `,
-      'upgrades': `
+      upgrades: `
         <h4>Upgrades</h4>
         <p>Upgrades permanently improve your crafting abilities:</p>
         <ul>
@@ -821,7 +1018,7 @@ export class UIManager {
         </ul>
         <p>Each upgrade can be leveled up multiple times for stronger effects.</p>
       `,
-      'research': `
+      research: `
         <h4>Research</h4>
         <p>Research unlocks new elements for your portals:</p>
         <ul>
@@ -833,7 +1030,7 @@ export class UIManager {
         <p>Some elements require prerequisites before they can be researched.</p>
         <p>Each element has a <strong>potency multiplier</strong> that affects how much power it contributes.</p>
       `,
-      'recipes': `
+      recipes: `
         <h4>Recipe Book</h4>
         <p>Recipes are discovered by combining ingredients in the crafting slots.</p>
         <ul>
@@ -843,7 +1040,7 @@ export class UIManager {
         </ul>
         <p>Bright icons mean you own the ingredient, faded icons mean you're missing it.</p>
       `,
-      'crafting': `
+      crafting: `
         <h4>Portal Crafting</h4>
         <p><strong>Portal Level</strong> is determined by:</p>
         <ul>
@@ -858,7 +1055,7 @@ export class UIManager {
         </ul>
         <p><strong>Element Affinity:</strong> Some ingredients add bonus elements when crafted (e.g., Fire Crystal adds +5 fire).</p>
       `,
-      'elements': `
+      elements: `
         <h4>Elements</h4>
         <p>Elements define the magical aspect of your portals:</p>
         <ul>
@@ -871,7 +1068,7 @@ export class UIManager {
         <p><strong>Element Potency:</strong> Each element has a power multiplier (shown as 1x, 1.2x, etc.) that affects how much it contributes to portal level.</p>
         <p>Use the +/- buttons next to each element in the crafting area to adjust amounts.</p>
       `,
-      'contracts': `
+      contracts: `
         <h4>Contracts</h4>
         <p>Customers arrive with portal requests. Each contract shows:</p>
         <ul>
@@ -909,7 +1106,7 @@ export class UIManager {
 
   public update(data: UIUpdateData): void {
     this.lastUpdateData = data;
-    
+
     // Update resource displays
     if (this.moneyDisplay) {
       this.moneyDisplay.textContent = `Gold: ${formatNumber(data.inventory.getGold())}`;
@@ -924,7 +1121,7 @@ export class UIManager {
     this.customerUI.update(data.customers, data.storedPortals);
     this.researchUI.update(data.elements, data.inventory);
     this.portalInventoryUI.update(data.storedPortals);
-    
+
     // Update modal content if open
     if (this.currentModal) {
       this.renderModalContent();

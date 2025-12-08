@@ -17,12 +17,12 @@ export interface PortalTypeDefinition {
   description: string;
   icon: string;
   visualColor: number;
-  
+
   // Requirements to match this portal type
   requiredElements: Partial<Record<ElementType, number>>; // Minimum amounts
   requiredTags?: string[]; // At least one must be present from ingredients/equipment
   optionalElements?: ElementType[]; // Can be present but not required
-  
+
   // Attributes granted by this portal type
   attributes: {
     power?: number;
@@ -31,7 +31,7 @@ export interface PortalTypeDefinition {
     danger?: number;
     [key: string]: any;
   };
-  
+
   // Rarity/tier of this portal type
   tier: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
 }
@@ -210,7 +210,8 @@ export const PORTAL_TYPES: PortalTypeDefinition[] = [
     id: 'graveyard',
     name: 'Graveyard',
     affinity: 'Death',
-    description: 'A portal to the realm of the dead, crafted from death and shadow elements with bones',
+    description:
+      'A portal to the realm of the dead, crafted from death and shadow elements with bones',
     icon: '💀',
     visualColor: 0x1a202c,
     requiredElements: { death: 10, shadow: 10 },
@@ -518,12 +519,12 @@ export const PORTAL_TYPES: PortalTypeDefinition[] = [
     description: 'A portal connecting all planes of existence',
     icon: '🌠',
     visualColor: 0x4c51bf,
-    requiredElements: { 
-      arcane: 40, 
-      void: 35, 
-      time: 30, 
-      light: 25, 
-      shadow: 25 
+    requiredElements: {
+      arcane: 40,
+      void: 35,
+      time: 30,
+      light: 25,
+      shadow: 25,
     },
     tier: 'legendary',
     attributes: {
@@ -584,7 +585,8 @@ export function scorePortalTypeMatch(
   portalElements: Partial<Record<ElementType, number>>,
   portalIngredientIds: string[],
   portalEquipmentIds: string[],
-  portalType: PortalTypeDefinition
+  portalType: PortalTypeDefinition,
+  generatedEquipment: any[] = []
 ): number {
   let score = 0;
   let requiredMatches = 0;
@@ -605,26 +607,51 @@ export function scorePortalTypeMatch(
   // Check required tags (at least one must match)
   if (portalType.requiredTags && portalType.requiredTags.length > 0) {
     totalRequired++;
-    
+
     // Collect all tags from ingredients and equipment
     const allTags = new Set<string>();
-    
+
     for (const ingredientId of portalIngredientIds) {
       const ingredient = getIngredientById(ingredientId);
       if (ingredient?.tags) {
-        ingredient.tags.forEach(tag => allTags.add(tag));
+        ingredient.tags.forEach((tag) => allTags.add(tag));
       }
     }
-    
+
     for (const equipmentId of portalEquipmentIds) {
       const equipment = getEquipmentById(equipmentId);
       if (equipment?.tags) {
-        equipment.tags.forEach(tag => allTags.add(tag));
+        equipment.tags.forEach((tag) => allTags.add(tag));
       }
     }
-    
+
+    // Also collect tags from generated equipment
+    for (const generatedItem of generatedEquipment) {
+      // Check if item has tags directly
+      if (generatedItem?.tags && Array.isArray(generatedItem.tags)) {
+        generatedItem.tags.forEach((tag: string) => allTags.add(tag));
+      }
+      // Also check attributes for tags
+      if (generatedItem?.attributes) {
+        const attrs = generatedItem.attributes;
+        // Check each attribute type for tags
+        if (attrs.prefix?.tags) {
+          attrs.prefix.tags.forEach((tag: string) => allTags.add(tag));
+        }
+        if (attrs.material?.tags) {
+          attrs.material.tags.forEach((tag: string) => allTags.add(tag));
+        }
+        if (attrs.suffix?.tags) {
+          attrs.suffix.tags.forEach((tag: string) => allTags.add(tag));
+        }
+        if (attrs.gearType?.tags) {
+          attrs.gearType.tags.forEach((tag: string) => allTags.add(tag));
+        }
+      }
+    }
+
     // Check if any required tag is present
-    const hasRequiredTag = portalType.requiredTags.some(reqTag => allTags.has(reqTag));
+    const hasRequiredTag = portalType.requiredTags.some((reqTag) => allTags.has(reqTag));
     if (hasRequiredTag) {
       requiredMatches++;
       score += 10;
@@ -660,14 +687,21 @@ export function scorePortalTypeMatch(
 export function matchPortalType(
   elements: Partial<Record<ElementType, number>>,
   ingredientIds: string[],
-  equipmentIds: string[] = []
+  equipmentIds: string[] = [],
+  generatedEquipment: any[] = []
 ): PortalTypeDefinition | null {
   let bestMatch: PortalTypeDefinition | null = null;
   let bestScore = 0;
 
   // Try to match against all portal types
   for (const portalType of PORTAL_TYPES) {
-    const score = scorePortalTypeMatch(elements, ingredientIds, equipmentIds, portalType);
+    const score = scorePortalTypeMatch(
+      elements,
+      ingredientIds,
+      equipmentIds,
+      portalType,
+      generatedEquipment
+    );
     if (score > bestScore) {
       bestScore = score;
       bestMatch = portalType;
@@ -682,12 +716,22 @@ export function matchPortalType(
  * Get all discovered portal types based on what recipes have been crafted
  */
 export function getDiscoveredPortalTypes(
-  craftedPortals: Array<{ elements: Partial<Record<ElementType, number>>; ingredients: string[]; equipment?: string[] }>
+  craftedPortals: Array<{
+    elements: Partial<Record<ElementType, number>>;
+    ingredients: string[];
+    equipment?: string[];
+    generatedEquipmentAttributes?: any[];
+  }>
 ): Set<string> {
   const discovered = new Set<string>();
 
   for (const portal of craftedPortals) {
-    const match = matchPortalType(portal.elements, portal.ingredients, portal.equipment || []);
+    const match = matchPortalType(
+      portal.elements,
+      portal.ingredients,
+      portal.equipment || [],
+      portal.generatedEquipmentAttributes || []
+    );
     if (match) {
       discovered.add(match.id);
     }
