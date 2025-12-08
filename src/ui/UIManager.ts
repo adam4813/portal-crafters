@@ -107,7 +107,7 @@ export class UIManager {
     document.getElementById('pause-btn')?.addEventListener('click', () => this.openModal('pause'));
     document.getElementById('guide-btn')?.addEventListener('click', () => this.openModal('guide'));
     document
-      .getElementById('expeditions-btn')
+      .getElementById('start-expedition-btn')
       ?.addEventListener('click', () => this.openModal('expeditions'));
     document.getElementById('shop-btn')?.addEventListener('click', () => this.openModal('shop'));
     document
@@ -593,6 +593,7 @@ export class UIManager {
       { id: 'crafting', label: '🔮 Crafting' },
       { id: 'elements', label: '✨ Elements' },
       { id: 'contracts', label: '📜 Contracts' },
+      { id: 'expeditions', label: '🗺️ Expeditions' },
       { id: 'mana-converter', label: '🔄 Mana Converter' },
     ];
 
@@ -740,6 +741,24 @@ export class UIManager {
         <p>Fulfill contracts by selecting a matching portal from your inventory.</p>
         <p><strong>Tip:</strong> Higher level portals and those with item effects may give bonus rewards!</p>
       `,
+      expeditions: `
+        <h4>Expeditions</h4>
+        <p>Send your crafted portals on expeditions to gather resources!</p>
+        <ul>
+          <li><strong>Portal Consumed</strong> - The portal is used up when sent on an expedition</li>
+          <li><strong>Duration</strong> - Higher level portals take longer but yield better rewards</li>
+          <li><strong>Elements Matter</strong> - The portal's elemental composition determines what resources you can find</li>
+        </ul>
+        <p><strong>Duration by Level:</strong></p>
+        <ul>
+          <li>Level 1: ~1 minute</li>
+          <li>Level 2: ~2 minutes</li>
+          <li>Level 3: ~3 minutes</li>
+          <li>Level 4: ~5 minutes</li>
+          <li>Level 5+: 7+ minutes</li>
+        </ul>
+        <p><strong>Tip:</strong> Hover over an active expedition to see potential rewards. High mana investment can slightly reduce expedition time!</p>
+      `,
       'mana-converter': `
         <h4>Mana Converter</h4>
         <p>Transform mana into elemental energy:</p>
@@ -843,6 +862,15 @@ export class UIManager {
     this.customerUI.update(data.customers, data.storedPortals, data.progression, data.elements);
     this.researchUI.update(data.elements, data.inventory);
     this.portalInventoryUI.update(data.storedPortals);
+
+    // Update active expeditions in sidebar
+    const activeExpeditionsContainer = document.getElementById('active-expeditions');
+    if (activeExpeditionsContainer) {
+      activeExpeditionsContainer.innerHTML = this.expeditionUI.renderActiveExpeditions(
+        data.expeditions
+      );
+      this.expeditionUI.attachEventListeners();
+    }
 
     // Update modal content if open
     if (this.currentModal) {

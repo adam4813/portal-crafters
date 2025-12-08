@@ -1,15 +1,39 @@
 import type { Expedition, ExpeditionReward, Portal } from '../types';
 
 /**
- * Calculate expedition duration based on portal properties
- * Higher level portals = faster expeditions
- * More mana invested = faster expeditions
+ * Calculate expedition duration based on portal level
+ * Higher level portals take longer but yield better rewards
+ * Level 1: ~60-90 seconds
+ * Level 2: ~2-3 minutes
+ * Level 3: ~3-4 minutes
+ * Level 4: ~5-6 minutes
+ * Level 5+: ~7-10 minutes
  */
 function calculateExpeditionDuration(portal: Portal): number {
-  const baseTime = 1800; // 30 minutes base
-  const levelReduction = Math.min(portal.level * 60, 600); // Max 10 minutes reduction
-  const manaReduction = Math.min(Math.floor(portal.manaInvested / 10), 300); // Max 5 minutes reduction
-  return Math.max(300, baseTime - levelReduction - manaReduction); // Minimum 5 minutes
+  const level = portal.level;
+
+  // Base duration scales with level (in seconds)
+  // Using a curve: level 1 = 60s, level 2 = 120s, level 3 = 180s, level 4 = 300s, level 5 = 420s
+  let baseDuration: number;
+  if (level <= 1) {
+    baseDuration = 60; // 1 minute
+  } else if (level === 2) {
+    baseDuration = 120; // 2 minutes
+  } else if (level === 3) {
+    baseDuration = 180; // 3 minutes
+  } else if (level === 4) {
+    baseDuration = 300; // 5 minutes
+  } else {
+    // Level 5+: 7 minutes base + 1 minute per level above 5
+    baseDuration = 420 + (level - 5) * 60;
+  }
+
+  // Small reduction from mana invested (max 20% reduction)
+  const manaBonus = Math.min(portal.manaInvested / 500, 0.2);
+  const finalDuration = Math.floor(baseDuration * (1 - manaBonus));
+
+  // Minimum 30 seconds, maximum 15 minutes
+  return Math.max(30, Math.min(finalDuration, 900));
 }
 
 /**

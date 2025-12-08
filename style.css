@@ -170,10 +170,15 @@ body {
 }
 
 .panel-footer {
+  display: flex;
   flex-shrink: 0;
   padding: 0.75rem 1rem;
   border-top: 1px solid var(--background-light);
   background-color: var(--background-medium);
+}
+
+.panel-footer button {
+  flex: 1;
 }
 
 .flex-container {
@@ -1933,8 +1938,8 @@ body {
 
 .available-expeditions-list,
 .active-expeditions-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 1rem;
 }
 
