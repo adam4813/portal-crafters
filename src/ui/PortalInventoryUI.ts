@@ -6,7 +6,7 @@ import { getEquipmentById } from '../data/equipment';
 
 function buildPortalTooltip(portal: PortalType): string {
   const lines: string[] = [];
-  
+
   // Portal type name and affinity (if available)
   if (portal.typeName) {
     lines.push(`${portal.typeName}`);
@@ -15,17 +15,19 @@ function buildPortalTooltip(portal: PortalType): string {
     }
     lines.push('');
   }
-  
+
   lines.push(`Level ${portal.level} Portal`);
   lines.push('');
-  
+
   // Mana invested
   if (portal.manaInvested > 0) {
     lines.push(`Raw Mana: ${portal.manaInvested}`);
   }
-  
+
   // Elements
-  const elementEntries = Object.entries(portal.elements).filter(([, amount]) => amount && amount > 0);
+  const elementEntries = Object.entries(portal.elements).filter(
+    ([, amount]) => amount && amount > 0
+  );
   if (elementEntries.length > 0) {
     lines.push('');
     lines.push('Elements:');
@@ -37,7 +39,7 @@ function buildPortalTooltip(portal: PortalType): string {
       lines.push(`  ${icon} ${element}: ${amount}${potencyStr}`);
     }
   }
-  
+
   // Portal attributes (if available)
   if (portal.attributes && Object.keys(portal.attributes).length > 0) {
     lines.push('');
@@ -51,7 +53,7 @@ function buildPortalTooltip(portal: PortalType): string {
       lines.push(`  ${formattedAttr}: ${value}`);
     }
   }
-  
+
   // Ingredients used
   if (portal.ingredients && portal.ingredients.length > 0) {
     lines.push('');
@@ -63,7 +65,7 @@ function buildPortalTooltip(portal: PortalType): string {
       }
     }
   }
-  
+
   // Equipment used
   if (portal.equipment && portal.equipment.length > 0) {
     for (const equipId of portal.equipment) {
@@ -73,7 +75,7 @@ function buildPortalTooltip(portal: PortalType): string {
       }
     }
   }
-  
+
   // Generated equipment attributes
   if (portal.generatedEquipmentAttributes && portal.generatedEquipmentAttributes.length > 0) {
     lines.push('');
@@ -82,12 +84,12 @@ function buildPortalTooltip(portal: PortalType): string {
       lines.push(`  ${equip.icon} ${equip.name}`);
     }
   }
-  
+
   // Created timestamp
   const createdDate = new Date(portal.createdAt);
   lines.push('');
   lines.push(`Crafted: ${createdDate.toLocaleDateString()} ${createdDate.toLocaleTimeString()}`);
-  
+
   return lines.join('\n');
 }
 
@@ -127,7 +129,7 @@ export class PortalInventoryUI {
         .join(' ');
 
       const tooltip = buildPortalTooltip(portal);
-      
+
       // Display portal type name if available, otherwise show level
       const displayName = portal.typeName || `Level ${portal.level} Portal`;
 

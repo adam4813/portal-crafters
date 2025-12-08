@@ -11,6 +11,7 @@
       <header class="game-header">
         <h1>Portal Crafters</h1>
         <div class="header-buttons">
+          <button id="pause-btn" class="btn-header">⏸️ Pause</button>
           <button id="guide-btn" class="btn-header">📚 Guide</button>
           <button id="shop-btn" class="btn-header">🛒 Shop</button>
           <button id="upgrades-btn" class="btn-header">⬆️ Upgrades</button>
@@ -26,7 +27,15 @@
         <aside class="sidebar left-sidebar">
           <section id="customer-panel" class="panel">
             <h2>Contracts</h2>
+            <div id="progression-status" class="progression-status"></div>
             <div class="panel-body" id="customer-queue"></div>
+          </section>
+          <section id="active-expeditions-panel" class="panel">
+            <h2>Expeditions</h2>
+            <div class="panel-body" id="active-expeditions"></div>
+            <div class="panel-footer">
+              <button id="start-expedition-btn" class="btn-secondary">🗺️ Start Expedition</button>
+            </div>
           </section>
         </aside>
         

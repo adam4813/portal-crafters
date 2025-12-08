@@ -169,10 +169,7 @@ export class ResearchUI {
 
     // Check if we have enough crafting slots for this recipe
     if (recipe.ingredientIds.length > crafting.getMaxSlots()) {
-      showToast(
-        `Not enough crafting slots! Need ${recipe.ingredientIds.length} slots.`,
-        'error'
-      );
+      showToast(`Not enough crafting slots! Need ${recipe.ingredientIds.length} slots.`, 'error');
       return;
     }
 

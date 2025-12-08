@@ -219,7 +219,14 @@ export class CraftingSystem {
     // Notify callbacks with generated equipment attributes
     this.onCraftCallbacks.forEach((cb) => cb(elements, bonusLevel, generatedEquipmentUsed));
 
-    return { elements, bonusLevel, isNewRecipe, generatedEquipmentUsed, ingredientIds, equipmentIds };
+    return {
+      elements,
+      bonusLevel,
+      isNewRecipe,
+      generatedEquipmentUsed,
+      ingredientIds,
+      equipmentIds,
+    };
   }
 
   private generateRecipeId(ingredientIds: string[]): string {
@@ -286,12 +293,12 @@ export class CraftingSystem {
     return this.slots.map((slot) => {
       let equipmentId: string | null = null;
       let isGenerated = false;
-      
+
       if (slot.equipment) {
         equipmentId = slot.equipment.id;
         isGenerated = isGeneratedEquipment(slot.equipment);
       }
-      
+
       return {
         index: slot.index,
         ingredientId: slot.ingredient?.id || null,
@@ -301,12 +308,15 @@ export class CraftingSystem {
     });
   }
 
-  public loadSlotsState(slotsState: CraftingSlotState[], getGeneratedEquipment: (id: string) => GeneratedEquipment | undefined): void {
+  public loadSlotsState(
+    slotsState: CraftingSlotState[],
+    getGeneratedEquipment: (id: string) => GeneratedEquipment | undefined
+  ): void {
     this.initializeSlots();
-    
+
     for (const slotState of slotsState) {
       if (slotState.index < 0 || slotState.index >= this.maxSlots) continue;
-      
+
       if (slotState.ingredientId) {
         const ingredient = getIngredientById(slotState.ingredientId);
         if (ingredient) {

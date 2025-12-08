@@ -170,17 +170,22 @@ body {
 }
 
 .panel-footer {
+  display: flex;
   flex-shrink: 0;
   padding: 0.75rem 1rem;
   border-top: 1px solid var(--background-light);
   background-color: var(--background-medium);
 }
 
+.panel-footer button {
+  flex: 1;
+}
+
 .flex-container {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-    justify-content: space-between;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .game-canvas-container {
@@ -368,6 +373,23 @@ body {
   margin-bottom: 0.5rem;
 }
 
+.customer-card.miniboss-card {
+  background: linear-gradient(135deg, rgba(237, 137, 54, 0.2), rgba(107, 70, 193, 0.2));
+  border: 2px solid var(--accent-color);
+  box-shadow: 0 0 15px rgba(237, 137, 54, 0.3);
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 15px rgba(237, 137, 54, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(237, 137, 54, 0.5);
+  }
+}
+
 .customer-header {
   display: flex;
   justify-content: space-between;
@@ -384,9 +406,99 @@ body {
   color: var(--text-secondary);
 }
 
+.customer-timer.unlimited {
+  color: var(--accent-color);
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
 .customer-timer.urgent {
   color: var(--danger-color);
   font-weight: bold;
+}
+
+/* Progression Status Display */
+.progression-status {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--primary-color);
+}
+
+.progression-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.tier-name {
+  font-size: 1rem;
+  font-weight: bold;
+  color: var(--accent-color);
+}
+
+.tier-progress {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.contracts-count {
+  color: var(--text-secondary);
+}
+
+.miniboss-status {
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+
+.miniboss-status.complete {
+  background-color: rgba(72, 187, 120, 0.2);
+  color: var(--success-color);
+}
+
+.miniboss-status.incomplete {
+  background-color: rgba(245, 101, 101, 0.2);
+  color: var(--danger-color);
+}
+
+.next-tier-info {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background-color: rgba(107, 70, 193, 0.1);
+  border-radius: 4px;
+  border-left: 3px solid var(--primary-color);
+}
+
+.next-tier-name {
+  font-weight: bold;
+  color: var(--primary-color);
+  margin-bottom: 0.25rem;
+}
+
+.unlock-requirements {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.requirement {
+  font-size: 0.75rem;
+  padding: 0.15rem 0.3rem;
+  border-radius: 3px;
+}
+
+.requirement.met {
+  color: var(--success-color);
+  background-color: rgba(72, 187, 120, 0.1);
+}
+
+.requirement.unmet {
+  color: var(--text-secondary);
+  background-color: rgba(160, 174, 192, 0.1);
 }
 
 .customer-requirements {
@@ -1112,11 +1224,21 @@ body {
   font-weight: bold;
 }
 
-.portal-element.fire { border-left: 3px solid var(--fire-color); }
-.portal-element.water { border-left: 3px solid var(--water-color); }
-.portal-element.earth { border-left: 3px solid var(--earth-color); }
-.portal-element.air { border-left: 3px solid var(--air-color); }
-.portal-element.lightning { border-left: 3px solid var(--lightning-color); }
+.portal-element.fire {
+  border-left: 3px solid var(--fire-color);
+}
+.portal-element.water {
+  border-left: 3px solid var(--water-color);
+}
+.portal-element.earth {
+  border-left: 3px solid var(--earth-color);
+}
+.portal-element.air {
+  border-left: 3px solid var(--air-color);
+}
+.portal-element.lightning {
+  border-left: 3px solid var(--lightning-color);
+}
 
 .portal-element.removable {
   cursor: pointer;
@@ -1319,23 +1441,57 @@ body {
   justify-content: space-between;
 }
 
-.element-control.fire { border-color: var(--fire-color); }
-.element-control.water { border-color: var(--water-color); }
-.element-control.earth { border-color: var(--earth-color); }
-.element-control.air { border-color: var(--air-color); }
-.element-control.lightning { border-color: var(--lightning-color); }
-.element-control.ice { border-color: #81e6d9; }
-.element-control.metal { border-color: #718096; }
-.element-control.nature { border-color: #48bb78; }
-.element-control.shadow { border-color: #4a5568; }
-.element-control.light { border-color: #faf089; }
-.element-control.void { border-color: #9f7aea; }
-.element-control.crystal { border-color: #b794f4; }
-.element-control.arcane { border-color: #805ad5; }
-.element-control.time { border-color: #d69e2e; }
-.element-control.chaos { border-color: #fc8181; }
-.element-control.life { border-color: #68d391; }
-.element-control.death { border-color: #4a5568; }
+.element-control.fire {
+  border-color: var(--fire-color);
+}
+.element-control.water {
+  border-color: var(--water-color);
+}
+.element-control.earth {
+  border-color: var(--earth-color);
+}
+.element-control.air {
+  border-color: var(--air-color);
+}
+.element-control.lightning {
+  border-color: var(--lightning-color);
+}
+.element-control.ice {
+  border-color: #81e6d9;
+}
+.element-control.metal {
+  border-color: #718096;
+}
+.element-control.nature {
+  border-color: #48bb78;
+}
+.element-control.shadow {
+  border-color: #4a5568;
+}
+.element-control.light {
+  border-color: #faf089;
+}
+.element-control.void {
+  border-color: #9f7aea;
+}
+.element-control.crystal {
+  border-color: #b794f4;
+}
+.element-control.arcane {
+  border-color: #805ad5;
+}
+.element-control.time {
+  border-color: #d69e2e;
+}
+.element-control.chaos {
+  border-color: #fc8181;
+}
+.element-control.life {
+  border-color: #68d391;
+}
+.element-control.death {
+  border-color: #4a5568;
+}
 
 .element-control-icon {
   font-size: 1rem;
@@ -1348,23 +1504,57 @@ body {
   flex: 1;
 }
 
-.element-control.fire .element-control-name { color: var(--fire-color); }
-.element-control.water .element-control-name { color: var(--water-color); }
-.element-control.earth .element-control-name { color: var(--earth-color); }
-.element-control.air .element-control-name { color: var(--air-color); }
-.element-control.lightning .element-control-name { color: var(--lightning-color); }
-.element-control.ice .element-control-name { color: #81e6d9; }
-.element-control.metal .element-control-name { color: #a0aec0; }
-.element-control.nature .element-control-name { color: #48bb78; }
-.element-control.shadow .element-control-name { color: #a0aec0; }
-.element-control.light .element-control-name { color: #faf089; }
-.element-control.void .element-control-name { color: #9f7aea; }
-.element-control.crystal .element-control-name { color: #b794f4; }
-.element-control.arcane .element-control-name { color: #805ad5; }
-.element-control.time .element-control-name { color: #d69e2e; }
-.element-control.chaos .element-control-name { color: #fc8181; }
-.element-control.life .element-control-name { color: #68d391; }
-.element-control.death .element-control-name { color: #a0aec0; }
+.element-control.fire .element-control-name {
+  color: var(--fire-color);
+}
+.element-control.water .element-control-name {
+  color: var(--water-color);
+}
+.element-control.earth .element-control-name {
+  color: var(--earth-color);
+}
+.element-control.air .element-control-name {
+  color: var(--air-color);
+}
+.element-control.lightning .element-control-name {
+  color: var(--lightning-color);
+}
+.element-control.ice .element-control-name {
+  color: #81e6d9;
+}
+.element-control.metal .element-control-name {
+  color: #a0aec0;
+}
+.element-control.nature .element-control-name {
+  color: #48bb78;
+}
+.element-control.shadow .element-control-name {
+  color: #a0aec0;
+}
+.element-control.light .element-control-name {
+  color: #faf089;
+}
+.element-control.void .element-control-name {
+  color: #9f7aea;
+}
+.element-control.crystal .element-control-name {
+  color: #b794f4;
+}
+.element-control.arcane .element-control-name {
+  color: #805ad5;
+}
+.element-control.time .element-control-name {
+  color: #d69e2e;
+}
+.element-control.chaos .element-control-name {
+  color: #fc8181;
+}
+.element-control.life .element-control-name {
+  color: #68d391;
+}
+.element-control.death .element-control-name {
+  color: #a0aec0;
+}
 
 .element-control-potency {
   color: var(--success-color);
@@ -1696,6 +1886,244 @@ body {
 }
 
 .guide-step strong {
+  color: var(--accent-color);
+}
+
+/* ============================================
+   Expedition Panel Styles
+   ============================================ */
+
+.expeditions-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.expedition-intro {
+  background-color: rgba(107, 70, 193, 0.1);
+  border-left: 4px solid var(--primary-color);
+  padding: 1rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.expedition-intro p {
+  margin: 0.5rem 0;
+}
+
+.expedition-intro strong {
+  color: var(--accent-color);
+}
+
+.no-rewards {
+  color: var(--text-secondary);
+  font-style: italic;
+  font-size: 0.85rem;
+}
+
+.expeditions-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.expeditions-section h3 {
+  color: var(--primary-color);
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+  border-bottom: 2px solid var(--primary-color);
+  padding-bottom: 0.5rem;
+}
+
+.available-expeditions-list,
+.active-expeditions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.expedition-card {
+  background-color: var(--background-light);
+  border: 1px solid var(--secondary-color);
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  transition: all 0.2s ease;
+}
+
+.expedition-card:hover {
+  border-color: var(--primary-color);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.expedition-card.active-expedition {
+  border-color: var(--primary-color);
+  background: linear-gradient(135deg, rgba(107, 70, 193, 0.1), var(--background-light));
+}
+
+.expedition-card.active-expedition.complete {
+  border-color: var(--success-color);
+  background: linear-gradient(135deg, rgba(72, 187, 120, 0.1), var(--background-light));
+  animation: pulse-success 2s ease-in-out infinite;
+}
+
+@keyframes pulse-success {
+  0%,
+  100% {
+    box-shadow: 0 0 10px rgba(72, 187, 120, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(72, 187, 120, 0.5);
+  }
+}
+
+.expedition-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.expedition-header h4 {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+.expedition-timer,
+.expedition-duration {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-weight: bold;
+}
+
+.expedition-timer.complete {
+  color: var(--success-color);
+}
+
+.expedition-description {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.expedition-cost {
+  font-size: 0.85rem;
+  color: var(--warning-color);
+}
+
+.expedition-rewards {
+  font-size: 0.85rem;
+}
+
+.expedition-rewards strong {
+  color: var(--primary-color);
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.reward-list {
+  margin: 0;
+  padding-left: 1.5rem;
+  color: var(--text-secondary);
+}
+
+.reward-list li {
+  margin: 0.15rem 0;
+}
+
+.start-expedition-btn,
+.send-expedition-btn,
+.collect-expedition-btn {
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.collect-expedition-btn {
+  background-color: var(--success-color);
+  border-color: var(--success-color);
+}
+
+.collect-expedition-btn:hover {
+  background-color: #38a169;
+}
+
+/* ============================================
+   Pause Menu Styles
+   ============================================ */
+
+.pause-menu-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  text-align: center;
+}
+
+.pause-message {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin: 0;
+  padding: 1rem;
+  background-color: rgba(107, 70, 193, 0.1);
+  border-radius: 6px;
+  border-left: 3px solid var(--primary-color);
+}
+
+.pause-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0 auto;
+  width: 100%;
+  max-width: 300px;
+}
+
+.pause-action-btn {
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+}
+
+.pause-info {
+  margin-top: 1rem;
+}
+
+.pause-info h4 {
+  color: var(--accent-color);
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  border-bottom: 1px solid var(--background-light);
+  padding-bottom: 0.5rem;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.stat-item {
+  background-color: var(--background-light);
+  padding: 0.75rem;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.stat-value {
+  font-size: 1.1rem;
+  font-weight: bold;
   color: var(--accent-color);
 }
 

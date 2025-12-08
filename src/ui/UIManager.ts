@@ -4,6 +4,8 @@ import type { CraftingSystem } from '../game/CraftingSystem';
 import type { CustomerSystem } from '../game/Customer';
 import type { ElementSystem } from '../game/ElementSystem';
 import type { UpgradeSystem } from '../game/UpgradeSystem';
+import type { ProgressionSystem } from '../game/ProgressionSystem';
+import type { ExpeditionSystem } from '../game/ExpeditionSystem';
 import type { Portal } from '../game/Portal';
 import type { GameState, Portal as PortalType, ElementType } from '../types';
 import { CraftingUI } from './CraftingUI';
@@ -13,6 +15,7 @@ import { ShopUI } from './ShopUI';
 import { ResearchUI } from './ResearchUI';
 import { ManaConversionUI } from './ManaConversionUI';
 import { PortalInventoryUI } from './PortalInventoryUI';
+import { ExpeditionUI } from './ExpeditionUI';
 import { formatNumber } from '../utils/helpers';
 import { getIngredientById } from '../data/ingredients';
 import { getEquipmentById } from '../data/equipment';
@@ -27,9 +30,20 @@ export interface UIUpdateData {
   portal: Portal;
   gameState: GameState;
   storedPortals: PortalType[];
+  progression: ProgressionSystem;
+  expeditions: ExpeditionSystem;
 }
 
-type ModalType = 'shop' | 'upgrades' | 'research' | 'mana-converter' | 'recipes' | 'guide' | null;
+type ModalType =
+  | 'shop'
+  | 'upgrades'
+  | 'research'
+  | 'mana-converter'
+  | 'recipes'
+  | 'guide'
+  | 'pause'
+  | 'expeditions'
+  | null;
 
 export class UIManager {
   private game: Game;
@@ -40,6 +54,7 @@ export class UIManager {
   private researchUI: ResearchUI;
   private manaConversionUI: ManaConversionUI;
   private portalInventoryUI: PortalInventoryUI;
+  private expeditionUI: ExpeditionUI;
 
   // DOM elements
   private moneyDisplay: HTMLElement | null;
@@ -69,6 +84,7 @@ export class UIManager {
     this.researchUI = new ResearchUI(game);
     this.manaConversionUI = new ManaConversionUI(game);
     this.portalInventoryUI = new PortalInventoryUI(game);
+    this.expeditionUI = new ExpeditionUI(game);
 
     this.moneyDisplay = document.getElementById('money-display');
     this.manaDisplay = document.getElementById('mana-display');
@@ -88,13 +104,17 @@ export class UIManager {
     this.researchUI.initialize();
     this.manaConversionUI.initialize();
     this.portalInventoryUI.initialize();
-
+    this.expeditionUI.initialize();
     this.setupModalHandlers();
   }
 
   private setupModalHandlers(): void {
     // Header buttons
+    document.getElementById('pause-btn')?.addEventListener('click', () => this.openModal('pause'));
     document.getElementById('guide-btn')?.addEventListener('click', () => this.openModal('guide'));
+    document
+      .getElementById('start-expedition-btn')
+      ?.addEventListener('click', () => this.openModal('expeditions'));
     document.getElementById('shop-btn')?.addEventListener('click', () => this.openModal('shop'));
     document
       .getElementById('upgrades-btn')
@@ -136,7 +156,9 @@ export class UIManager {
 
     // Set modal title
     const titles: Record<string, string> = {
+      pause: '⏸️ Game Paused',
       guide: '📚 Game Guide',
+      expeditions: '🗺️ Expeditions',
       shop: '🛒 Mana Shop',
       upgrades: '⬆️ Upgrades',
       research: '🔬 Research',
@@ -177,8 +199,14 @@ export class UIManager {
     if (!this.modalContent || !this.lastUpdateData) return;
 
     switch (this.currentModal) {
+      case 'pause':
+        this.renderPauseModal();
+        break;
       case 'guide':
         this.renderGuideModal();
+        break;
+      case 'expeditions':
+        this.renderExpeditionsModal();
         break;
       case 'shop':
         this.renderShopModal();
@@ -196,6 +224,15 @@ export class UIManager {
         this.renderRecipesModal();
         break;
     }
+  }
+
+  private renderExpeditionsModal(): void {
+    if (!this.modalContent || !this.lastUpdateData) return;
+
+    const { expeditions, storedPortals } = this.lastUpdateData;
+
+    this.modalContent.innerHTML = this.expeditionUI.render(expeditions, storedPortals);
+    this.expeditionUI.attachEventListeners();
   }
 
   private renderShopModal(): void {
@@ -933,6 +970,7 @@ export class UIManager {
       { id: 'crafting', label: '🔮 Crafting' },
       { id: 'elements', label: '✨ Elements' },
       { id: 'contracts', label: '📜 Contracts' },
+      { id: 'expeditions', label: '🗺️ Expeditions' },
       { id: 'mana-converter', label: '🔄 Mana Converter' },
     ];
 
@@ -1080,6 +1118,24 @@ export class UIManager {
         <p>Fulfill contracts by selecting a matching portal from your inventory.</p>
         <p><strong>Tip:</strong> Higher level portals and those with item effects may give bonus rewards!</p>
       `,
+      expeditions: `
+        <h4>Expeditions</h4>
+        <p>Send your crafted portals on expeditions to gather resources!</p>
+        <ul>
+          <li><strong>Portal Consumed</strong> - The portal is used up when sent on an expedition</li>
+          <li><strong>Duration</strong> - Higher level portals take longer but yield better rewards</li>
+          <li><strong>Elements Matter</strong> - The portal's elemental composition determines what resources you can find</li>
+        </ul>
+        <p><strong>Duration by Level:</strong></p>
+        <ul>
+          <li>Level 1: ~1 minute</li>
+          <li>Level 2: ~2 minutes</li>
+          <li>Level 3: ~3 minutes</li>
+          <li>Level 4: ~5 minutes</li>
+          <li>Level 5+: 7+ minutes</li>
+        </ul>
+        <p><strong>Tip:</strong> Hover over an active expedition to see potential rewards. High mana investment can slightly reduce expedition time!</p>
+      `,
       'mana-converter': `
         <h4>Mana Converter</h4>
         <p>Transform mana into elemental energy:</p>
@@ -1094,6 +1150,68 @@ export class UIManager {
     };
 
     return content[sectionId] || '<p>Section not found.</p>';
+  }
+
+  private renderPauseModal(): void {
+    if (!this.modalContent) return;
+
+    const html = `
+      <div class="pause-menu-content">
+        <p class="pause-message">The game is paused. Customer timers and spawns are frozen.</p>
+        
+        <div class="pause-actions">
+          <button id="resume-game-btn" class="btn-primary pause-action-btn">▶️ Resume Game</button>
+          <button id="save-game-btn" class="btn-secondary pause-action-btn">💾 Save Game</button>
+        </div>
+        
+        <div class="pause-info">
+          <h4>Game Statistics</h4>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <span class="stat-label">Portals Crafted:</span>
+              <span class="stat-value">${formatNumber(this.lastUpdateData?.gameState.totalPortalsCreated || 0)}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Customers Served:</span>
+              <span class="stat-value">${formatNumber(this.lastUpdateData?.gameState.totalCustomersServed || 0)}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Total Gold Earned:</span>
+              <span class="stat-value">${formatNumber(this.lastUpdateData?.gameState.totalGoldEarned || 0)}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Play Time:</span>
+              <span class="stat-value">${this.formatPlayTime(this.lastUpdateData?.gameState.playTime || 0)}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    this.modalContent.innerHTML = html;
+
+    // Add event listeners
+    document.getElementById('resume-game-btn')?.addEventListener('click', () => {
+      this.closeModal();
+    });
+
+    document.getElementById('save-game-btn')?.addEventListener('click', () => {
+      this.game.saveGame();
+    });
+  }
+
+  private formatPlayTime(seconds: number): string {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = Math.floor(seconds % 60);
+
+    if (hours > 0) {
+      return `${hours}h ${minutes}m ${secs}s`;
+    } else if (minutes > 0) {
+      return `${minutes}m ${secs}s`;
+    } else {
+      return `${secs}s`;
+    }
   }
 
   public getSelectedItem(): { type: 'ingredient' | 'equipment'; id: string } | null {
@@ -1118,9 +1236,18 @@ export class UIManager {
     // Update all UI components
     this.craftingUI.update(data.crafting, data.inventory);
     this.inventoryUI.update(data.inventory, data.elements);
-    this.customerUI.update(data.customers, data.storedPortals);
+    this.customerUI.update(data.customers, data.storedPortals, data.progression, data.elements);
     this.researchUI.update(data.elements, data.inventory);
     this.portalInventoryUI.update(data.storedPortals);
+
+    // Update active expeditions in sidebar
+    const activeExpeditionsContainer = document.getElementById('active-expeditions');
+    if (activeExpeditionsContainer) {
+      activeExpeditionsContainer.innerHTML = this.expeditionUI.renderActiveExpeditions(
+        data.expeditions
+      );
+      this.expeditionUI.attachEventListeners();
+    }
 
     // Update modal content if open
     if (this.currentModal) {
