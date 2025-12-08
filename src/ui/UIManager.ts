@@ -99,7 +99,6 @@ export class UIManager {
     this.manaConversionUI.initialize();
     this.portalInventoryUI.initialize();
     this.expeditionUI.initialize();
-
     this.setupModalHandlers();
   }
 
