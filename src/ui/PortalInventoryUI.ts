@@ -43,7 +43,12 @@ function buildPortalTooltip(portal: PortalType): string {
     lines.push('');
     lines.push('Attributes:');
     for (const [attr, value] of Object.entries(portal.attributes)) {
-      lines.push(`  ${attr}: ${value}`);
+      // Format attribute name: capitalize first letter and convert camelCase to spaces
+      const formattedAttr = attr
+        .replace(/([A-Z])/g, ' $1')
+        .replace(/^./, (str) => str.toUpperCase())
+        .trim();
+      lines.push(`  ${formattedAttr}: ${value}`);
     }
   }
   

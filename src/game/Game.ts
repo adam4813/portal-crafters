@@ -271,10 +271,11 @@ export class Game {
       return;
     }
 
-    // Match portal type based on elements and ingredients
+    // Match portal type based on elements, ingredients, and equipment
     const portalType = matchPortalType(
       portalData.elements,
-      result?.ingredientIds || []
+      result?.ingredientIds || [],
+      result?.equipmentIds || []
     );
 
     // Create a new portal - level is already calculated in portalData
@@ -311,6 +312,8 @@ export class Game {
       showToast('Portal crafted and stored!', 'success');
     }
     
+    // Invalidate portal types cache since we crafted a new portal
+    this.uiManager.invalidatePortalTypesCache();
     this.updateUI();
   }
 

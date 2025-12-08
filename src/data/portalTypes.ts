@@ -1,5 +1,6 @@
 import type { ElementType } from '../types';
-
+import { getIngredientById } from './ingredients';
+import { getEquipmentById } from './equipment';
 /**
  * Portal Type Definition - represents a specific category of portal
  * that can be crafted from particular combinations of elements and ingredients
@@ -14,7 +15,7 @@ export interface PortalTypeDefinition {
   
   // Requirements to match this portal type
   requiredElements: Partial<Record<ElementType, number>>; // Minimum amounts
-  requiredIngredients?: string[]; // At least one must be present
+  requiredTags?: string[]; // At least one must be present from ingredients/equipment
   optionalElements?: ElementType[]; // Can be present but not required
   
   // Attributes granted by this portal type
@@ -204,11 +205,11 @@ export const PORTAL_TYPES: PortalTypeDefinition[] = [
     id: 'graveyard',
     name: 'Graveyard',
     affinity: 'Death',
-    description: 'A portal to the realm of the dead, crafted from shadow and bones',
+    description: 'A portal to the realm of the dead, crafted from death and shadow elements with bones',
     icon: '💀',
     visualColor: 0x1a202c,
     requiredElements: { death: 10, shadow: 10 },
-    requiredIngredients: ['ancient_rune', 'moon_dust', 'phoenix_feather'],
+    requiredTags: ['bone'],
     tier: 'rare',
     attributes: {
       power: 10,
@@ -365,7 +366,7 @@ export const PORTAL_TYPES: PortalTypeDefinition[] = [
     icon: '🦅',
     visualColor: 0xf6ad55,
     requiredElements: { life: 25, fire: 20, light: 15 },
-    requiredIngredients: ['phoenix_feather'],
+    requiredTags: ['phoenix'],
     tier: 'epic',
     attributes: {
       power: 18,
@@ -382,7 +383,7 @@ export const PORTAL_TYPES: PortalTypeDefinition[] = [
     icon: '🐉',
     visualColor: 0x9b2c2c,
     requiredElements: { fire: 40, metal: 20 },
-    requiredIngredients: ['dragon_scale'],
+    requiredTags: ['dragon'],
     tier: 'epic',
     attributes: {
       power: 20,
@@ -572,11 +573,12 @@ export const PORTAL_TYPES: PortalTypeDefinition[] = [
 ];
 
 /**
- * Score how well a portal's elements and ingredients match a portal type
+ * Score how well a portal's elements, ingredients, and equipment match a portal type
  */
 export function scorePortalTypeMatch(
   portalElements: Partial<Record<ElementType, number>>,
-  portalIngredients: string[],
+  portalIngredientIds: string[],
+  portalEquipmentIds: string[],
   portalType: PortalTypeDefinition
 ): number {
   let score = 0;
@@ -595,20 +597,42 @@ export function scorePortalTypeMatch(
     }
   }
 
-  // Check required ingredients (at least one must match)
-  if (portalType.requiredIngredients && portalType.requiredIngredients.length > 0) {
+  // Check required tags (at least one must match)
+  if (portalType.requiredTags && portalType.requiredTags.length > 0) {
     totalRequired++;
-    const hasRequiredIngredient = portalType.requiredIngredients.some((reqIng) =>
-      portalIngredients.includes(reqIng)
-    );
-    if (hasRequiredIngredient) {
+    
+    // Collect all tags from ingredients and equipment
+    const allTags = new Set<string>();
+    
+    for (const ingredientId of portalIngredientIds) {
+      const ingredient = getIngredientById(ingredientId);
+      if (ingredient?.tags) {
+        ingredient.tags.forEach(tag => allTags.add(tag));
+      }
+    }
+    
+    for (const equipmentId of portalEquipmentIds) {
+      const equipment = getEquipmentById(equipmentId);
+      if (equipment?.tags) {
+        equipment.tags.forEach(tag => allTags.add(tag));
+      }
+    }
+    
+    // Check if any required tag is present
+    const hasRequiredTag = portalType.requiredTags.some(reqTag => allTags.has(reqTag));
+    if (hasRequiredTag) {
       requiredMatches++;
       score += 10;
     }
   }
 
+  // Handle basic portal (no requirements)
+  if (totalRequired === 0) {
+    return 10; // Default score for basic portal
+  }
+
   // Must meet all requirements to be valid
-  if (totalRequired > 0 && requiredMatches < totalRequired) {
+  if (requiredMatches < totalRequired) {
     return 0;
   }
 
@@ -625,19 +649,20 @@ export function scorePortalTypeMatch(
 }
 
 /**
- * Match a portal to its type based on elements and ingredients
+ * Match a portal to its type based on elements, ingredients, and equipment
  * Returns the best matching portal type, or null if no match
  */
 export function matchPortalType(
   elements: Partial<Record<ElementType, number>>,
-  ingredients: string[]
+  ingredientIds: string[],
+  equipmentIds: string[] = []
 ): PortalTypeDefinition | null {
   let bestMatch: PortalTypeDefinition | null = null;
   let bestScore = 0;
 
   // Try to match against all portal types
   for (const portalType of PORTAL_TYPES) {
-    const score = scorePortalTypeMatch(elements, ingredients, portalType);
+    const score = scorePortalTypeMatch(elements, ingredientIds, equipmentIds, portalType);
     if (score > bestScore) {
       bestScore = score;
       bestMatch = portalType;
@@ -652,12 +677,12 @@ export function matchPortalType(
  * Get all discovered portal types based on what recipes have been crafted
  */
 export function getDiscoveredPortalTypes(
-  craftedPortals: Array<{ elements: Partial<Record<ElementType, number>>; ingredients: string[] }>
+  craftedPortals: Array<{ elements: Partial<Record<ElementType, number>>; ingredients: string[]; equipment: string[] }>
 ): Set<string> {
   const discovered = new Set<string>();
 
   for (const portal of craftedPortals) {
-    const match = matchPortalType(portal.elements, portal.ingredients);
+    const match = matchPortalType(portal.elements, portal.ingredients, portal.equipment);
     if (match) {
       discovered.add(match.id);
     }

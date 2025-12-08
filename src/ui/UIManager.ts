@@ -5,7 +5,7 @@ import type { CustomerSystem } from '../game/Customer';
 import type { ElementSystem } from '../game/ElementSystem';
 import type { UpgradeSystem } from '../game/UpgradeSystem';
 import type { Portal } from '../game/Portal';
-import type { GameState, Portal as PortalType } from '../types';
+import type { GameState, Portal as PortalType, ElementType } from '../types';
 import { CraftingUI } from './CraftingUI';
 import { InventoryUI } from './InventoryUI';
 import { CustomerUI } from './CustomerUI';
@@ -15,6 +15,8 @@ import { ManaConversionUI } from './ManaConversionUI';
 import { PortalInventoryUI } from './PortalInventoryUI';
 import { formatNumber } from '../utils/helpers';
 import { getIngredientById } from '../data/ingredients';
+import { getEquipmentById } from '../data/equipment';
+import type { PortalTypeDefinition } from '../data/portalTypes';
 
 export interface UIUpdateData {
   inventory: InventorySystem;
@@ -54,6 +56,9 @@ export class UIManager {
 
   // Last update data for modal re-renders
   private lastUpdateData: UIUpdateData | null = null;
+  
+  // Cache for discovered portal types (invalidated on portal craft)
+  private discoveredPortalTypesCache: Set<string> | null = null;
 
   constructor(game: Game) {
     this.game = game;
@@ -453,18 +458,23 @@ export class UIManager {
     this.manaConversionUI.renderToElement(this.modalContent, this.lastUpdateData.inventory, this.lastUpdateData.elements);
   }
 
-  private renderRecipesModal(): void {
+  private async renderRecipesModal(): Promise<void> {
     if (!this.modalContent || !this.lastUpdateData) return;
     
     const { inventory } = this.lastUpdateData;
     const storedPortals = this.game.getStoredPortals();
 
-    // Import portal type functions dynamically
-    import('../data/portalTypes').then(({ getDiscoveredPortalTypes, getAllPortalTypes }) => {
-      // Get discovered portal types based on crafted portals
-      const discovered = getDiscoveredPortalTypes(
-        storedPortals.map(p => ({ elements: p.elements, ingredients: p.ingredients }))
-      );
+    try {
+      // Import portal type functions dynamically
+      const { getDiscoveredPortalTypes, getAllPortalTypes } = await import('../data/portalTypes');
+      
+      // Use cached discovered types if available, otherwise calculate
+      if (!this.discoveredPortalTypesCache) {
+        this.discoveredPortalTypesCache = getDiscoveredPortalTypes(
+          storedPortals.map(p => ({ elements: p.elements, ingredients: p.ingredients, equipment: p.equipment }))
+        );
+      }
+      const discovered = this.discoveredPortalTypesCache;
       const allTypes = getAllPortalTypes();
 
       let html = `
@@ -511,14 +521,22 @@ export class UIManager {
           }
         });
       });
-    });
+    } catch (error) {
+      console.error('Failed to load portal types:', error);
+      this.modalContent!.innerHTML = '<p class="error-message">Failed to load recipe book. Please try again.</p>';
+    }
+  }
+  
+  // Method to invalidate cache when a new portal is crafted
+  public invalidatePortalTypesCache(): void {
+    this.discoveredPortalTypesCache = null;
   }
 
   private renderPortalTypesTab(
     container: HTMLElement,
-    allTypes: any[],
+    allTypes: PortalTypeDefinition[],
     discovered: Set<string>,
-    inventory: any
+    inventory: InventorySystem
   ): void {
     if (discovered.size === 0) {
       container.innerHTML = `
@@ -529,7 +547,7 @@ export class UIManager {
     }
 
     // Group by tier
-    const tiers = ['legendary', 'epic', 'rare', 'uncommon', 'common'];
+    const tiers: Array<'legendary' | 'epic' | 'rare' | 'uncommon' | 'common'> = ['legendary', 'epic', 'rare', 'uncommon', 'common'];
     let html = '';
 
     for (const tier of tiers) {
@@ -542,19 +560,16 @@ export class UIManager {
       for (const portalType of tierTypes) {
         // Check if player has required elements
         const hasElements = this.checkHasElements(portalType.requiredElements, inventory);
-        const hasIngredients = this.checkHasIngredients(portalType.requiredIngredients, inventory);
-        const canCraft = hasElements && hasIngredients;
+        const hasTags = this.checkHasTags(portalType.requiredTags, inventory);
+        const canCraft = hasElements && hasTags;
 
         // Build requirements display
         const elementReqs = Object.entries(portalType.requiredElements)
           .map(([element, amount]) => `${element}: ${amount}`)
           .join(', ');
         
-        const ingredientReqs = portalType.requiredIngredients 
-          ? portalType.requiredIngredients.map((id: string) => {
-              const ing = this.getIngredientName(id);
-              return ing;
-            }).join(' OR ')
+        const tagReqs = portalType.requiredTags 
+          ? portalType.requiredTags.map(tag => this.capitalizeFirst(tag)).join(' OR ')
           : 'None';
 
         const clickableClass = canCraft ? 'portal-type-clickable' : 'portal-type-locked';
@@ -570,7 +585,7 @@ export class UIManager {
             <div class="portal-type-description">${portalType.description}</div>
             <div class="portal-type-requirements">
               <strong>Elements:</strong> ${elementReqs || 'None'}
-              ${portalType.requiredIngredients ? `<br><strong>Items:</strong> ${ingredientReqs}` : ''}
+              ${portalType.requiredTags ? `<br><strong>Tags:</strong> ${tagReqs}` : ''}
             </div>
           </div>
         `;
@@ -592,49 +607,103 @@ export class UIManager {
     });
   }
 
-  private checkHasElements(requiredElements: any, inventory: any): boolean {
+  private checkHasElements(requiredElements: Partial<Record<ElementType, number>>, inventory: InventorySystem): boolean {
     for (const [element, amount] of Object.entries(requiredElements)) {
-      if (!inventory.hasElement(element, amount as number)) {
+      if (!inventory.hasElement(element as ElementType, amount as number)) {
         return false;
       }
     }
     return true;
   }
 
-  private checkHasIngredients(requiredIngredients: string[] | undefined, inventory: any): boolean {
-    if (!requiredIngredients || requiredIngredients.length === 0) return true;
-    return requiredIngredients.some(id => inventory.hasIngredient(id));
+  private checkHasTags(requiredTags: string[] | undefined, inventory: InventorySystem): boolean {
+    if (!requiredTags || requiredTags.length === 0) return true;
+    
+    // Check if any ingredient or equipment in inventory has one of the required tags
+    const inventoryState = inventory.getState();
+    
+    // Check ingredients
+    for (const ingredientId of Object.keys(inventoryState.ingredients)) {
+      if (inventoryState.ingredients[ingredientId] > 0) {
+        const ingredient = getIngredientById(ingredientId);
+        if (ingredient?.tags) {
+          for (const tag of requiredTags) {
+            if (ingredient.tags.includes(tag)) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+    
+    // Check equipment (basic items)
+    for (const equipmentId of Object.keys(inventoryState.equipment)) {
+      if (inventoryState.equipment[equipmentId] > 0) {
+        const equipment = getEquipmentById(equipmentId);
+        if (equipment?.tags) {
+          for (const tag of requiredTags) {
+            if (equipment.tags.includes(tag)) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+    
+    return false;
+  }
+  
+  private capitalizeFirst(str: string): string {
+    return str.charAt(0).toUpperCase() + str.slice(1);
   }
 
-  private getIngredientName(id: string): string {
-    const ingredient = getIngredientById(id);
-    return ingredient?.name || id;
-  }
-
-  private handlePortalTypeClick(typeId: string): void {
-    import('../data/portalTypes').then(({ getPortalTypeById }) => {
+  private async handlePortalTypeClick(typeId: string): Promise<void> {
+    try {
+      const { getPortalTypeById } = await import('../data/portalTypes');
+      const { showToast } = await import('../utils/helpers');
       const portalType = getPortalTypeById(typeId);
       if (!portalType) return;
 
-      // Add required elements to portal
-      for (const [element, amount] of Object.entries(portalType.requiredElements)) {
-        this.game.addElementToPortal(element as any, amount as number);
+      const inventory = this.game.getInventory();
+      
+      // Validate resources before adding
+      const hasElements = this.checkHasElements(portalType.requiredElements, inventory);
+      const hasTags = this.checkHasTags(portalType.requiredTags, inventory);
+      
+      if (!hasElements || !hasTags) {
+        showToast('Missing required resources to pre-fill this recipe!', 'error');
+        return;
       }
 
-      // Try to add at least one required ingredient to a crafting slot
-      if (portalType.requiredIngredients && portalType.requiredIngredients.length > 0) {
+      // Add required elements to portal
+      for (const [element, amount] of Object.entries(portalType.requiredElements)) {
+        this.game.addElementToPortal(element as ElementType, amount as number);
+      }
+
+      // Try to add an item with required tag to a crafting slot
+      if (portalType.requiredTags && portalType.requiredTags.length > 0) {
         const crafting = this.game.getCrafting();
-        const inventory = this.game.getInventory();
+        const inventoryState = inventory.getState();
         
-        // Find first available ingredient and slot
-        for (const ingredientId of portalType.requiredIngredients) {
-          if (inventory.hasIngredient(ingredientId)) {
-            const slots = crafting.getSlots();
-            const emptySlot = slots.find(s => !s.ingredient && !s.equipment);
-            if (emptySlot) {
-              crafting.addIngredientToSlot(emptySlot.index, ingredientId);
-              inventory.removeIngredient(ingredientId, 1);
-              break;
+        // Find first available ingredient with required tag and empty slot
+        let itemAdded = false;
+        for (const ingredientId of Object.keys(inventoryState.ingredients)) {
+          if (inventoryState.ingredients[ingredientId] > 0) {
+            const ingredient = getIngredientById(ingredientId);
+            if (ingredient?.tags) {
+              for (const tag of portalType.requiredTags) {
+                if (ingredient.tags.includes(tag)) {
+                  const slots = crafting.getSlots();
+                  const emptySlot = slots.find(s => !s.ingredient && !s.equipment);
+                  if (emptySlot) {
+                    crafting.addIngredientToSlot(emptySlot.index, ingredientId);
+                    inventory.removeIngredient(ingredientId, 1);
+                    itemAdded = true;
+                    break;
+                  }
+                }
+              }
+              if (itemAdded) break;
             }
           }
         }
@@ -642,11 +711,12 @@ export class UIManager {
 
       this.closeModal();
       this.game.refreshUI();
-      
-      import('../utils/helpers').then(({ showToast }) => {
-        showToast(`Pre-filled crafting with ${portalType.name} recipe!`, 'success');
-      });
-    });
+      showToast(`Pre-filled crafting with ${portalType.name} recipe!`, 'success');
+    } catch (error) {
+      console.error('Failed to pre-fill portal type:', error);
+      const { showToast } = await import('../utils/helpers');
+      showToast('Failed to pre-fill recipe. Please try again.', 'error');
+    }
   }
 
   private renderGuideModal(): void {
