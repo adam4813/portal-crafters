@@ -1,17 +1,21 @@
 import type { Game } from '../game/Game';
 import type { CustomerSystem } from '../game/Customer';
+import type { ProgressionSystem } from '../game/ProgressionSystem';
+import type { ElementSystem } from '../game/ElementSystem';
 import type { Portal as PortalType, Customer } from '../types';
 import { formatTime } from '../utils/helpers';
 
 export class CustomerUI {
   private game: Game;
   private queueContainer: HTMLElement | null;
+  private progressionContainer: HTMLElement | null;
   private timerInterval: number | null = null;
   private isPaused: boolean = false;
 
   constructor(game: Game) {
     this.game = game;
     this.queueContainer = document.getElementById('customer-queue');
+    this.progressionContainer = document.getElementById('progression-status');
   }
 
   public initialize(): void {
@@ -67,8 +71,65 @@ export class CustomerUI {
     }
   }
 
-  public update(customers: CustomerSystem, storedPortals: PortalType[]): void {
+  public update(
+    customers: CustomerSystem,
+    storedPortals: PortalType[],
+    progression?: ProgressionSystem,
+    elements?: ElementSystem
+  ): void {
+    this.renderProgressionStatus(progression, elements);
     this.renderQueue(customers, storedPortals);
+  }
+
+  private renderProgressionStatus(progression?: ProgressionSystem, elements?: ElementSystem): void {
+    if (!this.progressionContainer || !progression || !elements) return;
+
+    const currentTier = progression.getCurrentTier();
+    const nextTier = progression.getNextTier();
+    const contractsCompleted = progression.getContractsCompletedThisTier();
+    const miniBossCompleted = progression.isMiniBossCompleted(currentTier.tier);
+
+    let html = '<div class="progression-info">';
+    html += `<div class="tier-name">🏆 ${currentTier.name} (Tier ${currentTier.tier})</div>`;
+    html += `<div class="tier-progress">`;
+    html += `<span class="contracts-count">Contracts: ${contractsCompleted}</span>`;
+    html += `<span class="miniboss-status ${miniBossCompleted ? 'complete' : 'incomplete'}">`;
+    html += miniBossCompleted ? '✅ Mini-boss Complete' : '⚔️ Mini-boss Pending';
+    html += `</span>`;
+    html += `</div>`;
+
+    // Show next tier unlock requirements if available
+    if (nextTier) {
+      const unlockStatus = progression.getNextTierUnlockStatus(elements.getUnlockedElements());
+      html += `<div class="next-tier-info">`;
+      html += `<div class="next-tier-name">Next: ${nextTier.name}</div>`;
+      html += `<div class="unlock-requirements">`;
+
+      // Mini-boss requirement
+      html += `<div class="requirement ${unlockStatus.miniBossCompleted ? 'met' : 'unmet'}">`;
+      html += `${unlockStatus.miniBossCompleted ? '✅' : '❌'} Complete mini-boss`;
+      html += `</div>`;
+
+      // Contracts requirement
+      html += `<div class="requirement ${unlockStatus.contractsCompleted ? 'met' : 'unmet'}">`;
+      html += `${unlockStatus.contractsCompleted ? '✅' : '❌'} ${contractsCompleted}/${unlockStatus.contractsNeeded} contracts`;
+      html += `</div>`;
+
+      // Element requirement
+      if (unlockStatus.elementNeeded) {
+        html += `<div class="requirement ${unlockStatus.elementUnlocked ? 'met' : 'unmet'}">`;
+        html += `${unlockStatus.elementUnlocked ? '✅' : '❌'} Research ${unlockStatus.elementNeeded}`;
+        html += `</div>`;
+      }
+
+      html += `</div>`;
+      html += `</div>`;
+    } else {
+      html += `<div class="next-tier-info">🎉 Max tier reached!</div>`;
+    }
+
+    html += '</div>';
+    this.progressionContainer.innerHTML = html;
   }
 
   private renderQueue(customers: CustomerSystem, storedPortals: PortalType[]): void {
@@ -87,6 +148,7 @@ export class CustomerUI {
     for (const customer of queue) {
       const waitTime = Math.floor((now - customer.arrivedAt) / 1000);
       const timeRemaining = Math.max(0, customer.patience - waitTime);
+      const isMiniBoss = customer.id.startsWith('miniboss-');
 
       // Find which portals can fulfill this customer
       const matchingPortals = storedPortals.filter((portal) =>
@@ -97,11 +159,17 @@ export class CustomerUI {
       const reqElements = this.formatElementRequirement(customer.requirements);
       const reqMana = customer.requirements.minMana ? `✨ ≥${customer.requirements.minMana}` : '';
 
+      // Add special class for mini-boss
+      const cardClass = isMiniBoss ? 'customer-card miniboss-card' : 'customer-card';
+      const timerDisplay = isMiniBoss
+        ? '<div class="customer-timer unlimited">⏱️ ∞ Unlimited</div>'
+        : `<div class="customer-timer ${timeRemaining < 30 ? 'urgent' : ''}">⏱️ ${formatTime(timeRemaining)}</div>`;
+
       html += `
-        <div class="customer-card" data-customer-id="${customer.id}" data-arrived-at="${customer.arrivedAt}" data-patience="${customer.patience}">
+        <div class="${cardClass}" data-customer-id="${customer.id}" data-arrived-at="${customer.arrivedAt}" data-patience="${customer.patience}">
           <div class="customer-header">
             <div class="customer-name">${customer.icon} ${customer.name}</div>
-            <div class="customer-timer ${timeRemaining < 30 ? 'urgent' : ''}">⏱️ ${formatTime(timeRemaining)}</div>
+            ${timerDisplay}
           </div>
           <div class="customer-requirements">
             <span class="req-level">Lv ${customer.requirements.minLevel}+</span>

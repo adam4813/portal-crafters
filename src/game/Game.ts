@@ -10,6 +10,8 @@ import { ManaSystem } from './ManaSystem';
 import { UpgradeSystem } from './UpgradeSystem';
 import { RewardSystem } from './RewardSystem';
 import { SaveSystem } from './SaveSystem';
+import { ProgressionSystem } from './ProgressionSystem';
+import { ExpeditionSystem } from './ExpeditionSystem';
 import { UIManager } from '../ui/UIManager';
 import { createInitialGameState, showToast } from '../utils/helpers';
 import { calculatePortalEffects } from './PortalEffectSystem';
@@ -31,6 +33,8 @@ export class Game {
   private upgradeSystem: UpgradeSystem;
   private rewardSystem: RewardSystem;
   private saveSystem: SaveSystem;
+  private progressionSystem: ProgressionSystem;
+  private expeditionSystem: ExpeditionSystem;
   private uiManager: UIManager;
 
   // Game state
@@ -81,6 +85,8 @@ export class Game {
     this.upgradeSystem = new UpgradeSystem();
     this.rewardSystem = new RewardSystem();
     this.saveSystem = new SaveSystem();
+    this.progressionSystem = new ProgressionSystem();
+    this.expeditionSystem = new ExpeditionSystem();
 
     // Initialize UI
     this.uiManager = new UIManager(this);
@@ -131,6 +137,9 @@ export class Game {
     // Initialize UI
     this.uiManager.initialize();
 
+    // Ensure mini-boss contract is added to queue
+    this.updateMiniBossContract();
+
     // Update UI with initial state
     this.updateUI();
 
@@ -148,6 +157,8 @@ export class Game {
     this.customerSystem.initialize(state.unlockedElements);
     this.customerSystem.loadQueue(state.customerQueue);
     this.manaSystem.initialize(state.inventory.mana);
+    this.progressionSystem.initialize(state.progression);
+    this.expeditionSystem.initialize(state.activeExpeditions);
 
     // Load stored portals
     this.storedPortals = state.storedPortals ? [...state.storedPortals] : [];
@@ -191,6 +202,8 @@ export class Game {
       totalGoldEarned: this.gameState.totalGoldEarned,
       playTime: this.gameState.playTime,
       lastSaveTime: Date.now(),
+      progression: this.progressionSystem.getState(),
+      activeExpeditions: this.expeditionSystem.getState(),
     };
   }
 
@@ -233,6 +246,41 @@ export class Game {
     // Update customer system (handles patience/expiration) - only when not paused
     if (!this.isPaused) {
       this.customerSystem.update(deltaTime);
+
+      // Ensure mini-boss contract is in queue if not completed
+      this.updateMiniBossContract();
+    }
+  }
+
+  /**
+   * Ensure the current tier's mini-boss contract is always in the queue
+   */
+  private updateMiniBossContract(): void {
+    const currentTier = this.progressionSystem.getCurrentTier();
+
+    // Check if mini-boss for current tier is already completed
+    if (this.progressionSystem.isMiniBossCompleted(currentTier.tier)) {
+      // Remove mini-boss from queue if it's there
+      this.customerSystem.removeMiniBossContract();
+      return;
+    }
+
+    // Add mini-boss contract if not in queue
+    const queue = this.customerSystem.getQueue();
+    const hasMiniBoss = queue.some((c) => c.id.startsWith('miniboss-'));
+
+    if (!hasMiniBoss) {
+      this.customerSystem.addMiniBossContract(
+        currentTier.tier,
+        currentTier.miniBossContract.name,
+        {
+          minLevel: currentTier.miniBossContract.minLevel,
+          requiredElements: currentTier.miniBossContract.requiredElements,
+          minElementAmount: currentTier.miniBossContract.minElementAmount,
+          minMana: currentTier.miniBossContract.minMana,
+        },
+        currentTier.miniBossContract.payment
+      );
     }
   }
 
@@ -326,11 +374,32 @@ export class Game {
     // Remove portal from storage
     this.storedPortals.splice(portalIndex, 1);
 
+    // Check if this is a mini-boss contract
+    const isMiniBoss = customer.id.startsWith('miniboss-');
+
     // Complete the contract
     const payment = this.customerSystem.completeContract(customer.id);
     this.inventorySystem.addGold(payment);
     this.gameState.totalCustomersServed++;
     this.gameState.totalGoldEarned += payment;
+
+    // Track progression
+    if (isMiniBoss) {
+      // Complete mini-boss for current tier
+      const currentTier = this.progressionSystem.getCurrentTier();
+      this.progressionSystem.completeMiniBoss(currentTier.tier);
+      showToast(`🏆 Mini-boss contract complete! Tier ${currentTier.tier} mastered!`, 'success');
+
+      // Check if we can advance to next tier
+      if (this.progressionSystem.canAdvanceToNextTier(this.elementSystem.getUnlockedElements())) {
+        this.progressionSystem.advanceToNextTier();
+        const newTier = this.progressionSystem.getCurrentTier();
+        showToast(`🎉 Advanced to ${newTier.name}!`, 'success');
+      }
+    } else {
+      // Regular contract - increment counter
+      this.progressionSystem.completeContract();
+    }
 
     // Calculate portal effects from equipment attributes
     const generatedEquipmentAttributes = portalData.generatedEquipmentAttributes || [];
@@ -349,7 +418,9 @@ export class Game {
       showToast(message, 'success');
     }
 
-    showToast(`Contract complete! Received ${payment} gold!`, 'success');
+    if (!isMiniBoss) {
+      showToast(`Contract complete! Received ${payment} gold!`, 'success');
+    }
     this.updateUI();
   }
 
@@ -646,6 +717,8 @@ export class Game {
       portal: this.portal,
       gameState: this.gameState,
       storedPortals: this.storedPortals,
+      progression: this.progressionSystem,
+      expeditions: this.expeditionSystem,
     });
   }
 
@@ -751,6 +824,83 @@ export class Game {
 
   public getManaSystem(): ManaSystem {
     return this.manaSystem;
+  }
+
+  public getProgression(): ProgressionSystem {
+    return this.progressionSystem;
+  }
+
+  public getExpeditions(): ExpeditionSystem {
+    return this.expeditionSystem;
+  }
+
+  public startExpedition(portalId: string): void {
+    // Find the portal
+    const portalIndex = this.storedPortals.findIndex((p) => p.id === portalId);
+    if (portalIndex === -1) {
+      showToast('Portal not found!', 'error');
+      return;
+    }
+
+    const portal = this.storedPortals[portalIndex];
+
+    // Remove portal from storage (it's consumed by the expedition)
+    this.storedPortals.splice(portalIndex, 1);
+
+    // Start expedition
+    const expedition = this.expeditionSystem.startExpedition(portal);
+    const duration = Math.floor(expedition.duration / 60);
+    showToast(
+      `Expedition started! Party sent through portal. Returns in ${duration} minutes.`,
+      'success'
+    );
+    this.updateUI();
+  }
+
+  public completeExpedition(expeditionId: string): void {
+    const rewards = this.expeditionSystem.completeExpedition(expeditionId);
+    if (!rewards) {
+      showToast('Expedition not ready yet!', 'warning');
+      return;
+    }
+
+    // Apply rewards
+    let rewardMessage = 'Expedition complete! Received: ';
+    const rewardParts: string[] = [];
+
+    for (const reward of rewards) {
+      switch (reward.type) {
+        case 'gold':
+          this.inventorySystem.addGold(reward.amount);
+          rewardParts.push(`${reward.amount} gold`);
+          break;
+        case 'mana':
+          this.inventorySystem.addMana(reward.amount);
+          rewardParts.push(`${reward.amount} mana`);
+          break;
+        case 'ingredient':
+          if (reward.itemId) {
+            this.inventorySystem.addIngredient(reward.itemId, reward.amount);
+            rewardParts.push(`${reward.amount}x ${reward.itemId}`);
+          }
+          break;
+        case 'equipment':
+          if (reward.itemId) {
+            this.inventorySystem.addEquipment(reward.itemId, reward.amount);
+            rewardParts.push(`${reward.amount}x ${reward.itemId}`);
+          }
+          break;
+      }
+    }
+
+    if (rewardParts.length > 0) {
+      rewardMessage += rewardParts.join(', ');
+    } else {
+      rewardMessage = 'Expedition complete, but no rewards found.';
+    }
+
+    showToast(rewardMessage, 'success');
+    this.updateUI();
   }
 
   /**

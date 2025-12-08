@@ -199,6 +199,8 @@ export interface GameState {
   totalGoldEarned: number;
   playTime: number;
   lastSaveTime: number;
+  progression?: ProgressionState;
+  activeExpeditions?: Expedition[];
 }
 
 // Serializable crafting slot state (stores IDs instead of full objects)
@@ -322,4 +324,57 @@ export type AnyEquipment = Equipment | GeneratedEquipment;
  */
 export function isGeneratedEquipment(eq: AnyEquipment): eq is GeneratedEquipment {
   return 'isGenerated' in eq && eq.isGenerated === true;
+}
+
+// ============================================
+// Progression System Types
+// ============================================
+
+/**
+ * Progression tier - represents a stage of game progression
+ */
+export interface ProgressionTier {
+  id: string;
+  name: string;
+  tier: number; // 1-5
+  unlockRequirements: {
+    requiredElement?: ElementType; // Element that must be researched
+    contractsCompleted: number; // Contracts completed in previous tier
+  };
+  miniBossContract: ContractRequirements & {
+    name: string;
+    description: string;
+    payment: number;
+  };
+}
+
+/**
+ * Progression state - tracks player progress through tiers
+ */
+export interface ProgressionState {
+  currentTier: number; // 1-5
+  contractsCompletedThisTier: number;
+  tiersUnlocked: number[]; // Array of unlocked tier numbers
+  miniBossCompleted: number[]; // Array of completed mini-boss tier numbers
+}
+
+/**
+ * Expedition - party sent through a portal to gather resources
+ */
+export interface Expedition {
+  id: string;
+  portalId: string; // ID of the portal used for this expedition
+  portalSnapshot: Portal; // Snapshot of the portal at expedition start
+  startedAt: number; // Timestamp when expedition started
+  duration: number; // Duration in seconds (based on portal properties)
+}
+
+/**
+ * Expedition reward
+ */
+export interface ExpeditionReward {
+  type: 'ingredient' | 'equipment' | 'gold' | 'mana';
+  itemId?: string;
+  amount: number;
+  chance: number; // 0-1, probability of receiving this reward
 }

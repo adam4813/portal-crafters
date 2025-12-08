@@ -4,6 +4,8 @@ import type { CraftingSystem } from '../game/CraftingSystem';
 import type { CustomerSystem } from '../game/Customer';
 import type { ElementSystem } from '../game/ElementSystem';
 import type { UpgradeSystem } from '../game/UpgradeSystem';
+import type { ProgressionSystem } from '../game/ProgressionSystem';
+import type { ExpeditionSystem } from '../game/ExpeditionSystem';
 import type { Portal } from '../game/Portal';
 import type { GameState, Portal as PortalType } from '../types';
 import { CraftingUI } from './CraftingUI';
@@ -13,6 +15,7 @@ import { ShopUI } from './ShopUI';
 import { ResearchUI } from './ResearchUI';
 import { ManaConversionUI } from './ManaConversionUI';
 import { PortalInventoryUI } from './PortalInventoryUI';
+import { ExpeditionUI } from './ExpeditionUI';
 import { formatNumber } from '../utils/helpers';
 
 export interface UIUpdateData {
@@ -24,6 +27,8 @@ export interface UIUpdateData {
   portal: Portal;
   gameState: GameState;
   storedPortals: PortalType[];
+  progression: ProgressionSystem;
+  expeditions: ExpeditionSystem;
 }
 
 type ModalType =
@@ -34,6 +39,7 @@ type ModalType =
   | 'recipes'
   | 'guide'
   | 'pause'
+  | 'expeditions'
   | null;
 
 export class UIManager {
@@ -45,6 +51,7 @@ export class UIManager {
   private researchUI: ResearchUI;
   private manaConversionUI: ManaConversionUI;
   private portalInventoryUI: PortalInventoryUI;
+  private expeditionUI: ExpeditionUI;
 
   // DOM elements
   private moneyDisplay: HTMLElement | null;
@@ -71,6 +78,7 @@ export class UIManager {
     this.researchUI = new ResearchUI(game);
     this.manaConversionUI = new ManaConversionUI(game);
     this.portalInventoryUI = new PortalInventoryUI(game);
+    this.expeditionUI = new ExpeditionUI(game);
 
     this.moneyDisplay = document.getElementById('money-display');
     this.manaDisplay = document.getElementById('mana-display');
@@ -90,7 +98,7 @@ export class UIManager {
     this.researchUI.initialize();
     this.manaConversionUI.initialize();
     this.portalInventoryUI.initialize();
-
+    this.expeditionUI.initialize();
     this.setupModalHandlers();
   }
 
@@ -98,6 +106,9 @@ export class UIManager {
     // Header buttons
     document.getElementById('pause-btn')?.addEventListener('click', () => this.openModal('pause'));
     document.getElementById('guide-btn')?.addEventListener('click', () => this.openModal('guide'));
+    document
+      .getElementById('expeditions-btn')
+      ?.addEventListener('click', () => this.openModal('expeditions'));
     document.getElementById('shop-btn')?.addEventListener('click', () => this.openModal('shop'));
     document
       .getElementById('upgrades-btn')
@@ -141,6 +152,7 @@ export class UIManager {
     const titles: Record<string, string> = {
       pause: '⏸️ Game Paused',
       guide: '📚 Game Guide',
+      expeditions: '🗺️ Expeditions',
       shop: '🛒 Mana Shop',
       upgrades: '⬆️ Upgrades',
       research: '🔬 Research',
@@ -187,6 +199,9 @@ export class UIManager {
       case 'guide':
         this.renderGuideModal();
         break;
+      case 'expeditions':
+        this.renderExpeditionsModal();
+        break;
       case 'shop':
         this.renderShopModal();
         break;
@@ -203,6 +218,15 @@ export class UIManager {
         this.renderRecipesModal();
         break;
     }
+  }
+
+  private renderExpeditionsModal(): void {
+    if (!this.modalContent || !this.lastUpdateData) return;
+
+    const { expeditions, storedPortals } = this.lastUpdateData;
+
+    this.modalContent.innerHTML = this.expeditionUI.render(expeditions, storedPortals);
+    this.expeditionUI.attachEventListeners();
   }
 
   private renderShopModal(): void {
@@ -816,7 +840,7 @@ export class UIManager {
     // Update all UI components
     this.craftingUI.update(data.crafting, data.inventory);
     this.inventoryUI.update(data.inventory, data.elements);
-    this.customerUI.update(data.customers, data.storedPortals);
+    this.customerUI.update(data.customers, data.storedPortals, data.progression, data.elements);
     this.researchUI.update(data.elements, data.inventory);
     this.portalInventoryUI.update(data.storedPortals);
 
