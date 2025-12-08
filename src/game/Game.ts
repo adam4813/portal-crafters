@@ -340,7 +340,9 @@ export class Game {
       generatedEquipmentAttributes: result?.generatedEquipmentUsed || [],
       typeName: portalType?.name,
       affinity: portalType?.affinity,
-      attributes: portalType?.attributes,
+      attributes: portalType?.attributes ? Object.fromEntries(
+        Object.entries(portalType.attributes).filter(([_, v]) => v !== undefined)
+      ) as Record<string, number> : undefined,
     };
 
     this.storedPortals.push(newPortal);

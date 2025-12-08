@@ -18,6 +18,7 @@ import { PortalInventoryUI } from './PortalInventoryUI';
 import { ExpeditionUI } from './ExpeditionUI';
 import { formatNumber } from '../utils/helpers';
 import { getIngredientById } from '../data/ingredients';
+import { extractTagsFromGeneratedEquipment } from '../data/portalTypes';
 import { getEquipmentById } from '../data/equipment';
 import type { PortalTypeDefinition } from '../data/portalTypes';
 
@@ -797,33 +798,11 @@ export class UIManager {
     if (inventoryState.generatedEquipment) {
       for (const generatedId of Object.keys(inventoryState.generatedEquipment)) {
         const generated = inventoryState.generatedEquipment[generatedId];
-        // Check if generated equipment has tags directly
-        if (generated.tags && Array.isArray(generated.tags)) {
-          for (const tag of requiredTags) {
-            if (generated.tags.includes(tag)) {
-              return true;
-            }
-          }
-        }
-        // Also check attributes for tags
-        if (generated.attributes) {
-          const attrs = generated.attributes;
-          const attrTags: string[] = [];
-          // Collect tags from all attribute types
-          if (attrs.prefix?.tags) attrTags.push(...attrs.prefix.tags);
-          if (attrs.material?.tags) attrTags.push(...attrs.material.tags);
-          if (attrs.suffix?.tags) attrTags.push(...attrs.suffix.tags);
-          if (attrs.gearType && 'tags' in attrs.gearType) {
-            const gearTypeTags = (attrs.gearType as any).tags;
-            if (Array.isArray(gearTypeTags)) {
-              attrTags.push(...gearTypeTags);
-            }
-          }
-
-          for (const tag of requiredTags) {
-            if (attrTags.includes(tag)) {
-              return true;
-            }
+        const tags = extractTagsFromGeneratedEquipment(generated);
+        
+        for (const tag of requiredTags) {
+          if (tags.includes(tag)) {
+            return true;
           }
         }
       }
@@ -910,30 +889,9 @@ export class UIManager {
           if (inventoryState.generatedEquipment) {
             for (const generatedId of Object.keys(inventoryState.generatedEquipment)) {
               const generated = inventoryState.generatedEquipment[generatedId];
-              let hasTags = false;
-
-              // Check direct tags
-              if (generated.tags && Array.isArray(generated.tags) && generated.tags.includes(tag)) {
-                hasTags = true;
-              }
-
-              // Check attribute tags
-              if (!hasTags && generated.attributes) {
-                const attrs = generated.attributes;
-                const attrTags: string[] = [];
-                if (attrs.prefix?.tags) attrTags.push(...attrs.prefix.tags);
-                if (attrs.material?.tags) attrTags.push(...attrs.material.tags);
-                if (attrs.suffix?.tags) attrTags.push(...attrs.suffix.tags);
-                if (attrs.gearType && 'tags' in attrs.gearType) {
-                  const gearTypeTags = (attrs.gearType as any).tags;
-                  if (Array.isArray(gearTypeTags)) {
-                    attrTags.push(...gearTypeTags);
-                  }
-                }
-                hasTags = attrTags.includes(tag);
-              }
-
-              if (hasTags) {
+              const tags = extractTagsFromGeneratedEquipment(generated);
+              
+              if (tags.includes(tag)) {
                 const slots = crafting.getSlots();
                 const emptySlot = slots.find((s) => !s.ingredient && !s.equipment);
                 if (emptySlot) {

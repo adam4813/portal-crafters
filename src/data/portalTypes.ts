@@ -1,10 +1,33 @@
-import type { ElementType } from '../types';
+import type { ElementType, GeneratedEquipment } from '../types';
 import { getIngredientById } from './ingredients';
 import { getEquipmentById } from './equipment';
 
 // Constants for portal type matching
 const DEFAULT_BASIC_PORTAL_SCORE = 10;
 const MINIMUM_MATCH_SCORE = 10;
+
+/**
+ * Extract all tags from a generated equipment's attributes
+ */
+export function extractTagsFromGeneratedEquipment(generatedItem: GeneratedEquipment): string[] {
+  const tags: string[] = [];
+  
+  // Check direct tags
+  if (generatedItem.tags && Array.isArray(generatedItem.tags)) {
+    tags.push(...generatedItem.tags);
+  }
+  
+  // Check attribute tags
+  if (generatedItem.attributes) {
+    const attrs = generatedItem.attributes;
+    if (attrs.prefix?.tags) tags.push(...attrs.prefix.tags);
+    if (attrs.material?.tags) tags.push(...attrs.material.tags);
+    if (attrs.suffix?.tags) tags.push(...attrs.suffix.tags);
+    // Note: gearType doesn't have tags in its interface
+  }
+  
+  return tags;
+}
 
 /**
  * Portal Type Definition - represents a specific category of portal
@@ -29,7 +52,7 @@ export interface PortalTypeDefinition {
     stability?: number;
     mystery?: number;
     danger?: number;
-    [key: string]: any;
+    [key: string]: number | undefined;
   };
 
   // Rarity/tier of this portal type
@@ -586,7 +609,7 @@ export function scorePortalTypeMatch(
   portalIngredientIds: string[],
   portalEquipmentIds: string[],
   portalType: PortalTypeDefinition,
-  generatedEquipment: any[] = []
+  generatedEquipment: GeneratedEquipment[] = []
 ): number {
   let score = 0;
   let requiredMatches = 0;
@@ -627,27 +650,8 @@ export function scorePortalTypeMatch(
 
     // Also collect tags from generated equipment
     for (const generatedItem of generatedEquipment) {
-      // Check if item has tags directly
-      if (generatedItem?.tags && Array.isArray(generatedItem.tags)) {
-        generatedItem.tags.forEach((tag: string) => allTags.add(tag));
-      }
-      // Also check attributes for tags
-      if (generatedItem?.attributes) {
-        const attrs = generatedItem.attributes;
-        // Check each attribute type for tags
-        if (attrs.prefix?.tags) {
-          attrs.prefix.tags.forEach((tag: string) => allTags.add(tag));
-        }
-        if (attrs.material?.tags) {
-          attrs.material.tags.forEach((tag: string) => allTags.add(tag));
-        }
-        if (attrs.suffix?.tags) {
-          attrs.suffix.tags.forEach((tag: string) => allTags.add(tag));
-        }
-        if (attrs.gearType?.tags) {
-          attrs.gearType.tags.forEach((tag: string) => allTags.add(tag));
-        }
-      }
+      const tags = extractTagsFromGeneratedEquipment(generatedItem);
+      tags.forEach(tag => allTags.add(tag));
     }
 
     // Check if any required tag is present
@@ -688,7 +692,7 @@ export function matchPortalType(
   elements: Partial<Record<ElementType, number>>,
   ingredientIds: string[],
   equipmentIds: string[] = [],
-  generatedEquipment: any[] = []
+  generatedEquipment: GeneratedEquipment[] = []
 ): PortalTypeDefinition | null {
   let bestMatch: PortalTypeDefinition | null = null;
   let bestScore = 0;
@@ -720,7 +724,7 @@ export function getDiscoveredPortalTypes(
     elements: Partial<Record<ElementType, number>>;
     ingredients: string[];
     equipment?: string[];
-    generatedEquipmentAttributes?: any[];
+    generatedEquipmentAttributes?: GeneratedEquipment[];
   }>
 ): Set<string> {
   const discovered = new Set<string>();
