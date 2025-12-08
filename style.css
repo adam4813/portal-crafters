@@ -450,11 +450,6 @@ body {
   font-weight: 500;
 }
 
-.shop-item-cost {
-  font-size: 0.85rem;
-  color: var(--warning-color);
-}
-
 /* Research Tree Styles */
 .research-node {
   padding: 0.5rem;
@@ -482,11 +477,6 @@ body {
   margin-bottom: 0.5rem;
   font-size: 0.9rem;
   transition: all 0.2s ease;
-}
-
-.recipe-entry.undiscovered {
-  color: var(--text-secondary);
-  font-style: italic;
 }
 
 .recipe-entry.recipe-clickable {
@@ -525,31 +515,6 @@ body {
   font-size: 0.85rem;
   color: var(--text-secondary);
   padding-left: 0.5rem;
-}
-
-/* Animations */
-@keyframes pulse {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
-}
-
-@keyframes glow {
-  0%,
-  100% {
-    box-shadow: 0 0 5px var(--primary-color);
-  }
-  50% {
-    box-shadow: 0 0 20px var(--primary-color);
-  }
-}
-
-.portal-active {
-  animation: glow 2s ease-in-out infinite;
 }
 
 /* Toast Notifications */
