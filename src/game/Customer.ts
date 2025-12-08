@@ -47,7 +47,7 @@ export class CustomerSystem {
 
   public update(_deltaTime: number): void {
     if (this.isPaused) return;
-    
+
     const now = Date.now();
 
     // Spawn new customers periodically
@@ -97,7 +97,7 @@ export class CustomerSystem {
     const reqTypeRoll = Math.random();
     let requiredElements: ElementType[] | 'any' | 'none' | undefined;
     let minElementAmount: number | undefined;
-    
+
     if (reqTypeRoll < 0.1) {
       // 10% chance: no elements required (raw mana only)
       requiredElements = 'none';
