@@ -261,37 +261,37 @@ export class Game {
   public craftPortal(): void {
     const portalData = this.portal.getData();
     const hasElements = Object.values(portalData.elements).some(v => v && v > 0);
+    const hasMana = portalData.manaInvested > 0;
     const result = this.craftingSystem.craft();
     
-    // Need either items or elements to craft
-    if (!result && !hasElements) {
+    // Need either items, elements, or mana to craft
+    if (!result && !hasElements && !hasMana) {
       showToast('Add elements or items to craft a portal!', 'warning');
       return;
     }
 
-    // Create a new portal combining current portal elements with crafting results
+    // Create a new portal - level is already calculated in portalData
     const newPortal: PortalType = {
       id: `portal-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-      level: portalData.level + (result?.bonusLevel || 0),
+      level: portalData.level,
       manaInvested: portalData.manaInvested,
       elements: { ...portalData.elements },
-      ingredients: result ? [] : [],
-      equipment: [],
+      ingredients: result?.ingredientIds || [],
+      equipment: result?.equipmentIds || [],
       visualColor: 0x6b46c1,
       visualIntensity: 0.5,
       createdAt: Date.now(),
       generatedEquipmentAttributes: result?.generatedEquipmentUsed || [],
     };
 
-    // Recalculate level based on elements
-    const elementTotal = Object.values(newPortal.elements).reduce((sum, val) => sum + (val || 0), 0);
-    newPortal.level = Math.max(1, newPortal.level + Math.floor(elementTotal / 5));
-
     this.storedPortals.push(newPortal);
     this.gameState.totalPortalsCreated++;
 
     // Reset the current portal for new crafting
     this.portal.reset();
+
+    // Save after crafting
+    this.saveSystem.save();
 
     if (result?.isNewRecipe) {
       showToast('New recipe discovered! Portal crafted and stored.', 'success');

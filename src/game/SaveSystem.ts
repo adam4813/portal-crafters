@@ -2,17 +2,15 @@ import type { GameState } from '../types';
 import { createInitialGameState } from '../utils/helpers';
 
 const SAVE_KEY = 'portal-crafters-save';
-const AUTO_SAVE_INTERVAL = 5000; // 5 seconds
 
 export class SaveSystem {
-  private autoSaveInterval: ReturnType<typeof setInterval> | null = null;
   private onLoadCallbacks: ((state: GameState) => void)[] = [];
   private onSaveCallbacks: (() => GameState)[] = [];
 
   constructor() {}
 
   public initialize(): void {
-    this.startAutoSave();
+    // No auto-save - saves are event-driven (on craft, purchase, etc.) and on page unload
   }
 
   public onLoad(callback: (state: GameState) => void): void {
@@ -117,23 +115,6 @@ export class SaveSystem {
     }
   }
 
-  private startAutoSave(): void {
-    if (this.autoSaveInterval) {
-      clearInterval(this.autoSaveInterval);
-    }
-
-    this.autoSaveInterval = setInterval(() => {
-      this.save();
-    }, AUTO_SAVE_INTERVAL);
-  }
-
-  public stopAutoSave(): void {
-    if (this.autoSaveInterval) {
-      clearInterval(this.autoSaveInterval);
-      this.autoSaveInterval = null;
-    }
-  }
-
   public getLastSaveTime(): number | null {
     try {
       const saveData = localStorage.getItem(SAVE_KEY);
@@ -147,6 +128,6 @@ export class SaveSystem {
   }
 
   public dispose(): void {
-    this.stopAutoSave();
+    // No cleanup needed - auto-save removed
   }
 }

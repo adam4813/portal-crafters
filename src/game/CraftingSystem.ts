@@ -141,6 +141,8 @@ export class CraftingSystem {
     bonusLevel: number;
     isNewRecipe: boolean;
     generatedEquipmentUsed: GeneratedEquipment[];
+    ingredientIds: string[];
+    equipmentIds: string[];
   } | null {
     const filledSlots = this.slots.filter((s) => s.ingredient || s.equipment);
     if (filledSlots.length === 0) return null;
@@ -151,6 +153,7 @@ export class CraftingSystem {
 
     // Process ingredients
     const ingredientIds: string[] = [];
+    const equipmentIds: string[] = [];
     for (const slot of filledSlots) {
       if (slot.ingredient) {
         ingredientIds.push(slot.ingredient.id);
@@ -162,6 +165,7 @@ export class CraftingSystem {
       }
 
       if (slot.equipment) {
+        equipmentIds.push(slot.equipment.id);
         bonusLevel += slot.equipment.portalBonus;
         if (slot.equipment.elementBonus) {
           for (const [element, amount] of Object.entries(slot.equipment.elementBonus)) {
@@ -215,7 +219,7 @@ export class CraftingSystem {
     // Notify callbacks with generated equipment attributes
     this.onCraftCallbacks.forEach((cb) => cb(elements, bonusLevel, generatedEquipmentUsed));
 
-    return { elements, bonusLevel, isNewRecipe, generatedEquipmentUsed };
+    return { elements, bonusLevel, isNewRecipe, generatedEquipmentUsed, ingredientIds, equipmentIds };
   }
 
   private generateRecipeId(ingredientIds: string[]): string {
