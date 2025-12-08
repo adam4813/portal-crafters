@@ -40,11 +40,7 @@ export class ExpeditionUI {
             <p class="expedition-description">${expedition.description}</p>
             <div class="expedition-rewards">
               <strong>Potential Rewards:</strong>
-              <ul class="reward-list">
-                ${expedition.rewards.map(r => `
-                  <li>${r.amount}x ${r.itemId || r.type} (${Math.round(r.chance * 100)}% chance)</li>
-                `).join('')}
-              </ul>
+              ${this.renderRewardsList(expedition.rewards)}
             </div>
             ${isComplete ? `
               <button class="btn-primary collect-expedition-btn" data-expedition-id="${expedition.id}">
@@ -87,11 +83,7 @@ export class ExpeditionUI {
           </div>
           <div class="expedition-rewards">
             <strong>Potential Rewards:</strong>
-            <ul class="reward-list">
-              ${expedition.rewards.map(r => `
-                <li>${r.amount}x ${r.itemId || r.type} (${Math.round(r.chance * 100)}% chance)</li>
-              `).join('')}
-            </ul>
+            ${this.renderRewardsList(expedition.rewards)}
           </div>
           <button 
             class="btn-primary start-expedition-btn ${!canAfford ? 'disabled' : ''}" 
@@ -108,6 +100,16 @@ export class ExpeditionUI {
     html += '</div>';
 
     return html;
+  }
+
+  private renderRewardsList(rewards: { type: string; itemId?: string; amount: number; chance: number }[]): string {
+    return `
+      <ul class="reward-list">
+        ${rewards.map(r => `
+          <li>${r.amount}x ${r.itemId || r.type} (${Math.round(r.chance * 100)}% chance)</li>
+        `).join('')}
+      </ul>
+    `;
   }
 
   public attachEventListeners(): void {

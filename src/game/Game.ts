@@ -847,10 +847,22 @@ export class Game {
 
     // Deduct costs
     if (template.requirements?.gold) {
-      this.inventorySystem.spendGold(template.requirements.gold);
+      const success = this.inventorySystem.spendGold(template.requirements.gold);
+      if (!success) {
+        showToast('Failed to deduct gold!', 'error');
+        return;
+      }
     }
     if (template.requirements?.mana) {
-      this.inventorySystem.spendMana(template.requirements.mana);
+      const success = this.inventorySystem.spendMana(template.requirements.mana);
+      if (!success) {
+        showToast('Failed to deduct mana!', 'error');
+        // Refund gold if mana deduction failed
+        if (template.requirements?.gold) {
+          this.inventorySystem.addGold(template.requirements.gold);
+        }
+        return;
+      }
     }
 
     // Start expedition

@@ -188,14 +188,6 @@ export class ExpeditionSystem {
   }
 
   /**
-   * Update active expeditions (clean up old ones that should be completed)
-   */
-  public update(): void {
-    // This method can be called periodically to ensure state consistency
-    // Currently expeditions remain until manually collected
-  }
-
-  /**
    * Get the current state for saving
    */
   public getState(): Expedition[] {
