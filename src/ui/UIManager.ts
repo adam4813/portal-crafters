@@ -14,6 +14,7 @@ import { ResearchUI } from './ResearchUI';
 import { ManaConversionUI } from './ManaConversionUI';
 import { PortalInventoryUI } from './PortalInventoryUI';
 import { formatNumber } from '../utils/helpers';
+import { getIngredientById } from '../data/ingredients';
 
 export interface UIUpdateData {
   inventory: InventorySystem;
@@ -606,12 +607,8 @@ export class UIManager {
   }
 
   private getIngredientName(id: string): string {
-    // Import and use getIngredientById
-    import('../data/ingredients').then(({ getIngredientById }) => {
-      const ingredient = getIngredientById(id);
-      return ingredient?.name || id;
-    });
-    return id; // Return id as fallback for synchronous call
+    const ingredient = getIngredientById(id);
+    return ingredient?.name || id;
   }
 
   private handlePortalTypeClick(typeId: string): void {
