@@ -94,10 +94,10 @@ export class CustomerUI {
       );
 
       // Build requirements display
-      const reqElements = customer.requirements.requiredElements?.map(el => {
-        const needed = customer.requirements.minElementAmount || 1;
-        return `${el} ≥${needed}`;
-      }).join(', ') || 'None';
+      const reqElements = this.formatElementRequirement(customer.requirements);
+      const reqMana = customer.requirements.minMana 
+        ? `✨ ≥${customer.requirements.minMana}` 
+        : '';
 
       html += `
         <div class="customer-card" data-customer-id="${customer.id}" data-arrived-at="${customer.arrivedAt}" data-patience="${customer.patience}">
@@ -107,6 +107,7 @@ export class CustomerUI {
           </div>
           <div class="customer-requirements">
             <span class="req-level">Lv ${customer.requirements.minLevel}+</span>
+            ${reqMana ? `<span class="req-mana">${reqMana}</span>` : ''}
             <span class="req-elements">${reqElements}</span>
           </div>
           <div class="customer-reward">💰 ${customer.payment} gold</div>
@@ -198,19 +199,65 @@ export class CustomerUI {
     `;
   }
 
+  private formatElementRequirement(requirements: Customer['requirements']): string {
+    const req = requirements.requiredElements;
+    
+    if (req === undefined) {
+      return 'Any'; // No restriction
+    }
+    
+    if (req === 'any') {
+      return 'Any element';
+    }
+    
+    if (req === 'none') {
+      return 'No elements';
+    }
+    
+    // Specific elements array
+    if (Array.isArray(req) && req.length > 0) {
+      const needed = requirements.minElementAmount || 1;
+      return req.map(el => `${el} ≥${needed}`).join(', ');
+    }
+    
+    return 'Any';
+  }
+
   private portalMeetsRequirements(portal: PortalType, customer: Customer): boolean {
+    // Check level requirement
     if (portal.level < customer.requirements.minLevel) {
       return false;
     }
 
-    if (customer.requirements.requiredElements) {
-      for (const element of customer.requirements.requiredElements) {
+    // Check mana requirement
+    if (customer.requirements.minMana && portal.manaInvested < customer.requirements.minMana) {
+      return false;
+    }
+
+    // Check element requirements
+    const reqElements = customer.requirements.requiredElements;
+    const portalElementTotal = Object.values(portal.elements).reduce((sum, val) => sum + (val || 0), 0);
+    
+    if (reqElements === 'any') {
+      // Must have at least some elements
+      if (portalElementTotal === 0) {
+        return false;
+      }
+    } else if (reqElements === 'none') {
+      // Must have no elements (raw mana only)
+      if (portalElementTotal > 0) {
+        return false;
+      }
+    } else if (Array.isArray(reqElements) && reqElements.length > 0) {
+      // Must have specific elements
+      for (const element of reqElements) {
         const amount = portal.elements[element] || 0;
         if (amount < (customer.requirements.minElementAmount || 1)) {
           return false;
         }
       }
     }
+    // If reqElements is undefined, any combination is allowed
 
     return true;
   }

@@ -83,8 +83,15 @@ export interface Portal {
 // Customer contract requirements
 export interface ContractRequirements {
   minLevel: number;
-  requiredElements?: ElementType[];
+  // Element requirements:
+  // - undefined/missing: any combination allowed (elements, no elements, or mix)
+  // - 'any': must have at least some element(s)
+  // - 'none': must have no elements (raw mana only)
+  // - ElementType[]: must have specific elements
+  requiredElements?: ElementType[] | 'any' | 'none';
   minElementAmount?: number;
+  // Minimum raw mana required in the portal
+  minMana?: number;
 }
 
 // Customer interface

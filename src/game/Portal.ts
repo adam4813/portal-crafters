@@ -137,6 +137,15 @@ export class Portal {
     this.updateVisualization();
   }
 
+  public removeMana(amount: number): void {
+    this.portalData.manaInvested = Math.max(0, this.portalData.manaInvested - amount);
+    this.portalData.level = calculatePortalLevel(
+      this.portalData.manaInvested,
+      this.portalData.elements
+    );
+    this.updateVisualization();
+  }
+
   public addElement(element: ElementType, amount: number): void {
     this.portalData.elements[element] = (this.portalData.elements[element] || 0) + amount;
     this.portalData.level = calculatePortalLevel(

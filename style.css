@@ -211,7 +211,7 @@ body {
 }
 
 #crafting-preview {
-  width: 200px;
+  height: 100%;
 }
 
 .crafting-help {
@@ -352,8 +352,13 @@ body {
   color: var(--text-primary);
 }
 
-.customer-requirements .req-elements {
-  font-size: 0.8rem;
+.customer-requirements .req-mana {
+  background-color: rgba(107, 70, 193, 0.3);
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  margin-right: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--primary-color);
 }
 
 .customer-reward {
@@ -1166,6 +1171,42 @@ body {
   font-size: 0.85rem;
   color: var(--text-secondary);
   margin-bottom: 0.25rem;
+}
+
+/* Mana Control Styles */
+.mana-control {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.5rem;
+  background-color: var(--background-medium);
+  border-radius: 4px;
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+  border: 1px solid var(--primary-color);
+}
+
+.mana-control-icon {
+  font-size: 1rem;
+}
+
+.mana-control-label {
+  color: var(--primary-color);
+  font-weight: 500;
+  min-width: 70px;
+}
+
+.mana-control-amount {
+  color: var(--text-primary);
+  font-weight: bold;
+  min-width: 40px;
+  text-align: center;
+}
+
+.mana-control-buttons {
+  display: flex;
+  gap: 0.25rem;
+  margin-left: auto;
 }
 
 /* Element Control Styles */

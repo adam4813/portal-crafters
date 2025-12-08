@@ -93,15 +93,43 @@ export class CustomerSystem {
   }
 
   private generateRequirements(template: CustomerTemplate): ContractRequirements {
-    const elements = selectElementRequirements(
-      this.unlockedElements,
-      template.difficultyMultiplier
-    );
+    // Randomly determine element requirement type
+    const reqTypeRoll = Math.random();
+    let requiredElements: ElementType[] | 'any' | 'none' | undefined;
+    let minElementAmount: number | undefined;
+    
+    if (reqTypeRoll < 0.1) {
+      // 10% chance: no elements required (raw mana only)
+      requiredElements = 'none';
+    } else if (reqTypeRoll < 0.2) {
+      // 10% chance: any element(s) required
+      requiredElements = 'any';
+      minElementAmount = Math.ceil(template.difficultyMultiplier * 2);
+    } else if (reqTypeRoll < 0.35) {
+      // 15% chance: no restriction (undefined)
+      requiredElements = undefined;
+    } else {
+      // 65% chance: specific elements required
+      const elements = selectElementRequirements(
+        this.unlockedElements,
+        template.difficultyMultiplier
+      );
+      requiredElements = elements;
+      minElementAmount = Math.ceil(template.difficultyMultiplier * 3);
+    }
+
+    // Randomly add mana requirement
+    let minMana: number | undefined;
+    if (Math.random() < 0.4) {
+      // 40% chance to have a mana requirement
+      minMana = Math.floor(template.difficultyMultiplier * 20 + Math.random() * 30);
+    }
 
     return {
       minLevel: Math.max(1, Math.floor(template.difficultyMultiplier * 2)),
-      requiredElements: elements,
-      minElementAmount: Math.ceil(template.difficultyMultiplier * 3),
+      requiredElements,
+      minElementAmount,
+      minMana,
     };
   }
 

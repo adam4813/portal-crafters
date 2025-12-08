@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import type { GameState, ElementType, Portal as PortalType } from '../types';
+import type { GameState, ElementType, Portal as PortalType, Customer } from '../types';
 import { isGeneratedEquipment } from '../types';
 import { Portal } from './Portal';
 import { CustomerSystem } from './Customer';
@@ -310,19 +310,7 @@ export class Game {
     const portalData = this.storedPortals[portalIndex];
     
     // Check requirements
-    const meetsLevel = portalData.level >= customer.requirements.minLevel;
-    let meetsElements = true;
-    if (customer.requirements.requiredElements) {
-      for (const element of customer.requirements.requiredElements) {
-        const amount = portalData.elements[element] || 0;
-        if (amount < (customer.requirements.minElementAmount || 1)) {
-          meetsElements = false;
-          break;
-        }
-      }
-    }
-
-    if (!meetsLevel || !meetsElements) {
+    if (!this.portalMeetsRequirements(portalData, customer)) {
       showToast('Portal does not meet requirements!', 'error');
       return;
     }
@@ -377,6 +365,45 @@ export class Game {
       return;
     }
     showToast('Select a portal to fulfill a customer request!', 'warning');
+  }
+
+  private portalMeetsRequirements(portal: PortalType, customer: Customer): boolean {
+    // Check level requirement
+    if (portal.level < customer.requirements.minLevel) {
+      return false;
+    }
+
+    // Check mana requirement
+    if (customer.requirements.minMana && portal.manaInvested < customer.requirements.minMana) {
+      return false;
+    }
+
+    // Check element requirements
+    const reqElements = customer.requirements.requiredElements;
+    const portalElementTotal = Object.values(portal.elements).reduce((sum, val) => sum + (val || 0), 0);
+    
+    if (reqElements === 'any') {
+      // Must have at least some elements
+      if (portalElementTotal === 0) {
+        return false;
+      }
+    } else if (reqElements === 'none') {
+      // Must have no elements (raw mana only)
+      if (portalElementTotal > 0) {
+        return false;
+      }
+    } else if (Array.isArray(reqElements) && reqElements.length > 0) {
+      // Must have specific elements
+      for (const element of reqElements) {
+        const amount = portal.elements[element] || 0;
+        if (amount < (customer.requirements.minElementAmount || 1)) {
+          return false;
+        }
+      }
+    }
+    // If reqElements is undefined, any combination is allowed
+
+    return true;
   }
 
   public purchaseMana(goldAmount: number): void {
@@ -537,6 +564,20 @@ export class Game {
 
     this.inventorySystem.spendMana(amount);
     this.portal.addMana(amount);
+    this.updateUI();
+  }
+
+  public removeManaFromPortal(amount: number): void {
+    const portalData = this.portal.getData();
+    const currentMana = portalData.manaInvested;
+    
+    if (currentMana < amount) {
+      showToast('Not enough mana in portal!', 'error');
+      return;
+    }
+
+    this.portal.removeMana(amount);
+    this.inventorySystem.addMana(amount);
     this.updateUI();
   }
 

@@ -102,13 +102,14 @@ export class CraftingUI {
       }
     });
 
-    // Update craft button state - can craft if has items OR has elements in portal
+    // Update craft button state - can craft if has items OR has elements OR has mana in portal
     const hasItems = crafting.getFilledSlotCount() > 0;
     const portalData = this.game.getPortal().getData();
     const hasElements = Object.values(portalData.elements).some(v => v && v > 0);
+    const hasMana = portalData.manaInvested > 0;
     
     if (this.craftButton) {
-      (this.craftButton as HTMLButtonElement).disabled = !hasItems && !hasElements;
+      (this.craftButton as HTMLButtonElement).disabled = !hasItems && !hasElements && !hasMana;
     }
 
     // Update preview
@@ -118,15 +119,28 @@ export class CraftingUI {
     this.updateLevelProgress(crafting, portalData);
   }
 
-  private updatePreview(crafting: CraftingSystem, hasItems: boolean, portalData: any): void {
+  private updatePreview(crafting: CraftingSystem, _hasItems: boolean, portalData: any): void {
     if (!this.previewContainer) return;
 
-    const hasElements = Object.values(portalData.elements).some((v: any) => v && v > 0);
+    let html = '';
 
-    if (!hasItems && !hasElements) {
-      this.previewContainer.innerHTML = '<p class="preview-empty">Add elements or items to craft a portal</p>';
-      return;
-    }
+    // Mana control (raw power) - always show
+    const inventory = this.game.getInventory();
+    const availableMana = inventory.getMana();
+    const portalMana = portalData.manaInvested;
+    
+    html += `
+      <div class="mana-control">
+        <span class="mana-control-icon">✨</span>
+        <span class="mana-control-label">Raw Mana</span>
+        <span class="mana-control-amount">${portalMana}</span>
+        <div class="mana-control-buttons">
+          <button class="element-btn element-btn-sub" data-action="mana-sub" title="Remove 10 mana" ${portalMana < 10 ? 'disabled' : ''}>−</button>
+          <button class="element-btn element-btn-add" data-action="mana-add" title="Add 10 mana" ${availableMana < 10 ? 'disabled' : ''}>+</button>
+          <button class="element-btn element-btn-remove" data-action="mana-remove" title="Remove all mana" ${portalMana === 0 ? 'disabled' : ''}>×</button>
+        </div>
+      </div>
+    `;
 
     // Get current portal elements with interactive controls
     let elementsHtml = '';
@@ -149,6 +163,10 @@ export class CraftingUI {
         `;
       }
     }
+    
+    if (elementsHtml) {
+      html += `<div class="preview-elements">${elementsHtml}</div>`;
+    }
 
     // Calculate item display (contents)
     const slots = crafting.getSlots();
@@ -162,12 +180,6 @@ export class CraftingUI {
         itemsHtml += `<span class="content-item">${slot.equipment.icon} ${slot.equipment.name}</span>`;
       }
     }
-
-    let html = '';
-    
-    if (elementsHtml) {
-      html += `<div class="preview-elements">${elementsHtml}</div>`;
-    }
     
     if (itemsHtml) {
       html += `<div class="preview-items-section"><div class="preview-label">Items:</div><div class="preview-contents">${itemsHtml}</div></div>`;
@@ -175,8 +187,19 @@ export class CraftingUI {
 
     this.previewContainer.innerHTML = html;
 
+    // Add click handlers for mana control buttons
+    this.previewContainer.querySelectorAll('[data-action^="mana-"]').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const action = (btn as HTMLElement).dataset.action;
+        if (action) {
+          this.handleManaAction(action, portalMana);
+        }
+      });
+    });
+
     // Add click handlers for element control buttons
-    this.previewContainer.querySelectorAll('.element-btn').forEach((btn) => {
+    this.previewContainer.querySelectorAll('.element-btn[data-element]').forEach((btn) => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         const element = (btn as HTMLElement).dataset.element as ElementType;
@@ -186,6 +209,26 @@ export class CraftingUI {
         }
       });
     });
+  }
+
+  private handleManaAction(action: string, currentMana: number): void {
+    switch (action) {
+      case 'mana-sub':
+        if (currentMana >= 10) {
+          this.game.removeManaFromPortal(10);
+        }
+        break;
+      case 'mana-add':
+        if (this.game.getInventory().hasMana(10)) {
+          this.game.addManaToPortal(10);
+        }
+        break;
+      case 'mana-remove':
+        if (currentMana > 0) {
+          this.game.removeManaFromPortal(currentMana);
+        }
+        break;
+    }
   }
 
   private handleElementAction(element: ElementType, action: string, currentAmount: number): void {
