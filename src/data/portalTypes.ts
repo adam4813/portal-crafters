@@ -1,6 +1,11 @@
 import type { ElementType } from '../types';
 import { getIngredientById } from './ingredients';
 import { getEquipmentById } from './equipment';
+
+// Constants for portal type matching
+const DEFAULT_BASIC_PORTAL_SCORE = 10;
+const MINIMUM_MATCH_SCORE = 10;
+
 /**
  * Portal Type Definition - represents a specific category of portal
  * that can be crafted from particular combinations of elements and ingredients
@@ -628,7 +633,7 @@ export function scorePortalTypeMatch(
 
   // Handle basic portal (no requirements)
   if (totalRequired === 0) {
-    return 10; // Default score for basic portal
+    return DEFAULT_BASIC_PORTAL_SCORE;
   }
 
   // Must meet all requirements to be valid
@@ -669,20 +674,20 @@ export function matchPortalType(
     }
   }
 
-  // Return match if score is above threshold (at least 10 points)
-  return bestScore >= 10 ? bestMatch : null;
+  // Return match if score meets minimum threshold
+  return bestScore >= MINIMUM_MATCH_SCORE ? bestMatch : null;
 }
 
 /**
  * Get all discovered portal types based on what recipes have been crafted
  */
 export function getDiscoveredPortalTypes(
-  craftedPortals: Array<{ elements: Partial<Record<ElementType, number>>; ingredients: string[]; equipment: string[] }>
+  craftedPortals: Array<{ elements: Partial<Record<ElementType, number>>; ingredients: string[]; equipment?: string[] }>
 ): Set<string> {
   const discovered = new Set<string>();
 
   for (const portal of craftedPortals) {
-    const match = matchPortalType(portal.elements, portal.ingredients, portal.equipment);
+    const match = matchPortalType(portal.elements, portal.ingredients, portal.equipment || []);
     if (match) {
       discovered.add(match.id);
     }

@@ -471,7 +471,11 @@ export class UIManager {
       // Use cached discovered types if available, otherwise calculate
       if (!this.discoveredPortalTypesCache) {
         this.discoveredPortalTypesCache = getDiscoveredPortalTypes(
-          storedPortals.map(p => ({ elements: p.elements, ingredients: p.ingredients, equipment: p.equipment }))
+          storedPortals.map(p => ({ 
+            elements: p.elements, 
+            ingredients: p.ingredients, 
+            equipment: p.equipment || [] 
+          }))
         );
       }
       const discovered = this.discoveredPortalTypesCache;
