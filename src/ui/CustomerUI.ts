@@ -158,9 +158,45 @@ export class CustomerUI {
       // Build requirements display
       const reqElements = this.formatElementRequirement(customer.requirements);
       const reqMana = customer.requirements.minMana ? `✨ ≥${customer.requirements.minMana}` : '';
+      const reqEquipment = this.formatEquipmentRequirement(customer.requirements);
 
-      // Add special class for mini-boss
-      const cardClass = isMiniBoss ? 'customer-card miniboss-card' : 'customer-card';
+      // Format modifiers display
+      const modifiersHtml = this.formatModifiers(customer.requirements.modifiers || []);
+
+      // Format special rewards display
+      const specialRewardHtml = customer.specialReward
+        ? `<div class="customer-special-reward">🎁 Special: ${this.formatSpecialReward(customer.specialReward)}</div>`
+        : '';
+
+      // Calculate adjusted payment with modifiers
+      let adjustedPayment = customer.payment;
+      if (customer.requirements.modifiers) {
+        for (const modifier of customer.requirements.modifiers) {
+          switch (modifier) {
+            case 'urgent':
+              adjustedPayment = Math.floor(adjustedPayment * 1.3);
+              break;
+            case 'bonus':
+              adjustedPayment = Math.floor(adjustedPayment * 1.2);
+              break;
+            case 'perfectionist':
+              adjustedPayment = Math.floor(adjustedPayment * 1.25);
+              break;
+            case 'bulk_order':
+              adjustedPayment = Math.floor(adjustedPayment * 1.4);
+              break;
+            case 'experimental':
+              adjustedPayment = Math.floor(adjustedPayment * 1.15);
+              break;
+          }
+        }
+      }
+
+      // Add special class for mini-boss and special customers
+      let cardClass = 'customer-card';
+      if (isMiniBoss) cardClass += ' miniboss-card';
+      if (customer.isSpecial) cardClass += ' special-card';
+
       const timerDisplay = isMiniBoss
         ? '<div class="customer-timer unlimited">⏱️ ∞ Unlimited</div>'
         : `<div class="customer-timer ${timeRemaining < 30 ? 'urgent' : ''}">⏱️ ${formatTime(timeRemaining)}</div>`;
@@ -171,12 +207,15 @@ export class CustomerUI {
             <div class="customer-name">${customer.icon} ${customer.name}</div>
             ${timerDisplay}
           </div>
+          ${modifiersHtml}
           <div class="customer-requirements">
             <span class="req-level">Lv ${customer.requirements.minLevel}+</span>
             ${reqMana ? `<span class="req-mana">${reqMana}</span>` : ''}
             <span class="req-elements">${reqElements}</span>
+            ${reqEquipment ? `<span class="req-equipment">${reqEquipment}</span>` : ''}
           </div>
-          <div class="customer-reward">💰 ${customer.payment} gold</div>
+          <div class="customer-reward">💰 ${adjustedPayment} gold</div>
+          ${specialRewardHtml}
           <div class="customer-fulfill">
             ${this.renderPortalSelector(customer, matchingPortals, storedPortals)}
           </div>
@@ -332,6 +371,67 @@ export class CustomerUI {
     }
     // If reqElements is undefined, any combination is allowed
 
+    // Check equipment requirements (simplified - just check if we have equipment)
+    if (
+      customer.requirements.requiredEquipmentSlots &&
+      customer.requirements.requiredEquipmentSlots.length > 0
+    ) {
+      const hasEquipment =
+        portal.equipment.length > 0 ||
+        (portal.generatedEquipmentAttributes && portal.generatedEquipmentAttributes.length > 0);
+      if (!hasEquipment) {
+        return false;
+      }
+    }
+
     return true;
+  }
+
+  private formatModifiers(modifiers: import('../types').ContractModifier[]): string {
+    if (!modifiers || modifiers.length === 0) return '';
+
+    const modifierLabels: Record<string, string> = {
+      urgent: '⚡ Urgent',
+      bonus: '💎 Bonus',
+      perfectionist: '✨ Perfectionist',
+      bulk_order: '📦 Bulk Order',
+      experimental: '🧪 Experimental',
+    };
+
+    const badges = modifiers.map((mod) => modifierLabels[mod] || mod).join(' ');
+    return `<div class="customer-modifiers">${badges}</div>`;
+  }
+
+  private formatEquipmentRequirement(requirements: Customer['requirements']): string {
+    const parts: string[] = [];
+
+    if (requirements.requiredEquipmentSlots && requirements.requiredEquipmentSlots.length > 0) {
+      const slots = requirements.requiredEquipmentSlots;
+      const count = requirements.minEquipmentCount || slots.length;
+      parts.push(`⚔️ ${count}x ${slots.join('/')}`);
+    }
+
+    if (requirements.minEquipmentRarity) {
+      parts.push(`💎 ${requirements.minEquipmentRarity}+`);
+    }
+
+    return parts.join(' ');
+  }
+
+  private formatSpecialReward(reward: import('../types').Reward): string {
+    switch (reward.type) {
+      case 'gold':
+        return `+${reward.amount} gold`;
+      case 'mana':
+        return `+${reward.amount} mana`;
+      case 'ingredient':
+        return `${reward.amount}x ingredient`;
+      case 'equipment':
+        return 'Equipment';
+      case 'generatedEquipment':
+        return 'Generated equipment';
+      default:
+        return 'Unknown reward';
+    }
   }
 }

@@ -412,6 +412,47 @@ body {
   font-weight: bold;
 }
 
+/* Special customer card styling */
+.customer-card.special-card {
+  background: linear-gradient(135deg, rgba(237, 137, 54, 0.15), rgba(236, 201, 75, 0.15));
+  border: 1px solid rgba(237, 137, 54, 0.5);
+}
+
+/* Contract modifiers */
+.customer-modifiers {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+  font-size: 0.75rem;
+}
+
+.customer-modifiers span {
+  background-color: rgba(237, 137, 54, 0.2);
+  color: var(--accent-color);
+  padding: 0.15rem 0.4rem;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+/* Special reward display */
+.customer-special-reward {
+  margin-top: 0.25rem;
+  padding: 0.3rem;
+  background-color: rgba(236, 201, 75, 0.2);
+  border-left: 3px solid var(--accent-color);
+  font-size: 0.85rem;
+  color: var(--accent-color);
+  font-weight: bold;
+}
+
+/* Equipment requirements */
+.req-equipment {
+  color: var(--accent-color);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
 /* Progression Status Display */
 .progression-status {
   margin-bottom: 1rem;
