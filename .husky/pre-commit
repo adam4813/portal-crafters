@@ -1,2 +1,1 @@
-npm run format:check
-npx tsc
+npm run format:check && npx tsc
