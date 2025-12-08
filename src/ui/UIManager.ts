@@ -217,60 +217,79 @@ export class UIManager {
       { id: 'chainmail', name: '🛡️ Chainmail', description: 'Uncommon armor, +8 portal bonus', cost: 100 },
     ];
 
-    let html = '<h4>Buy Mana</h4>';
-    html += '<div class="exchange-rate-info">';
-    html += `<p class="info-text">Current rate: <strong>${exchangeRate.manaPerGold} mana per gold</strong></p>`;
+    // Build tabs
+    let html = `
+      <div class="shop-tabs">
+        <button class="shop-tab ${this.currentShopTab === 'mana' ? 'active' : ''}" data-tab="mana">✨ Mana</button>
+        <button class="shop-tab ${this.currentShopTab === 'items' ? 'active' : ''}" data-tab="items">🧪 Items</button>
+        <button class="shop-tab ${this.currentShopTab === 'equipment' ? 'active' : ''}" data-tab="equipment">⚔️ Equipment</button>
+      </div>
+      <div class="shop-gold-display">Your Gold: <strong>${gold} 💰</strong></div>
+      <div class="shop-tab-content">
+    `;
+
+    if (this.currentShopTab === 'mana') {
+      html += '<div class="exchange-rate-info">';
+      html += `<p class="info-text">Current rate: <strong>${exchangeRate.manaPerGold} mana per gold</strong></p>`;
+      html += '</div>';
+
+      for (const pack of manaPackages) {
+        const manaAmount = pack.gold * exchangeRate.manaPerGold;
+        const canAfford = gold >= pack.gold;
+        html += `
+          <div class="shop-item ${!canAfford ? 'cannot-afford' : ''}">
+            <div class="shop-item-info">
+              <div class="shop-item-name">${pack.label}</div>
+              <div class="shop-item-description">+${manaAmount} mana</div>
+            </div>
+            <button class="btn-secondary buy-mana-btn" data-gold="${pack.gold}" ${!canAfford ? 'disabled' : ''}>
+              ${pack.gold} 💰
+            </button>
+          </div>
+        `;
+      }
+    } else if (this.currentShopTab === 'items') {
+      for (const item of shopItems) {
+        const canAfford = gold >= item.cost;
+        html += `
+          <div class="shop-item ${!canAfford ? 'cannot-afford' : ''}">
+            <div class="shop-item-info">
+              <div class="shop-item-name">${item.name}</div>
+              <div class="shop-item-description">${item.description}</div>
+            </div>
+            <button class="btn-secondary buy-item-btn" data-id="${item.id}" data-cost="${item.cost}" data-reward="${item.goldReward}" ${!canAfford ? 'disabled' : ''}>
+              ${item.cost === 0 ? 'FREE' : `${item.cost} 💰`}
+            </button>
+          </div>
+        `;
+      }
+    } else if (this.currentShopTab === 'equipment') {
+      for (const equip of shopEquipment) {
+        const canAfford = gold >= equip.cost;
+        html += `
+          <div class="shop-item ${!canAfford ? 'cannot-afford' : ''}">
+            <div class="shop-item-info">
+              <div class="shop-item-name">${equip.name}</div>
+              <div class="shop-item-description">${equip.description}</div>
+            </div>
+            <button class="btn-secondary buy-equip-btn" data-id="${equip.id}" data-cost="${equip.cost}" ${!canAfford ? 'disabled' : ''}>
+              ${equip.cost} 💰
+            </button>
+          </div>
+        `;
+      }
+    }
+
     html += '</div>';
-
-    for (const pack of manaPackages) {
-      const manaAmount = pack.gold * exchangeRate.manaPerGold;
-      const canAfford = gold >= pack.gold;
-      html += `
-        <div class="shop-item">
-          <div class="shop-item-info">
-            <div class="shop-item-name">${pack.label}</div>
-            <div class="shop-item-description">+${manaAmount} mana</div>
-          </div>
-          <button class="btn-secondary buy-mana-btn" data-gold="${pack.gold}" ${!canAfford ? 'disabled' : ''}>
-            ${pack.gold} 💰
-          </button>
-        </div>
-      `;
-    }
-
-    html += '<h4>Items</h4>';
-    for (const item of shopItems) {
-      const canAfford = gold >= item.cost;
-      html += `
-        <div class="shop-item">
-          <div class="shop-item-info">
-            <div class="shop-item-name">${item.name}</div>
-            <div class="shop-item-description">${item.description}</div>
-          </div>
-          <button class="btn-secondary buy-item-btn" data-id="${item.id}" data-cost="${item.cost}" data-reward="${item.goldReward}" ${!canAfford ? 'disabled' : ''}>
-            ${item.cost === 0 ? 'FREE' : `${item.cost} 💰`}
-          </button>
-        </div>
-      `;
-    }
-
-    html += '<h4>Equipment</h4>';
-    for (const equip of shopEquipment) {
-      const canAfford = gold >= equip.cost;
-      html += `
-        <div class="shop-item">
-          <div class="shop-item-info">
-            <div class="shop-item-name">${equip.name}</div>
-            <div class="shop-item-description">${equip.description}</div>
-          </div>
-          <button class="btn-secondary buy-equip-btn" data-id="${equip.id}" data-cost="${equip.cost}" ${!canAfford ? 'disabled' : ''}>
-            ${equip.cost} 💰
-          </button>
-        </div>
-      `;
-    }
-
     this.modalContent.innerHTML = html;
+
+    // Add click handlers for tabs
+    this.modalContent.querySelectorAll('.shop-tab').forEach((tab) => {
+      tab.addEventListener('click', () => {
+        this.currentShopTab = (tab as HTMLElement).dataset.tab as 'mana' | 'items' | 'equipment';
+        this.renderShopModal();
+      });
+    });
 
     // Add click handlers for mana packs
     this.modalContent.querySelectorAll('.buy-mana-btn').forEach((btn) => {
