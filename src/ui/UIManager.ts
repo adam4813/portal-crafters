@@ -448,10 +448,11 @@ export class UIManager {
         <p>Your goal is to craft magical portals and fulfill customer contracts to earn gold.</p>
         <div class="guide-steps">
           <div class="guide-step"><span class="step-num">1</span> <strong>Buy Mana</strong> - Use gold to purchase mana from the Shop</div>
-          <div class="guide-step"><span class="step-num">2</span> <strong>Convert Mana</strong> - Transform mana into elemental energy</div>
-          <div class="guide-step"><span class="step-num">3</span> <strong>Add Elements</strong> - Click elements in your inventory to add them to your portal</div>
-          <div class="guide-step"><span class="step-num">4</span> <strong>Craft Portal</strong> - Click "Craft Portal" to create and store your portal</div>
-          <div class="guide-step"><span class="step-num">5</span> <strong>Fulfill Contracts</strong> - Match your portals to customer requirements</div>
+          <div class="guide-step"><span class="step-num">2</span> <strong>Convert Mana</strong> - Transform mana into elemental energy using the Mana Converter</div>
+          <div class="guide-step"><span class="step-num">3</span> <strong>Add Power</strong> - Add Raw Mana and Elements to your portal to increase its level</div>
+          <div class="guide-step"><span class="step-num">4</span> <strong>Add Items</strong> - Place items in crafting slots for bonus effects (gold%, mana%, etc.)</div>
+          <div class="guide-step"><span class="step-num">5</span> <strong>Craft Portal</strong> - Click "Craft Portal" to create and store your portal</div>
+          <div class="guide-step"><span class="step-num">6</span> <strong>Fulfill Contracts</strong> - Match your portals to customer requirements</div>
         </div>
       `,
       'mana-gold': `
@@ -459,20 +460,34 @@ export class UIManager {
         <p><strong>Gold 💰</strong> is earned by fulfilling customer contracts. Use it to:</p>
         <ul>
           <li>Purchase mana from the Shop</li>
+          <li>Buy items with special portal effects</li>
           <li>Buy upgrades to improve your crafting</li>
           <li>Research new elements</li>
         </ul>
-        <p><strong>Mana ✨</strong> is magical energy used for crafting. Convert it into elemental energy using the Mana Converter.</p>
+        <p><strong>Mana ✨</strong> is magical energy. It can be used two ways:</p>
+        <ul>
+          <li><strong>Raw Mana</strong> - Add directly to portals for power (use +/- buttons in crafting)</li>
+          <li><strong>Convert to Elements</strong> - Transform into elemental energy using the Mana Converter</li>
+        </ul>
       `,
       'shop': `
-        <h4>Mana Shop</h4>
-        <p>The Shop allows you to exchange gold for mana. Available packages:</p>
+        <h4>Shop</h4>
+        <p><strong>Mana Packs:</strong> Exchange gold for mana.</p>
         <ul>
           <li><strong>Small Pack</strong> - 10 gold</li>
           <li><strong>Medium Pack</strong> - 50 gold</li>
           <li><strong>Large Pack</strong> - 100 gold</li>
         </ul>
-        <p>The exchange rate shows how much mana you receive per gold spent.</p>
+        <p><strong>Items:</strong> Purchase items with special portal effects:</p>
+        <ul>
+          <li><strong>Health Potion</strong> - +10% gold from portals</li>
+          <li><strong>Mana Crystal</strong> - +15% mana from portals</li>
+          <li><strong>Lucky Charm</strong> - +10% ingredient drop chance</li>
+          <li><strong>Treasure Map</strong> - +25% gold from portals</li>
+          <li><strong>Enchanted Lens</strong> - +10% equipment chance, +1 rarity</li>
+          <li><strong>Philosopher's Stone</strong> - Multiple bonuses combined</li>
+        </ul>
+        <p>Items go to your inventory and can be placed in crafting slots.</p>
       `,
       'upgrades': `
         <h4>Upgrades</h4>
@@ -493,6 +508,7 @@ export class UIManager {
           <li><strong>Lightning ⚡</strong> - Unlockable</li>
         </ul>
         <p>Some elements require prerequisites before they can be researched.</p>
+        <p>Each element has a <strong>potency multiplier</strong> that affects how much power it contributes.</p>
       `,
       'recipes': `
         <h4>Recipe Book</h4>
@@ -506,13 +522,18 @@ export class UIManager {
       `,
       'crafting': `
         <h4>Portal Crafting</h4>
-        <p>Create portals by combining elements and ingredients:</p>
-        <ol>
-          <li>Click elements in your inventory to add them to the portal</li>
-          <li>Click ingredients to select them, then click a slot to place them</li>
-          <li>Click "Craft Portal" to finalize and store your creation</li>
-        </ol>
-        <p>Portal level is determined by the amount of elements and ingredients used.</p>
+        <p><strong>Portal Level</strong> is determined by:</p>
+        <ul>
+          <li><strong>Raw Mana</strong> - Add mana directly using the +/- buttons</li>
+          <li><strong>Elements</strong> - Each element contributes power based on its potency</li>
+        </ul>
+        <p><strong>Item Effects</strong> (shown below crafting slots):</p>
+        <ul>
+          <li>Place items in slots to add bonus effects to the portal</li>
+          <li>Effects include: Gold%, Mana%, Ingredient Chance%, Equipment Chance%, Rarity</li>
+          <li>Hover over a slot to highlight which effects that item provides</li>
+        </ul>
+        <p><strong>Element Affinity:</strong> Some ingredients add bonus elements when crafted (e.g., Fire Crystal adds +5 fire).</p>
       `,
       'elements': `
         <h4>Elements</h4>
@@ -524,7 +545,8 @@ export class UIManager {
           <li>💨 <strong>Air</strong> - Light, swift portals</li>
           <li>⚡ <strong>Lightning</strong> - Powerful, electric portals</li>
         </ul>
-        <p>Customers may require specific elements in their portals.</p>
+        <p><strong>Element Potency:</strong> Each element has a power multiplier (shown as 1x, 1.2x, etc.) that affects how much it contributes to portal level.</p>
+        <p>Use the +/- buttons next to each element in the crafting area to adjust amounts.</p>
       `,
       'contracts': `
         <h4>Contracts</h4>
@@ -536,6 +558,7 @@ export class UIManager {
           <li><strong>Timer</strong> - Time before customer leaves</li>
         </ul>
         <p>Fulfill contracts by selecting a matching portal from your inventory.</p>
+        <p><strong>Tip:</strong> Higher level portals and those with item effects may give bonus rewards!</p>
       `,
       'mana-converter': `
         <h4>Mana Converter</h4>
@@ -545,7 +568,8 @@ export class UIManager {
           <li>Choose the amount to convert</li>
           <li>Click "Convert" to receive the elements</li>
         </ol>
-        <p>Different elements may have different mana costs. Upgrades can improve conversion rates.</p>
+        <p><strong>Conversion Rates:</strong> Different elements may require different amounts of mana. Upgrades can improve conversion efficiency.</p>
+        <p><strong>Tip:</strong> You can also add Raw Mana directly to portals without converting it!</p>
       `,
     };
 
