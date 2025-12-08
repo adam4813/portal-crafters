@@ -212,6 +212,7 @@ body {
 
 #crafting-preview {
   height: 100%;
+  flex: 1;
 }
 
 .crafting-help {
@@ -1184,6 +1185,7 @@ body {
   font-size: 0.85rem;
   margin-bottom: 0.5rem;
   border: 1px solid var(--primary-color);
+  justify-content: space-between;
 }
 
 .mana-control-icon {
@@ -1194,19 +1196,20 @@ body {
   color: var(--primary-color);
   font-weight: 500;
   min-width: 70px;
+  flex: 1;
 }
 
 .mana-control-amount {
   color: var(--text-primary);
   font-weight: bold;
   min-width: 40px;
-  text-align: center;
+  text-align: right;
 }
 
 .mana-control-buttons {
   display: flex;
   gap: 0.25rem;
-  margin-left: auto;
+  margin-left: 4px;
 }
 
 /* Element Control Styles */
@@ -1214,41 +1217,79 @@ body {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.3rem 0.5rem;
+  padding: 0.4rem 0.5rem;
   background-color: var(--background-medium);
   border-radius: 4px;
   font-size: 0.85rem;
+  border: 1px solid var(--background-light);
+  justify-content: space-between;
+}
+
+.element-control.fire { border-color: var(--fire-color); }
+.element-control.water { border-color: var(--water-color); }
+.element-control.earth { border-color: var(--earth-color); }
+.element-control.air { border-color: var(--air-color); }
+.element-control.lightning { border-color: var(--lightning-color); }
+.element-control.ice { border-color: #81e6d9; }
+.element-control.metal { border-color: #718096; }
+.element-control.nature { border-color: #48bb78; }
+.element-control.shadow { border-color: #4a5568; }
+.element-control.light { border-color: #faf089; }
+.element-control.void { border-color: #9f7aea; }
+.element-control.crystal { border-color: #b794f4; }
+.element-control.arcane { border-color: #805ad5; }
+.element-control.time { border-color: #d69e2e; }
+.element-control.chaos { border-color: #fc8181; }
+.element-control.life { border-color: #68d391; }
+.element-control.death { border-color: #4a5568; }
+
+.element-control-icon {
+  font-size: 1rem;
 }
 
 .element-control-name {
   text-transform: capitalize;
   font-weight: 500;
-  min-width: 70px;
+  min-width: 60px;
+  flex: 1;
 }
 
-.element-control-name.fire { color: var(--fire-color); }
-.element-control-name.water { color: var(--water-color); }
-.element-control-name.earth { color: var(--earth-color); }
-.element-control-name.air { color: var(--air-color); }
-.element-control-name.lightning { color: var(--lightning-color); }
+.element-control.fire .element-control-name { color: var(--fire-color); }
+.element-control.water .element-control-name { color: var(--water-color); }
+.element-control.earth .element-control-name { color: var(--earth-color); }
+.element-control.air .element-control-name { color: var(--air-color); }
+.element-control.lightning .element-control-name { color: var(--lightning-color); }
+.element-control.ice .element-control-name { color: #81e6d9; }
+.element-control.metal .element-control-name { color: #a0aec0; }
+.element-control.nature .element-control-name { color: #48bb78; }
+.element-control.shadow .element-control-name { color: #a0aec0; }
+.element-control.light .element-control-name { color: #faf089; }
+.element-control.void .element-control-name { color: #9f7aea; }
+.element-control.crystal .element-control-name { color: #b794f4; }
+.element-control.arcane .element-control-name { color: #805ad5; }
+.element-control.time .element-control-name { color: #d69e2e; }
+.element-control.chaos .element-control-name { color: #fc8181; }
+.element-control.life .element-control-name { color: #68d391; }
+.element-control.death .element-control-name { color: #a0aec0; }
 
-.element-control-percent {
+.element-control-potency {
   color: var(--success-color);
   font-size: 0.75rem;
-  min-width: 30px;
+  min-width: 25px;
+  opacity: 0.8;
 }
 
 .element-control-amount {
   color: var(--text-primary);
   font-weight: bold;
   min-width: 25px;
-  text-align: center;
+  text-align: right;
 }
 
 .element-control-buttons {
   display: flex;
   gap: 0.25rem;
-  margin-left: auto;
+  margin-left: 4px;
 }
 
 .element-btn {
@@ -1291,6 +1332,15 @@ body {
 
 .element-btn-remove:hover {
   background-color: #c53030;
+}
+
+.element-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.element-btn:disabled:hover {
+  background-color: inherit;
 }
 
 /* Level Progress Bar Styles */

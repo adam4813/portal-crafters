@@ -23,6 +23,7 @@ export interface ElementProperties {
   portalEffectMultiplier: number; // Multiplier for portal visual effects
   rewardBonusMultiplier: number; // Multiplier for reward generation
   contractDifficultyModifier: number; // Modifier for contract difficulty when required
+  powerMultiplier: number; // Multiplier for portal power contribution (1.0 = normal, 1.5 = 50% bonus)
 }
 
 // Tier configurations for easy reference
@@ -53,6 +54,7 @@ export const ELEMENTS: ElementDefinition[] = [
       portalEffectMultiplier: 1.0,
       rewardBonusMultiplier: 1.0,
       contractDifficultyModifier: 1.0,
+      powerMultiplier: 1.0,
     },
   },
   {
@@ -69,6 +71,7 @@ export const ELEMENTS: ElementDefinition[] = [
       portalEffectMultiplier: 1.0,
       rewardBonusMultiplier: 1.0,
       contractDifficultyModifier: 1.0,
+      powerMultiplier: 1.0,
     },
   },
 
@@ -87,6 +90,7 @@ export const ELEMENTS: ElementDefinition[] = [
       portalEffectMultiplier: 1.1,
       rewardBonusMultiplier: 1.1,
       contractDifficultyModifier: 1.2,
+      powerMultiplier: 1.2,
     },
   },
   {
@@ -103,6 +107,7 @@ export const ELEMENTS: ElementDefinition[] = [
       portalEffectMultiplier: 1.1,
       rewardBonusMultiplier: 1.1,
       contractDifficultyModifier: 1.2,
+      powerMultiplier: 1.2,
     },
   },
 
@@ -121,6 +126,7 @@ export const ELEMENTS: ElementDefinition[] = [
       portalEffectMultiplier: 1.3,
       rewardBonusMultiplier: 1.2,
       contractDifficultyModifier: 1.5,
+      powerMultiplier: 1.5,
     },
   },
   {
@@ -137,6 +143,7 @@ export const ELEMENTS: ElementDefinition[] = [
       portalEffectMultiplier: 1.4,
       rewardBonusMultiplier: 1.2,
       contractDifficultyModifier: 1.5,
+      powerMultiplier: 1.5,
     },
   },
   {
@@ -153,6 +160,7 @@ export const ELEMENTS: ElementDefinition[] = [
       portalEffectMultiplier: 1.2,
       rewardBonusMultiplier: 1.3,
       contractDifficultyModifier: 1.5,
+      powerMultiplier: 1.5,
     },
   },
   {
@@ -169,6 +177,7 @@ export const ELEMENTS: ElementDefinition[] = [
       portalEffectMultiplier: 1.2,
       rewardBonusMultiplier: 1.4,
       contractDifficultyModifier: 1.5,
+      powerMultiplier: 1.5,
     },
   },
 
@@ -187,6 +196,7 @@ export const ELEMENTS: ElementDefinition[] = [
       portalEffectMultiplier: 1.6,
       rewardBonusMultiplier: 1.5,
       contractDifficultyModifier: 2.0,
+      powerMultiplier: 2.0,
     },
   },
   {
@@ -203,6 +213,7 @@ export const ELEMENTS: ElementDefinition[] = [
       portalEffectMultiplier: 1.6,
       rewardBonusMultiplier: 1.5,
       contractDifficultyModifier: 2.0,
+      powerMultiplier: 2.0,
     },
   },
   {
@@ -219,6 +230,7 @@ export const ELEMENTS: ElementDefinition[] = [
       portalEffectMultiplier: 1.8,
       rewardBonusMultiplier: 1.4,
       contractDifficultyModifier: 2.0,
+      powerMultiplier: 2.0,
     },
   },
   {
@@ -235,6 +247,7 @@ export const ELEMENTS: ElementDefinition[] = [
       portalEffectMultiplier: 1.5,
       rewardBonusMultiplier: 1.6,
       contractDifficultyModifier: 2.0,
+      powerMultiplier: 2.0,
     },
   },
   {
@@ -251,6 +264,7 @@ export const ELEMENTS: ElementDefinition[] = [
       portalEffectMultiplier: 1.7,
       rewardBonusMultiplier: 1.5,
       contractDifficultyModifier: 2.0,
+      powerMultiplier: 2.0,
     },
   },
 
@@ -269,6 +283,7 @@ export const ELEMENTS: ElementDefinition[] = [
       portalEffectMultiplier: 2.0,
       rewardBonusMultiplier: 2.0,
       contractDifficultyModifier: 3.0,
+      powerMultiplier: 3.0,
     },
   },
   {
@@ -285,6 +300,7 @@ export const ELEMENTS: ElementDefinition[] = [
       portalEffectMultiplier: 2.5,
       rewardBonusMultiplier: 1.8,
       contractDifficultyModifier: 3.0,
+      powerMultiplier: 3.0,
     },
   },
   {
@@ -301,6 +317,7 @@ export const ELEMENTS: ElementDefinition[] = [
       portalEffectMultiplier: 1.8,
       rewardBonusMultiplier: 2.5,
       contractDifficultyModifier: 3.0,
+      powerMultiplier: 3.0,
     },
   },
   {
@@ -317,6 +334,7 @@ export const ELEMENTS: ElementDefinition[] = [
       portalEffectMultiplier: 2.2,
       rewardBonusMultiplier: 1.9,
       contractDifficultyModifier: 3.0,
+      powerMultiplier: 3.0,
     },
   },
 ];

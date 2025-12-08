@@ -3,6 +3,8 @@ import type { CraftingSystem } from '../game/CraftingSystem';
 import type { InventorySystem } from '../game/Inventory';
 import type { UIManager } from './UIManager';
 import type { ElementType } from '../types';
+import { getLevelProgress } from '../utils/helpers';
+import { getElementDefinition } from '../data/elements';
 
 export class CraftingUI {
   private game: Game;
@@ -147,16 +149,21 @@ export class CraftingUI {
     for (const [element, amount] of Object.entries(portalData.elements)) {
       if (amount && (amount as number) > 0) {
         const elementAmount = amount as number;
-        // Each element contributes 20% toward a level (5 elements = 1 level)
-        const percentPerElement = 20;
+        const elementDef = getElementDefinition(element as ElementType);
+        const icon = elementDef?.icon || '?';
+        const potency = elementDef?.properties.powerMultiplier || 1.0;
+        const potencyDisplay = potency === 1.0 ? '1x' : `${potency}x`;
+        const canAddMore = inventory.hasElement(element as ElementType, 1);
+        
         elementsHtml += `
-          <div class="element-control" data-element="${element}">
-            <span class="element-control-name ${element}">${element}</span>
-            <span class="element-control-percent">${percentPerElement}%</span>
+          <div class="element-control ${element}" data-element="${element}">
+            <span class="element-control-icon">${icon}</span>
+            <span class="element-control-name">${element}</span>
+            <span class="element-control-potency" title="Power multiplier">${potencyDisplay}</span>
             <span class="element-control-amount">${elementAmount}</span>
             <div class="element-control-buttons">
               <button class="element-btn element-btn-sub" data-element="${element}" data-action="sub" title="Remove 1 ${element}">−</button>
-              <button class="element-btn element-btn-add" data-element="${element}" data-action="add" title="Add 1 ${element}">+</button>
+              <button class="element-btn element-btn-add" data-element="${element}" data-action="add" title="Add 1 ${element}" ${canAddMore ? '' : 'disabled'}>+</button>
               <button class="element-btn element-btn-remove" data-element="${element}" data-action="remove" title="Remove all ${element}">×</button>
             </div>
           </div>
@@ -256,9 +263,6 @@ export class CraftingUI {
   private updateLevelProgress(crafting: CraftingSystem, portalData: any): void {
     if (!this.levelProgressContainer) return;
 
-    // Calculate total elements
-    const elementTotal = Object.values(portalData.elements).reduce((sum: number, val: any) => sum + (val || 0), 0) as number;
-    
     // Calculate item bonuses
     const slots = crafting.getSlots();
     let itemBonus = 0;
@@ -271,18 +275,14 @@ export class CraftingUI {
       }
     }
 
-    // Level calculation: base from mana + element bonus (5 elements = 1 level) + item bonus
-    // Add 1 to make it 1-based (start at level 1, not 0)
-    const baseLevel = Math.floor(Math.sqrt(portalData.manaInvested / 10)) + 1;
-    const elementBonus = Math.floor(elementTotal / 5);
-    const currentLevel = baseLevel + elementBonus + itemBonus;
-    
-    // Progress toward next level (from elements)
-    // At 0 elements, you're at level 1 with 0% progress toward level 2
-    // At 5 elements, you hit level 2 with 0% progress toward level 3
-    const elementsTowardNextLevel = elementTotal % 5;
-    const progressPercent = (elementsTowardNextLevel / 5) * 100;
+    // Get level progress from helper (uses curve-based thresholds)
+    const progress = getLevelProgress(portalData.manaInvested, portalData.elements);
+    const currentLevel = progress.currentLevel + itemBonus;
     const nextLevel = currentLevel + 1;
+    
+    // Calculate power needed for display
+    const powerNeeded = progress.powerForNextLevel - progress.powerForCurrentLevel;
+    const powerProgress = progress.currentPower - progress.powerForCurrentLevel;
 
     this.levelProgressContainer.innerHTML = `
       <div class="level-progress">
@@ -291,10 +291,10 @@ export class CraftingUI {
           <span class="level-value">${currentLevel}</span>
         </div>
         <div class="level-progress-bar">
-          <div class="level-progress-fill" style="width: ${progressPercent}%"></div>
+          <div class="level-progress-fill" style="width: ${progress.progressPercent}%"></div>
         </div>
         <div class="level-progress-footer">
-          <span class="level-progress-text">${elementsTowardNextLevel}/5 elements to level ${nextLevel}</span>
+          <span class="level-progress-text">${powerProgress}/${powerNeeded} power to level ${nextLevel}</span>
         </div>
       </div>
     `;

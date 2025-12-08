@@ -1,4 +1,5 @@
 import type { ElementType, GameState } from '../types';
+import { getElementDefinition } from '../data/elements';
 
 /**
  * Generate a unique ID
@@ -57,17 +58,114 @@ export function shuffleArray<T>(array: T[]): T[] {
 }
 
 /**
+ * Level thresholds - cumulative "power" needed to reach each level
+ * Power = elements + (mana / 10)
+ * Level 1: 0 power (starting)
+ * Level 2: 5 power
+ * Level 3: 10 power (5 more)
+ * Level 4: 15 power (5 more)
+ * Level 5: 22 power (7 more)
+ * Level 6: 29 power (7 more)
+ * Level 7: 39 power (10 more)
+ * Level 8: 49 power (10 more)
+ * Level 9: 64 power (15 more)
+ * Level 10: 84 power (20 more)
+ */
+const LEVEL_THRESHOLDS = [0, 0, 5, 10, 15, 22, 29, 39, 49, 64, 84];
+
+/**
+ * Calculate total power from elements with their multipliers
+ * 10 mana = 1 base power
+ * Elements contribute their amount * powerMultiplier
+ */
+export function calculateTotalPower(
+  manaInvested: number,
+  elements: Partial<Record<ElementType, number>>
+): number {
+  let elementPower = 0;
+  for (const [element, amount] of Object.entries(elements)) {
+    if (amount && amount > 0) {
+      const elementDef = getElementDefinition(element as ElementType);
+      const multiplier = elementDef?.properties.powerMultiplier || 1.0;
+      elementPower += amount * multiplier;
+    }
+  }
+  // 10 mana = 1 base power
+  const manaPower = Math.floor(manaInvested / 10);
+  return Math.floor(elementPower + manaPower);
+}
+
+/**
  * Calculate portal level based on mana and elements invested
+ * 10 mana = 1 element in terms of power
+ * Elements use their powerMultiplier for bonus power
  */
 export function calculatePortalLevel(
   manaInvested: number,
   elements: Partial<Record<ElementType, number>>
 ): number {
-  const elementTotal = Object.values(elements).reduce((sum, val) => sum + (val || 0), 0);
-  // Add 1 to make it 1-based (start at level 1, not 0)
-  const baseLevel = Math.floor(Math.sqrt(manaInvested / 10)) + 1;
-  const elementBonus = Math.floor(elementTotal / 5);
-  return baseLevel + elementBonus;
+  const totalPower = calculateTotalPower(manaInvested, elements);
+  
+  // Find the highest level we've reached
+  let level = 1;
+  for (let i = 1; i < LEVEL_THRESHOLDS.length; i++) {
+    if (totalPower >= LEVEL_THRESHOLDS[i]) {
+      level = i;
+    } else {
+      break;
+    }
+  }
+  
+  // Cap at level 10, but allow exceeding with extra power
+  if (level >= 10 && totalPower > LEVEL_THRESHOLDS[10]) {
+    // Each additional 25 power beyond level 10 = 1 more level
+    level = 10 + Math.floor((totalPower - LEVEL_THRESHOLDS[10]) / 25);
+  }
+  
+  return level;
+}
+
+/**
+ * Get the power threshold for a given level
+ */
+export function getLevelThreshold(level: number): number {
+  if (level <= 0) return 0;
+  if (level < LEVEL_THRESHOLDS.length) {
+    return LEVEL_THRESHOLDS[level];
+  }
+  // Beyond level 10: each level needs 25 more power
+  return LEVEL_THRESHOLDS[10] + (level - 10) * 25;
+}
+
+/**
+ * Get progress info toward the next level
+ */
+export function getLevelProgress(manaInvested: number, elements: Partial<Record<ElementType, number>>): {
+  currentLevel: number;
+  currentPower: number;
+  powerForCurrentLevel: number;
+  powerForNextLevel: number;
+  progressPercent: number;
+} {
+  const currentPower = calculateTotalPower(manaInvested, elements);
+  const currentLevel = calculatePortalLevel(manaInvested, elements);
+  
+  const powerForCurrentLevel = getLevelThreshold(currentLevel);
+  const powerForNextLevel = getLevelThreshold(currentLevel + 1);
+  
+  const powerIntoCurrentLevel = currentPower - powerForCurrentLevel;
+  const powerNeededForNext = powerForNextLevel - powerForCurrentLevel;
+  const progressPercent = powerNeededForNext > 0 
+    ? (powerIntoCurrentLevel / powerNeededForNext) * 100 
+    : 0;
+  
+  return {
+    currentLevel,
+    currentPower,
+    powerForCurrentLevel,
+    powerForNextLevel,
+    progressPercent,
+  };
 }
 
 /**
