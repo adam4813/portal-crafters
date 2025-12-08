@@ -16,6 +16,7 @@ import { UIManager } from '../ui/UIManager';
 import { createInitialGameState, showToast } from '../utils/helpers';
 import { calculatePortalEffects } from './PortalEffectSystem';
 import { getEquipmentById } from '../data/equipment';
+import { calculateAdjustedPayment } from '../data/customers';
 
 export class Game {
   // Three.js components
@@ -378,31 +379,9 @@ export class Game {
     // Check if this is a mini-boss contract
     const isMiniBoss = customer.id.startsWith('miniboss-');
 
-    // Complete the contract
-    let payment = this.customerSystem.completeContract(customer.id);
-
-    // Apply modifier bonuses to payment
-    if (customer.requirements.modifiers) {
-      for (const modifier of customer.requirements.modifiers) {
-        switch (modifier) {
-          case 'urgent':
-            payment = Math.floor(payment * 1.3); // 30% bonus for urgent contracts
-            break;
-          case 'bonus':
-            payment = Math.floor(payment * 1.2); // 20% bonus
-            break;
-          case 'perfectionist':
-            payment = Math.floor(payment * 1.25); // 25% bonus for meeting strict requirements
-            break;
-          case 'bulk_order':
-            payment = Math.floor(payment * 1.4); // 40% bonus for bulk orders
-            break;
-          case 'experimental':
-            payment = Math.floor(payment * 1.15); // 15% bonus for experimental contracts
-            break;
-        }
-      }
-    }
+    // Complete the contract and calculate adjusted payment with modifiers
+    const basePayment = this.customerSystem.completeContract(customer.id);
+    const payment = calculateAdjustedPayment(basePayment, customer.requirements.modifiers);
 
     this.inventorySystem.addGold(payment);
     this.gameState.totalCustomersServed++;

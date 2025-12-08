@@ -4,6 +4,7 @@ import type { ProgressionSystem } from '../game/ProgressionSystem';
 import type { ElementSystem } from '../game/ElementSystem';
 import type { Portal as PortalType, Customer, ContractModifier, Reward } from '../types';
 import { formatTime } from '../utils/helpers';
+import { calculateAdjustedPayment } from '../data/customers';
 
 export class CustomerUI {
   private game: Game;
@@ -168,29 +169,11 @@ export class CustomerUI {
         ? `<div class="customer-special-reward">🎁 Special: ${this.formatSpecialReward(customer.specialReward)}</div>`
         : '';
 
-      // Calculate adjusted payment with modifiers
-      let adjustedPayment = customer.payment;
-      if (customer.requirements.modifiers) {
-        for (const modifier of customer.requirements.modifiers) {
-          switch (modifier) {
-            case 'urgent':
-              adjustedPayment = Math.floor(adjustedPayment * 1.3);
-              break;
-            case 'bonus':
-              adjustedPayment = Math.floor(adjustedPayment * 1.2);
-              break;
-            case 'perfectionist':
-              adjustedPayment = Math.floor(adjustedPayment * 1.25);
-              break;
-            case 'bulk_order':
-              adjustedPayment = Math.floor(adjustedPayment * 1.4);
-              break;
-            case 'experimental':
-              adjustedPayment = Math.floor(adjustedPayment * 1.15);
-              break;
-          }
-        }
-      }
+      // Calculate adjusted payment with modifiers using shared utility
+      const adjustedPayment = calculateAdjustedPayment(
+        customer.payment,
+        customer.requirements.modifiers
+      );
 
       // Add special class for mini-boss and special customers
       let cardClass = 'customer-card';

@@ -150,11 +150,11 @@ export class CustomerSystem {
     for (const modifier of modifiers) {
       switch (modifier) {
         case 'urgent':
-          // Reduce patience significantly but increase payment
-          // Payment adjustment will be handled in UI display
+          // Note: Patience reduction is handled in spawnCustomer by reducing base patience
+          // Payment bonus is applied during contract completion
           break;
         case 'bonus':
-          // Increase payment (handled in payment calculation)
+          // Payment bonus is applied during contract completion
           break;
         case 'perfectionist':
           // Increase minimum level and element amount
@@ -173,15 +173,21 @@ export class CustomerSystem {
           }
           break;
         case 'experimental':
-          // Add equipment requirements
-          if (!requirements.requiredEquipmentSlots && Math.random() < 0.7) {
+          // Add equipment requirements (avoid duplicates)
+          if (!requirements.requiredEquipmentSlots) {
             const slots: EquipmentSlot[] = ['weapon', 'armor', 'accessory'];
-            const slotCount = Math.ceil(1 + template.difficultyMultiplier * 0.5);
+            const slotCount = Math.min(
+              Math.ceil(1 + template.difficultyMultiplier * 0.5),
+              slots.length
+            );
             requirements.requiredEquipmentSlots = [];
-            for (let i = 0; i < slotCount; i++) {
-              requirements.requiredEquipmentSlots.push(
-                slots[Math.floor(Math.random() * slots.length)]
-              );
+
+            // Select unique slots
+            const availableSlots = [...slots];
+            for (let i = 0; i < slotCount && availableSlots.length > 0; i++) {
+              const randomIndex = Math.floor(Math.random() * availableSlots.length);
+              requirements.requiredEquipmentSlots.push(availableSlots[randomIndex]);
+              availableSlots.splice(randomIndex, 1);
             }
           }
           break;

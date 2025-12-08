@@ -284,6 +284,41 @@ export function getHighestElementTier(elements: ElementType[]): ElementTier {
   return tierOrder[highestIndex];
 }
 
+/**
+ * Calculate adjusted payment with modifier bonuses
+ */
+export function calculateAdjustedPayment(
+  basePayment: number,
+  modifiers?: ContractModifier[]
+): number {
+  if (!modifiers || modifiers.length === 0) {
+    return basePayment;
+  }
+
+  let adjustedPayment = basePayment;
+  for (const modifier of modifiers) {
+    switch (modifier) {
+      case 'urgent':
+        adjustedPayment = Math.floor(adjustedPayment * 1.3); // 30% bonus
+        break;
+      case 'bonus':
+        adjustedPayment = Math.floor(adjustedPayment * 1.2); // 20% bonus
+        break;
+      case 'perfectionist':
+        adjustedPayment = Math.floor(adjustedPayment * 1.25); // 25% bonus
+        break;
+      case 'bulk_order':
+        adjustedPayment = Math.floor(adjustedPayment * 1.4); // 40% bonus
+        break;
+      case 'experimental':
+        adjustedPayment = Math.floor(adjustedPayment * 1.15); // 15% bonus
+        break;
+    }
+  }
+
+  return adjustedPayment;
+}
+
 export function selectElementRequirements(
   unlockedElements: ElementType[],
   difficulty: number
