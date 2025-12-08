@@ -259,6 +259,13 @@ export function createInitialGameState(): GameState {
     totalGoldEarned: 0,
     playTime: 0,
     lastSaveTime: Date.now(),
+    progression: {
+      currentTier: 1,
+      contractsCompletedThisTier: 0,
+      tiersUnlocked: [1],
+      miniBossCompleted: [],
+    },
+    activeExpeditions: [],
   };
 }
 

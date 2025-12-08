@@ -182,4 +182,45 @@ export class CustomerSystem {
   public saveQueue(): Customer[] {
     return [...this.queue];
   }
+
+  /**
+   * Add a progression mini-boss contract to the queue
+   */
+  public addMiniBossContract(
+    tierNumber: number,
+    name: string,
+    _description: string,
+    requirements: ContractRequirements,
+    payment: number
+  ): void {
+    // Check if mini-boss already exists in queue
+    const existingMiniBoss = this.queue.find(c => c.id.startsWith('miniboss-'));
+    if (existingMiniBoss) {
+      // Don't add duplicate mini-boss contracts
+      return;
+    }
+
+    const miniBoss: Customer = {
+      id: `miniboss-tier-${tierNumber}`,
+      name: `🏆 ${name}`,
+      icon: '👑',
+      requirements,
+      payment,
+      patience: Infinity, // Unlimited time
+      arrivedAt: Date.now(),
+    };
+
+    // Add mini-boss to the front of the queue
+    this.queue.unshift(miniBoss);
+  }
+
+  /**
+   * Remove the current mini-boss contract from queue (if it exists)
+   */
+  public removeMiniBossContract(): void {
+    const miniBossIndex = this.queue.findIndex(c => c.id.startsWith('miniboss-'));
+    if (miniBossIndex !== -1) {
+      this.queue.splice(miniBossIndex, 1);
+    }
+  }
 }

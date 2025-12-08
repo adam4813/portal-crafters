@@ -87,6 +87,7 @@ export class CustomerUI {
     for (const customer of queue) {
       const waitTime = Math.floor((now - customer.arrivedAt) / 1000);
       const timeRemaining = Math.max(0, customer.patience - waitTime);
+      const isMiniBoss = customer.id.startsWith('miniboss-');
 
       // Find which portals can fulfill this customer
       const matchingPortals = storedPortals.filter(portal => 
@@ -99,11 +100,17 @@ export class CustomerUI {
         ? `✨ ≥${customer.requirements.minMana}` 
         : '';
 
+      // Add special class for mini-boss
+      const cardClass = isMiniBoss ? 'customer-card miniboss-card' : 'customer-card';
+      const timerDisplay = isMiniBoss 
+        ? '<div class="customer-timer unlimited">⏱️ ∞ Unlimited</div>' 
+        : `<div class="customer-timer ${timeRemaining < 30 ? 'urgent' : ''}">⏱️ ${formatTime(timeRemaining)}</div>`;
+
       html += `
-        <div class="customer-card" data-customer-id="${customer.id}" data-arrived-at="${customer.arrivedAt}" data-patience="${customer.patience}">
+        <div class="${cardClass}" data-customer-id="${customer.id}" data-arrived-at="${customer.arrivedAt}" data-patience="${customer.patience}">
           <div class="customer-header">
             <div class="customer-name">${customer.icon} ${customer.name}</div>
-            <div class="customer-timer ${timeRemaining < 30 ? 'urgent' : ''}">⏱️ ${formatTime(timeRemaining)}</div>
+            ${timerDisplay}
           </div>
           <div class="customer-requirements">
             <span class="req-level">Lv ${customer.requirements.minLevel}+</span>

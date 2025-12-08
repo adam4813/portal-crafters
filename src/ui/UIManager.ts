@@ -4,6 +4,8 @@ import type { CraftingSystem } from '../game/CraftingSystem';
 import type { CustomerSystem } from '../game/Customer';
 import type { ElementSystem } from '../game/ElementSystem';
 import type { UpgradeSystem } from '../game/UpgradeSystem';
+import type { ProgressionSystem } from '../game/ProgressionSystem';
+import type { ExpeditionSystem } from '../game/ExpeditionSystem';
 import type { Portal } from '../game/Portal';
 import type { GameState, Portal as PortalType } from '../types';
 import { CraftingUI } from './CraftingUI';
@@ -24,6 +26,8 @@ export interface UIUpdateData {
   portal: Portal;
   gameState: GameState;
   storedPortals: PortalType[];
+  progression: ProgressionSystem;
+  expeditions: ExpeditionSystem;
 }
 
 type ModalType = 'shop' | 'upgrades' | 'research' | 'mana-converter' | 'recipes' | 'guide' | null;
