@@ -93,13 +93,19 @@ export class CustomerSystem {
     // Apply modifier effects to requirements
     this.applyModifierEffects(requirements, modifiers, template);
 
+    // Calculate patience with urgent modifier reduction
+    let patience = template.basePatience + Math.floor(Math.random() * 30);
+    if (modifiers.includes('urgent')) {
+      patience = Math.floor(patience * 0.7); // 30% reduction for urgent contracts
+    }
+
     const customer: Customer = {
       id: generateId(),
       name: generateCustomerName(template),
       icon: generateCustomerIcon(template),
       requirements,
       payment: generatePayment(template),
-      patience: template.basePatience + Math.floor(Math.random() * 30),
+      patience,
       arrivedAt: Date.now(),
       specialReward,
       rewardTier,
@@ -131,9 +137,9 @@ export class CustomerSystem {
       }
     }
 
-    // Select regular template based on difficulty
+    // Select regular template based on difficulty (allow +1 for variety)
     const templateIndex = Math.min(
-      Math.floor(Math.random() * this.difficultyLevel),
+      Math.floor(Math.random() * (this.difficultyLevel + 1)),
       regularTemplates.length - 1
     );
     return regularTemplates[templateIndex];

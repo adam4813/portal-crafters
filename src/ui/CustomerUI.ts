@@ -354,14 +354,69 @@ export class CustomerUI {
     }
     // If reqElements is undefined, any combination is allowed
 
-    // Check equipment requirements (simplified - just check if we have equipment)
-    if (
-      customer.requirements.requiredEquipmentSlots &&
-      customer.requirements.requiredEquipmentSlots.length > 0
-    ) {
-      const hasEquipment =
-        portal.equipment.length > 0 ||
-        (portal.generatedEquipmentAttributes && portal.generatedEquipmentAttributes.length > 0);
+    // Check equipment requirements
+    if (customer.requirements.requiredEquipmentSlots) {
+      const equipmentSlots = customer.requirements.requiredEquipmentSlots;
+      const requiredCount = customer.requirements.minEquipmentCount || equipmentSlots.length;
+
+      // Count how many required slots are filled in the portal
+      let filledCount = 0;
+      for (const slot of equipmentSlots) {
+        // Check if portal has equipment in this slot
+        // We need to check both portal.equipment (static) and portal.generatedEquipmentAttributes
+        const hasStaticEquipment = portal.equipment.some((eqId) => {
+          // Import getEquipmentById at top of file if needed
+          const eq = this.game
+            .getInventory()
+            .getAllOwnedEquipment()
+            .find((e) => e.id === eqId);
+          return eq && eq.slot === slot;
+        });
+        const hasGeneratedEquipment = (portal.generatedEquipmentAttributes || []).some(
+          (genEq) => genEq.slot === slot
+        );
+
+        if (hasStaticEquipment || hasGeneratedEquipment) {
+          filledCount++;
+        }
+      }
+
+      if (filledCount < requiredCount) {
+        return false;
+      }
+    }
+
+    // Check minimum equipment rarity (if specified)
+    if (customer.requirements.minEquipmentRarity) {
+      const rarityOrder = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
+      const minRarityIndex = rarityOrder.indexOf(customer.requirements.minEquipmentRarity);
+
+      // Check all equipment in portal meets minimum rarity
+      let hasEquipment = false;
+      for (const eqId of portal.equipment) {
+        const eq = this.game
+          .getInventory()
+          .getAllOwnedEquipment()
+          .find((e) => e.id === eqId);
+        if (eq) {
+          hasEquipment = true;
+          const eqRarityIndex = rarityOrder.indexOf(eq.rarity);
+          if (eqRarityIndex < minRarityIndex) {
+            return false;
+          }
+        }
+      }
+
+      // Also check generated equipment
+      for (const genEq of portal.generatedEquipmentAttributes || []) {
+        hasEquipment = true;
+        const eqRarityIndex = rarityOrder.indexOf(genEq.rarity);
+        if (eqRarityIndex < minRarityIndex) {
+          return false;
+        }
+      }
+
+      // Must have at least one piece of equipment if rarity is required
       if (!hasEquipment) {
         return false;
       }

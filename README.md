@@ -258,7 +258,7 @@ The game includes **10 customer templates** organized by difficulty tier:
    - Base Payment: 400 gold (±100 variance)
    - Exotic elements (Shadow, Light, Void)
    - Special reward chance: 10%
-5. **Tier 5 - Masters**: Temporal Mage, Chaos Lord, Life Weaver
+5. **Tier 4-5 - Masters**: Temporal Mage, Chaos Lord, Life Weaver
    - Base Payment: 800 gold (±200 variance)
    - Legendary elements (Time, Chaos, Life, Death)
    - Special reward chance: 15%
@@ -388,7 +388,7 @@ To add a new modifier:
 1. Add type to `ContractModifier` in `src/types/index.ts`
 2. Add to modifier chances in customer templates
 3. Implement effect in `applyModifierEffects()` in `Customer.ts`
-4. Add payment bonus in `fulfillCustomerWithPortal()` in `Game.ts`
+4. Add payment bonus in `calculateAdjustedPayment()` in `src/data/customers.ts`
 
 ### Contract Display
 
