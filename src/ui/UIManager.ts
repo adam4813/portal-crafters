@@ -12,7 +12,6 @@ import { CustomerUI } from './CustomerUI';
 import { ShopUI } from './ShopUI';
 import { ResearchUI } from './ResearchUI';
 import { ManaConversionUI } from './ManaConversionUI';
-import { TutorialUI } from './TutorialUI';
 import { PortalInventoryUI } from './PortalInventoryUI';
 import { formatNumber } from '../utils/helpers';
 
@@ -27,7 +26,7 @@ export interface UIUpdateData {
   storedPortals: PortalType[];
 }
 
-type ModalType = 'shop' | 'upgrades' | 'research' | 'mana-converter' | 'recipes' | null;
+type ModalType = 'shop' | 'upgrades' | 'research' | 'mana-converter' | 'recipes' | 'guide' | null;
 
 export class UIManager {
   private game: Game;
@@ -37,7 +36,6 @@ export class UIManager {
   private shopUI: ShopUI;
   private researchUI: ResearchUI;
   private manaConversionUI: ManaConversionUI;
-  private tutorialUI: TutorialUI;
   private portalInventoryUI: PortalInventoryUI;
 
   // DOM elements
@@ -50,6 +48,7 @@ export class UIManager {
   private modalContent: HTMLElement | null;
   private modalClose: HTMLElement | null;
   private currentModal: ModalType = null;
+  private currentGuideSection: string = 'getting-started';
 
   // Last update data for modal re-renders
   private lastUpdateData: UIUpdateData | null = null;
@@ -62,7 +61,6 @@ export class UIManager {
     this.shopUI = new ShopUI(game);
     this.researchUI = new ResearchUI(game);
     this.manaConversionUI = new ManaConversionUI(game);
-    this.tutorialUI = new TutorialUI();
     this.portalInventoryUI = new PortalInventoryUI(game);
 
     this.moneyDisplay = document.getElementById('money-display');
@@ -82,7 +80,6 @@ export class UIManager {
     this.shopUI.initialize();
     this.researchUI.initialize();
     this.manaConversionUI.initialize();
-    this.tutorialUI.initialize();
     this.portalInventoryUI.initialize();
     
     this.setupModalHandlers();
@@ -90,6 +87,7 @@ export class UIManager {
 
   private setupModalHandlers(): void {
     // Header buttons
+    document.getElementById('guide-btn')?.addEventListener('click', () => this.openModal('guide'));
     document.getElementById('shop-btn')?.addEventListener('click', () => this.openModal('shop'));
     document.getElementById('upgrades-btn')?.addEventListener('click', () => this.openModal('upgrades'));
     document.getElementById('research-btn')?.addEventListener('click', () => this.openModal('research'));
@@ -123,6 +121,7 @@ export class UIManager {
     
     // Set modal title
     const titles: Record<string, string> = {
+      'guide': '📚 Game Guide',
       'shop': '🛒 Mana Shop',
       'upgrades': '⬆️ Upgrades',
       'research': '🔬 Research',
@@ -130,6 +129,15 @@ export class UIManager {
       'recipes': '📖 Recipe Book'
     };
     this.modalTitle.textContent = titles[type || ''] || '';
+    
+    // Apply modal size classes
+    const modalContainer = this.modalOverlay.querySelector('.modal-container');
+    if (modalContainer) {
+      modalContainer.classList.remove('guide-modal');
+      if (type === 'guide') {
+        modalContainer.classList.add('guide-modal');
+      }
+    }
     
     // Render modal content
     this.renderModalContent();
@@ -154,6 +162,9 @@ export class UIManager {
     if (!this.modalContent || !this.lastUpdateData) return;
     
     switch (this.currentModal) {
+      case 'guide':
+        this.renderGuideModal();
+        break;
       case 'shop':
         this.renderShopModal();
         break;
@@ -340,6 +351,158 @@ export class UIManager {
     this.researchUI.renderRecipesToElement(this.modalContent, this.lastUpdateData.inventory);
   }
 
+  private renderGuideModal(): void {
+    if (!this.modalContent) return;
+
+    const sections = [
+      { id: 'getting-started', label: '🎮 Getting Started' },
+      { id: 'mana-gold', label: '💰 Mana & Gold' },
+      { id: 'shop', label: '🛒 Shop' },
+      { id: 'upgrades', label: '⬆️ Upgrades' },
+      { id: 'research', label: '🔬 Research' },
+      { id: 'recipes', label: '📖 Recipes' },
+      { id: 'crafting', label: '🔮 Crafting' },
+      { id: 'elements', label: '✨ Elements' },
+      { id: 'contracts', label: '📜 Contracts' },
+      { id: 'mana-converter', label: '🔄 Mana Converter' },
+    ];
+
+    let navHtml = '<ul class="guide-nav">';
+    for (const section of sections) {
+      const activeClass = this.currentGuideSection === section.id ? 'active' : '';
+      navHtml += `<li class="guide-nav-item ${activeClass}" data-section="${section.id}">${section.label}</li>`;
+    }
+    navHtml += '</ul>';
+
+    const contentHtml = this.getGuideContent(this.currentGuideSection);
+
+    this.modalContent.innerHTML = `
+      <div class="guide-layout">
+        <nav class="guide-sidebar">${navHtml}</nav>
+        <div class="guide-content">${contentHtml}</div>
+      </div>
+    `;
+
+    // Add click handlers for navigation
+    this.modalContent.querySelectorAll('.guide-nav-item').forEach((item) => {
+      item.addEventListener('click', () => {
+        this.currentGuideSection = (item as HTMLElement).dataset.section || 'getting-started';
+        this.renderGuideModal();
+      });
+    });
+  }
+
+  private getGuideContent(sectionId: string): string {
+    const content: Record<string, string> = {
+      'getting-started': `
+        <h4>Welcome to Portal Crafters!</h4>
+        <p>Your goal is to craft magical portals and fulfill customer contracts to earn gold.</p>
+        <div class="guide-steps">
+          <div class="guide-step"><span class="step-num">1</span> <strong>Buy Mana</strong> - Use gold to purchase mana from the Shop</div>
+          <div class="guide-step"><span class="step-num">2</span> <strong>Convert Mana</strong> - Transform mana into elemental energy</div>
+          <div class="guide-step"><span class="step-num">3</span> <strong>Add Elements</strong> - Click elements in your inventory to add them to your portal</div>
+          <div class="guide-step"><span class="step-num">4</span> <strong>Craft Portal</strong> - Click "Craft Portal" to create and store your portal</div>
+          <div class="guide-step"><span class="step-num">5</span> <strong>Fulfill Contracts</strong> - Match your portals to customer requirements</div>
+        </div>
+      `,
+      'mana-gold': `
+        <h4>Mana & Gold</h4>
+        <p><strong>Gold 💰</strong> is earned by fulfilling customer contracts. Use it to:</p>
+        <ul>
+          <li>Purchase mana from the Shop</li>
+          <li>Buy upgrades to improve your crafting</li>
+          <li>Research new elements</li>
+        </ul>
+        <p><strong>Mana ✨</strong> is magical energy used for crafting. Convert it into elemental energy using the Mana Converter.</p>
+      `,
+      'shop': `
+        <h4>Mana Shop</h4>
+        <p>The Shop allows you to exchange gold for mana. Available packages:</p>
+        <ul>
+          <li><strong>Small Pack</strong> - 10 gold</li>
+          <li><strong>Medium Pack</strong> - 50 gold</li>
+          <li><strong>Large Pack</strong> - 100 gold</li>
+        </ul>
+        <p>The exchange rate shows how much mana you receive per gold spent.</p>
+      `,
+      'upgrades': `
+        <h4>Upgrades</h4>
+        <p>Upgrades permanently improve your crafting abilities:</p>
+        <ul>
+          <li><strong>Mana Conversion</strong> - Increases efficiency when converting mana to elements</li>
+          <li><strong>Reward Chance</strong> - Increases chance of bonus rewards from contracts</li>
+        </ul>
+        <p>Each upgrade can be leveled up multiple times for stronger effects.</p>
+      `,
+      'research': `
+        <h4>Research</h4>
+        <p>Research unlocks new elements for your portals:</p>
+        <ul>
+          <li><strong>Fire 🔥</strong> and <strong>Water 💧</strong> - Available from start</li>
+          <li><strong>Earth 🌿</strong> - Unlockable</li>
+          <li><strong>Air 💨</strong> - Unlockable</li>
+          <li><strong>Lightning ⚡</strong> - Unlockable</li>
+        </ul>
+        <p>Some elements require prerequisites before they can be researched.</p>
+      `,
+      'recipes': `
+        <h4>Recipe Book</h4>
+        <p>Recipes are discovered by combining ingredients in the crafting slots.</p>
+        <ul>
+          <li>Experiment with different ingredient combinations</li>
+          <li>Discovered recipes are saved for future reference</li>
+          <li>Click a recipe to auto-fill your crafting slots (if you have the ingredients)</li>
+        </ul>
+        <p>Bright icons mean you own the ingredient, faded icons mean you're missing it.</p>
+      `,
+      'crafting': `
+        <h4>Portal Crafting</h4>
+        <p>Create portals by combining elements and ingredients:</p>
+        <ol>
+          <li>Click elements in your inventory to add them to the portal</li>
+          <li>Click ingredients to select them, then click a slot to place them</li>
+          <li>Click "Craft Portal" to finalize and store your creation</li>
+        </ol>
+        <p>Portal level is determined by the amount of elements and ingredients used.</p>
+      `,
+      'elements': `
+        <h4>Elements</h4>
+        <p>Elements define the magical aspect of your portals:</p>
+        <ul>
+          <li>🔥 <strong>Fire</strong> - Passionate, energetic portals</li>
+          <li>💧 <strong>Water</strong> - Calm, flowing portals</li>
+          <li>🌿 <strong>Earth</strong> - Stable, grounded portals</li>
+          <li>💨 <strong>Air</strong> - Light, swift portals</li>
+          <li>⚡ <strong>Lightning</strong> - Powerful, electric portals</li>
+        </ul>
+        <p>Customers may require specific elements in their portals.</p>
+      `,
+      'contracts': `
+        <h4>Contracts</h4>
+        <p>Customers arrive with portal requests. Each contract shows:</p>
+        <ul>
+          <li><strong>Level Requirement</strong> - Minimum portal level needed</li>
+          <li><strong>Element Requirements</strong> - Required elements and amounts</li>
+          <li><strong>Payment</strong> - Gold reward for completion</li>
+          <li><strong>Timer</strong> - Time before customer leaves</li>
+        </ul>
+        <p>Fulfill contracts by selecting a matching portal from your inventory.</p>
+      `,
+      'mana-converter': `
+        <h4>Mana Converter</h4>
+        <p>Transform mana into elemental energy:</p>
+        <ol>
+          <li>Select an element type to convert to</li>
+          <li>Choose the amount to convert</li>
+          <li>Click "Convert" to receive the elements</li>
+        </ol>
+        <p>Different elements may have different mana costs. Upgrades can improve conversion rates.</p>
+      `,
+    };
+
+    return content[sectionId] || '<p>Section not found.</p>';
+  }
+
   public getSelectedItem(): { type: 'ingredient' | 'equipment'; id: string } | null {
     return this.inventoryUI.getSelectedItem();
   }
@@ -364,7 +527,6 @@ export class UIManager {
     this.inventoryUI.update(data.inventory, data.elements);
     this.customerUI.update(data.customers, data.storedPortals);
     this.researchUI.update(data.elements, data.inventory);
-    this.tutorialUI.update();
     this.portalInventoryUI.update(data.storedPortals);
     
     // Update modal content if open
