@@ -749,11 +749,11 @@ export class UIManager {
           <div class="stats-grid">
             <div class="stat-item">
               <span class="stat-label">Portals Crafted:</span>
-              <span class="stat-value">${this.lastUpdateData?.gameState.totalPortalsCreated || 0}</span>
+              <span class="stat-value">${formatNumber(this.lastUpdateData?.gameState.totalPortalsCreated || 0)}</span>
             </div>
             <div class="stat-item">
               <span class="stat-label">Customers Served:</span>
-              <span class="stat-value">${this.lastUpdateData?.gameState.totalCustomersServed || 0}</span>
+              <span class="stat-value">${formatNumber(this.lastUpdateData?.gameState.totalCustomersServed || 0)}</span>
             </div>
             <div class="stat-item">
               <span class="stat-label">Total Gold Earned:</span>
