@@ -49,6 +49,7 @@ export class UIManager {
   private modalClose: HTMLElement | null;
   private currentModal: ModalType = null;
   private currentGuideSection: string = 'getting-started';
+  private currentShopTab: 'mana' | 'items' | 'equipment' = 'mana';
 
   // Last update data for modal re-renders
   private lastUpdateData: UIUpdateData | null = null;
@@ -208,6 +209,14 @@ export class UIManager {
       { id: 'debug_gold_sink', name: '[DEBUG] Gold Sink', description: 'Burns 100 gold for testing', cost: 100, goldReward: 0 },
     ];
 
+    const shopEquipment = [
+      { id: 'rusty_sword', name: '🗡️ Rusty Sword', description: 'Common weapon, +5 portal bonus', cost: 50 },
+      { id: 'leather_armor', name: '🥋 Leather Armor', description: 'Common armor, +3 portal bonus', cost: 40 },
+      { id: 'copper_ring', name: '💍 Copper Ring', description: 'Common accessory, +2 portal bonus', cost: 30 },
+      { id: 'iron_sword', name: '⚔️ Iron Sword', description: 'Uncommon weapon, +10 portal bonus, +2 earth', cost: 120 },
+      { id: 'chainmail', name: '🛡️ Chainmail', description: 'Uncommon armor, +8 portal bonus', cost: 100 },
+    ];
+
     let html = '<h4>Buy Mana</h4>';
     html += '<div class="exchange-rate-info">';
     html += `<p class="info-text">Current rate: <strong>${exchangeRate.manaPerGold} mana per gold</strong></p>`;
@@ -245,6 +254,22 @@ export class UIManager {
       `;
     }
 
+    html += '<h4>Equipment</h4>';
+    for (const equip of shopEquipment) {
+      const canAfford = gold >= equip.cost;
+      html += `
+        <div class="shop-item">
+          <div class="shop-item-info">
+            <div class="shop-item-name">${equip.name}</div>
+            <div class="shop-item-description">${equip.description}</div>
+          </div>
+          <button class="btn-secondary buy-equip-btn" data-id="${equip.id}" data-cost="${equip.cost}" ${!canAfford ? 'disabled' : ''}>
+            ${equip.cost} 💰
+          </button>
+        </div>
+      `;
+    }
+
     this.modalContent.innerHTML = html;
 
     // Add click handlers for mana packs
@@ -272,6 +297,20 @@ export class UIManager {
           if (!id.startsWith('debug_')) {
             inv.addIngredient(id, 1);
           }
+          this.game.refreshUI();
+        }
+      });
+    });
+
+    // Add click handlers for equipment purchases
+    this.modalContent.querySelectorAll('.buy-equip-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = (btn as HTMLElement).dataset.id || '';
+        const cost = parseInt((btn as HTMLElement).dataset.cost || '0', 10);
+        const inv = this.game.getInventory();
+        if (inv.canAfford(cost)) {
+          inv.spendGold(cost);
+          inv.addEquipment(id, 1);
           this.game.refreshUI();
         }
       });
