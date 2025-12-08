@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import type { GameState, ElementType } from '../types';
+import type { GameState, ElementType, Portal as PortalType } from '../types';
 import { isGeneratedEquipment } from '../types';
 import { Portal } from './Portal';
 import { CustomerSystem } from './Customer';
@@ -35,6 +35,7 @@ export class Game {
 
   // Game state
   private gameState: GameState;
+  private storedPortals: PortalType[] = [];
   private isRunning: boolean = false;
   private lastTime: number = 0;
   private animationFrameId: number | null = null;
@@ -106,6 +107,11 @@ export class Game {
     this.saveSystem.onSave(() => this.getState());
     this.saveSystem.initialize();
 
+    // Save before page unload
+    window.addEventListener('beforeunload', () => {
+      this.saveSystem.save();
+    });
+
     // Set up crafting callbacks
     this.craftingSystem.onCraft((elements, _bonus, generatedEquipmentUsed) => {
       // Add elements to portal
@@ -142,6 +148,9 @@ export class Game {
     this.customerSystem.loadQueue(state.customerQueue);
     this.manaSystem.initialize(state.inventory.mana);
 
+    // Load stored portals
+    this.storedPortals = state.storedPortals ? [...state.storedPortals] : [];
+
     // Apply conversion rate upgrades based on saved upgrade levels
     const fireConversionLevel = this.upgradeSystem.getLevel('mana_conversion_fire');
     if (fireConversionLevel > 0) {
@@ -167,6 +176,7 @@ export class Game {
       upgrades: this.upgradeSystem.getUpgradeLevels(),
       customerQueue: this.customerSystem.saveQueue(),
       currentPortal: this.portal.getData(),
+      storedPortals: [...this.storedPortals],
       totalPortalsCreated: this.gameState.totalPortalsCreated,
       totalCustomersServed: this.gameState.totalCustomersServed,
       totalGoldEarned: this.gameState.totalGoldEarned,
@@ -211,7 +221,7 @@ export class Game {
     // Update portal animation
     this.portal.update(deltaTime);
 
-    // Update customer system
+    // Update customer system (handles patience/expiration)
     this.customerSystem.update(deltaTime);
   }
 
@@ -237,43 +247,94 @@ export class Game {
 
   // Public API for UI interactions
   public craftPortal(): void {
+    const portalData = this.portal.getData();
+    const hasElements = Object.values(portalData.elements).some(v => v && v > 0);
     const result = this.craftingSystem.craft();
-    if (result) {
-      if (result.isNewRecipe) {
-        showToast('New recipe discovered!', 'success');
-      }
-      this.updateUI();
-    }
-  }
-
-  public completeContract(): void {
-    const customer = this.customerSystem.getCurrentCustomer();
-    if (!customer) {
-      showToast('No customer waiting!', 'warning');
+    
+    // Need either items or elements to craft
+    if (!result && !hasElements) {
+      showToast('Add elements or items to craft a portal!', 'warning');
       return;
     }
 
-    const portalData = this.portal.getData();
-    const meetsRequirements = this.portal.meetsRequirements(
-      customer.requirements.minLevel,
-      customer.requirements.requiredElements,
-      customer.requirements.minElementAmount
-    );
+    // Create a new portal combining current portal elements with crafting results
+    const newPortal: PortalType = {
+      id: `portal-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+      level: portalData.level + (result?.bonusLevel || 0),
+      manaInvested: portalData.manaInvested,
+      elements: { ...portalData.elements },
+      ingredients: result ? [] : [],
+      equipment: [],
+      visualColor: 0x6b46c1,
+      visualIntensity: 0.5,
+      createdAt: Date.now(),
+      generatedEquipmentAttributes: result?.generatedEquipmentUsed || [],
+    };
 
-    if (!meetsRequirements) {
+    // Recalculate level based on elements
+    const elementTotal = Object.values(newPortal.elements).reduce((sum, val) => sum + (val || 0), 0);
+    newPortal.level = Math.max(1, newPortal.level + Math.floor(elementTotal / 5));
+
+    this.storedPortals.push(newPortal);
+    this.gameState.totalPortalsCreated++;
+
+    // Reset the current portal for new crafting
+    this.portal.reset();
+
+    if (result?.isNewRecipe) {
+      showToast('New recipe discovered! Portal crafted and stored.', 'success');
+    } else {
+      showToast('Portal crafted and stored!', 'success');
+    }
+    
+    this.updateUI();
+  }
+
+  public fulfillCustomerWithPortal(customerId: string, portalId: string): void {
+    const queue = this.customerSystem.getQueue();
+    const customer = queue.find(c => c.id === customerId);
+    if (!customer) {
+      showToast('Customer not found!', 'error');
+      return;
+    }
+
+    const portalIndex = this.storedPortals.findIndex(p => p.id === portalId);
+    if (portalIndex === -1) {
+      showToast('Portal not found!', 'error');
+      return;
+    }
+
+    const portalData = this.storedPortals[portalIndex];
+    
+    // Check requirements
+    const meetsLevel = portalData.level >= customer.requirements.minLevel;
+    let meetsElements = true;
+    if (customer.requirements.requiredElements) {
+      for (const element of customer.requirements.requiredElements) {
+        const amount = portalData.elements[element] || 0;
+        if (amount < (customer.requirements.minElementAmount || 1)) {
+          meetsElements = false;
+          break;
+        }
+      }
+    }
+
+    if (!meetsLevel || !meetsElements) {
       showToast('Portal does not meet requirements!', 'error');
       return;
     }
+
+    // Remove portal from storage
+    this.storedPortals.splice(portalIndex, 1);
 
     // Complete the contract
     const payment = this.customerSystem.completeContract(customer.id);
     this.inventorySystem.addGold(payment);
     this.gameState.totalCustomersServed++;
     this.gameState.totalGoldEarned += payment;
-    this.gameState.totalPortalsCreated++;
 
     // Calculate portal effects from equipment attributes
-    const generatedEquipmentAttributes = this.portal.getGeneratedEquipmentAttributes();
+    const generatedEquipmentAttributes = portalData.generatedEquipmentAttributes || [];
     const portalEffects = calculatePortalEffects(generatedEquipmentAttributes);
 
     // Generate reward with attribute-based modifiers
@@ -289,11 +350,30 @@ export class Game {
       showToast(message, 'success');
     }
 
-    showToast(`Received ${payment} gold!`, 'success');
-
-    // Reset portal
-    this.portal.reset();
+    showToast(`Contract complete! Received ${payment} gold!`, 'success');
     this.updateUI();
+  }
+
+  // Legacy method - kept for backwards compatibility
+  public completeContractWithPortal(portalId: string): void {
+    const customer = this.customerSystem.getCurrentCustomer();
+    if (!customer) {
+      showToast('No customer waiting!', 'warning');
+      return;
+    }
+    this.fulfillCustomerWithPortal(customer.id, portalId);
+  }
+
+  // Legacy method - kept for backwards compatibility
+  public completeContract(): void {
+    if (this.storedPortals.length === 1) {
+      const customer = this.customerSystem.getCurrentCustomer();
+      if (customer) {
+        this.fulfillCustomerWithPortal(customer.id, this.storedPortals[0].id);
+      }
+      return;
+    }
+    showToast('Select a portal to fulfill a customer request!', 'warning');
   }
 
   public purchaseMana(goldAmount: number): void {
@@ -468,6 +548,21 @@ export class Game {
     this.updateUI();
   }
 
+  public removeElementFromPortal(element: ElementType, amount: number): void {
+    const portalData = this.portal.getData();
+    const currentAmount = portalData.elements[element] || 0;
+    
+    if (currentAmount < amount) {
+      showToast(`Not enough ${element} in portal!`, 'error');
+      return;
+    }
+
+    this.portal.removeElement(element, amount);
+    this.inventorySystem.addElement(element, amount);
+    showToast(`Removed ${amount} ${element} from portal`, 'success');
+    this.updateUI();
+  }
+
   public saveGame(): void {
     this.saveSystem.save();
     showToast('Game saved!', 'success');
@@ -481,6 +576,11 @@ export class Game {
     showToast('Game reset!', 'warning');
   }
 
+  // Public method for UI components to trigger a refresh
+  public refreshUI(): void {
+    this.updateUI();
+  }
+
   private updateUI(): void {
     this.uiManager.update({
       inventory: this.inventorySystem,
@@ -490,7 +590,65 @@ export class Game {
       upgrades: this.upgradeSystem,
       portal: this.portal,
       gameState: this.gameState,
+      storedPortals: this.storedPortals,
     });
+  }
+
+  // Stored Portal operations
+  public storeCurrentPortal(): void {
+    const portalData = this.portal.getData();
+    if (portalData.level <= 1 && portalData.manaInvested === 0 && Object.keys(portalData.elements).length === 0) {
+      showToast('Nothing to store - portal is empty!', 'warning');
+      return;
+    }
+    
+    this.storedPortals.push({ ...portalData });
+    this.portal.reset();
+    showToast('Portal stored for later use!', 'success');
+    this.updateUI();
+  }
+
+  public useStoredPortal(portalId: string): void {
+    const index = this.storedPortals.findIndex(p => p.id === portalId);
+    if (index === -1) {
+      showToast('Portal not found!', 'error');
+      return;
+    }
+
+    // Check if current portal has content
+    const currentData = this.portal.getData();
+    if (currentData.level > 1 || currentData.manaInvested > 0 || Object.keys(currentData.elements).length > 0) {
+      showToast('Store or complete current portal first!', 'warning');
+      return;
+    }
+
+    const storedPortal = this.storedPortals.splice(index, 1)[0];
+    this.portal.setData(storedPortal);
+    showToast('Portal loaded!', 'success');
+    this.updateUI();
+  }
+
+  public reclaimStoredPortal(portalId: string): void {
+    const index = this.storedPortals.findIndex(p => p.id === portalId);
+    if (index === -1) {
+      showToast('Portal not found!', 'error');
+      return;
+    }
+
+    const portal = this.storedPortals.splice(index, 1)[0];
+    // Refund 50% of mana invested
+    const manaRefund = Math.floor(portal.manaInvested * 0.5);
+    if (manaRefund > 0) {
+      this.inventorySystem.addMana(manaRefund);
+      showToast(`Reclaimed ${manaRefund} mana from portal!`, 'success');
+    } else {
+      showToast('Portal reclaimed!', 'success');
+    }
+    this.updateUI();
+  }
+
+  public getStoredPortals(): PortalType[] {
+    return [...this.storedPortals];
   }
 
   // Getters for UI

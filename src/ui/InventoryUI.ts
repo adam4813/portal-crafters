@@ -1,12 +1,12 @@
 import type { Game } from '../game/Game';
 import type { InventorySystem } from '../game/Inventory';
 import type { ElementSystem } from '../game/ElementSystem';
-import type { ElementType } from '../types';
 
 export class InventoryUI {
   private game: Game;
   private itemsContainer: HTMLElement | null;
   private elementsContainer: HTMLElement | null;
+  private selectedItem: { type: 'ingredient' | 'equipment'; id: string } | null = null;
 
   constructor(game: Game) {
     this.game = game;
@@ -23,13 +23,23 @@ export class InventoryUI {
     this.renderElements(inventory, elements);
   }
 
+  public getSelectedItem(): { type: 'ingredient' | 'equipment'; id: string } | null {
+    return this.selectedItem;
+  }
+
+  public clearSelection(): void {
+    this.selectedItem = null;
+    // Force re-render to update selection visual
+    this.renderItems(this.game.getInventory());
+  }
+
   private renderItems(inventory: InventorySystem): void {
     if (!this.itemsContainer) return;
 
     const ingredients = inventory.getIngredients();
     const equipment = inventory.getEquipment();
 
-    let html = '<div class="inventory-section"><h4>Ingredients</h4>';
+    let html = '<div class="inventory-section"><h4>Ingredients (click to select)</h4>';
 
     // Render ingredients
     const ownedIngredients = inventory.getOwnedIngredients();
@@ -38,17 +48,22 @@ export class InventoryUI {
     } else {
       for (const ingredient of ownedIngredients) {
         const count = ingredients[ingredient.id] || 0;
+        const elementInfo = ingredient.elementAffinity 
+          ? `+5 ${ingredient.elementAffinity}` 
+          : '';
+        const isSelected = this.selectedItem?.type === 'ingredient' && this.selectedItem?.id === ingredient.id;
         html += `
-          <div class="inventory-item" data-type="ingredient" data-id="${ingredient.id}" title="${ingredient.description}">
-            <span>${ingredient.icon}</span>
-            <span>${ingredient.name}</span>
+          <div class="inventory-item ${isSelected ? 'selected' : ''}" data-type="ingredient" data-id="${ingredient.id}" title="${ingredient.description}${elementInfo ? '\n' + elementInfo : ''}">
+            <span class="item-icon">${ingredient.icon}</span>
+            <span class="item-name">${ingredient.name}</span>
+            ${elementInfo ? `<span class="element-bonus">${elementInfo}</span>` : ''}
             <span class="count">x${count}</span>
           </div>
         `;
       }
     }
 
-    html += '</div><div class="inventory-section"><h4>Equipment</h4>';
+    html += '</div><div class="inventory-section"><h4>Equipment (click to select)</h4>';
 
     // Render equipment
     const ownedEquipment = inventory.getOwnedEquipment();
@@ -57,10 +72,11 @@ export class InventoryUI {
     } else {
       for (const equip of ownedEquipment) {
         const count = equipment[equip.id] || 0;
+        const isSelected = this.selectedItem?.type === 'equipment' && this.selectedItem?.id === equip.id;
         html += `
-          <div class="inventory-item" data-type="equipment" data-id="${equip.id}" title="${equip.description}">
-            <span>${equip.icon}</span>
-            <span>${equip.name}</span>
+          <div class="inventory-item ${isSelected ? 'selected' : ''}" data-type="equipment" data-id="${equip.id}" title="${equip.description}">
+            <span class="item-icon">${equip.icon}</span>
+            <span class="item-name">${equip.name}</span>
             <span class="count">x${count}</span>
           </div>
         `;
@@ -73,8 +89,9 @@ export class InventoryUI {
 
     // Add click handlers
     this.itemsContainer.querySelectorAll('.inventory-item').forEach((item) => {
-      item.addEventListener('click', () => {
-        const type = (item as HTMLElement).dataset.type;
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const type = (item as HTMLElement).dataset.type as 'ingredient' | 'equipment';
         const id = (item as HTMLElement).dataset.id;
         if (type && id) {
           this.handleItemClick(type, id);
@@ -83,21 +100,15 @@ export class InventoryUI {
     });
   }
 
-  private handleItemClick(type: string, id: string): void {
-    const crafting = this.game.getCrafting();
-    const slots = crafting.getSlots();
-
-    // Find first empty slot
-    for (let i = 0; i < slots.length; i++) {
-      if (!slots[i].ingredient && !slots[i].equipment) {
-        if (type === 'ingredient') {
-          this.game.addIngredientToSlot(i, id);
-        } else if (type === 'equipment') {
-          this.game.addEquipmentToSlot(i, id);
-        }
-        break;
-      }
+  private handleItemClick(type: 'ingredient' | 'equipment', id: string): void {
+    // Toggle selection
+    if (this.selectedItem?.type === type && this.selectedItem?.id === id) {
+      this.selectedItem = null;
+    } else {
+      this.selectedItem = { type, id };
     }
+    // Re-render to show selection
+    this.renderItems(this.game.getInventory());
   }
 
   private renderElements(inventory: InventorySystem, elementSystem: ElementSystem): void {
@@ -106,14 +117,17 @@ export class InventoryUI {
     const unlockedElements = elementSystem.getUnlockedElements();
     const elements = inventory.getElements();
 
-    let html = '<div class="element-display">';
+    let html = '<h4>Elements (click to add to portal)</h4><div class="element-display">';
 
     for (const element of unlockedElements) {
       const amount = elements[element] || 0;
       const info = elementSystem.getElementInfo(element);
       if (info) {
+        const canAdd = amount > 0;
         html += `
-          <div class="element-badge ${element}" title="Click to add to portal">
+          <div class="element-badge ${element} ${canAdd ? 'clickable' : 'empty'}" 
+               data-element="${element}" 
+               title="${canAdd ? `Click to add 1 ${element} to portal` : `No ${element} available`}">
             ${info.icon} ${amount}
           </div>
         `;
@@ -121,17 +135,17 @@ export class InventoryUI {
     }
 
     html += '</div>';
+    html += '<p class="element-help">Elements shape the portal\'s aspect/theme</p>';
 
     this.elementsContainer.innerHTML = html;
 
-    // Add click handlers for adding elements to portal
-    this.elementsContainer.querySelectorAll('.element-badge').forEach((badge) => {
-      badge.addEventListener('click', () => {
-        const elementClass = Array.from(badge.classList).find((c) => c !== 'element-badge') as
-          | ElementType
-          | undefined;
-        if (elementClass) {
-          this.game.addElementToPortal(elementClass, 1);
+    // Add click handlers for elements
+    this.elementsContainer.querySelectorAll('.element-badge.clickable').forEach((badge) => {
+      badge.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const element = (badge as HTMLElement).dataset.element;
+        if (element) {
+          this.game.addElementToPortal(element as any, 1);
         }
       });
     });

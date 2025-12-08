@@ -153,6 +153,7 @@ export function createInitialGameState(): GameState {
     upgrades: {},
     customerQueue: [],
     currentPortal: null,
+    storedPortals: [],
     totalPortalsCreated: 0,
     totalCustomersServed: 0,
     totalGoldEarned: 0,

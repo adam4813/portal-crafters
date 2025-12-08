@@ -76,6 +76,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  flex: 1;
 }
 
 .panel {
@@ -94,11 +95,18 @@ body {
   padding-bottom: 0.5rem;
 }
 
+.flex-container {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
 .game-canvas-container {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  max-width: 600px;
 }
 
 #portal-canvas {
@@ -114,6 +122,10 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 1rem;
+}
+
+#crafting-preview {
+  width: 200px;
 }
 
 .crafting-help {
@@ -218,46 +230,154 @@ body {
   margin-bottom: 0.5rem;
 }
 
-.customer-card.active {
-  border-left: 3px solid var(--accent-color);
+.customer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
 }
 
 .customer-name {
   font-weight: bold;
-  margin-bottom: 0.25rem;
+}
+
+.customer-timer {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.customer-timer.urgent {
+  color: var(--danger-color);
+  font-weight: bold;
 }
 
 .customer-requirements {
   font-size: 0.85rem;
   color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.customer-requirements .req-level {
+  background-color: var(--primary-color);
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  margin-right: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-primary);
+}
+
+.customer-requirements .req-elements {
+  font-size: 0.8rem;
 }
 
 .customer-reward {
   color: var(--warning-color);
   font-size: 0.9rem;
-  margin-top: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.customer-fulfill {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.customer-fulfill .no-portals,
+.customer-fulfill .no-match {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.customer-fulfill .no-match {
+  color: var(--danger-color);
+}
+
+.portal-select {
+  flex: 1;
+  min-width: 120px;
+  padding: 0.35rem;
+  background-color: var(--background-dark);
+  color: var(--text-primary);
+  border: 1px solid var(--secondary-color);
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.portal-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
 }
 
 /* Inventory Styles */
 .inventory-item {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.4rem;
   background-color: var(--background-light);
-  padding: 0.25rem 0.5rem;
+  padding: 0.4rem 0.6rem;
   border-radius: 4px;
-  margin: 0.25rem;
+  margin: 0.25rem 0;
   cursor: pointer;
   transition: all 0.2s ease;
+  border: 2px solid transparent;
 }
 
 .inventory-item:hover {
   background-color: var(--primary-color);
+  border-color: var(--accent-color);
+  transform: translateX(4px);
+}
+
+.inventory-item:active {
+  transform: translateX(2px);
+}
+
+.inventory-item.selected {
+  background-color: var(--accent-color);
+  border-color: var(--accent-color);
+  color: var(--background-dark);
+}
+
+.inventory-item.selected .count {
+  background-color: var(--background-medium);
+  color: var(--text-primary);
+}
+
+.inventory-item .item-icon {
+  font-size: 1.2rem;
+}
+
+.inventory-item .item-name {
+  flex: 1;
 }
 
 .inventory-item .count {
   font-size: 0.8rem;
   color: var(--text-secondary);
+  background-color: var(--background-dark);
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+}
+
+.inventory-section {
+  margin-bottom: 1rem;
+}
+
+.inventory-section h4 {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid var(--background-light);
+  padding-bottom: 0.25rem;
+}
+
+.element-help {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  margin-top: 0.5rem;
 }
 
 /* Element Display */
@@ -273,6 +393,21 @@ body {
   border-radius: 12px;
   font-size: 0.85rem;
   font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.element-badge.clickable {
+  cursor: pointer;
+}
+
+.element-badge.clickable:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 8px currentColor;
+}
+
+.element-badge.empty {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .element-badge.fire {
@@ -755,4 +890,301 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--secondary-color);
+}
+
+/* Portal Summary Styles */
+.portal-summary {
+  background-color: var(--background-medium);
+  border: 2px solid var(--primary-color);
+}
+
+.portal-summary h3 {
+  color: var(--primary-color);
+}
+
+.portal-level,
+.portal-mana {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem;
+  background-color: var(--background-light);
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+}
+
+.portal-level .label,
+.portal-mana .label {
+  color: var(--text-secondary);
+}
+
+.portal-level .value,
+.portal-mana .value {
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+.portal-elements-section {
+  margin-top: 0.5rem;
+}
+
+.portal-elements-section .label {
+  display: block;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.portal-elements-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.portal-element {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  background-color: var(--background-light);
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.portal-element .element-name {
+  text-transform: capitalize;
+  color: var(--text-secondary);
+}
+
+.portal-element .element-amount {
+  font-weight: bold;
+}
+
+.portal-element.fire { border-left: 3px solid var(--fire-color); }
+.portal-element.water { border-left: 3px solid var(--water-color); }
+.portal-element.earth { border-left: 3px solid var(--earth-color); }
+.portal-element.air { border-left: 3px solid var(--air-color); }
+.portal-element.lightning { border-left: 3px solid var(--lightning-color); }
+
+.portal-element.removable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.portal-element.removable:hover {
+  background-color: var(--danger-color-light);
+  border-left-color: var(--danger-color);
+}
+
+.portal-element .remove-icon {
+  display: none;
+  color: var(--danger-color);
+  font-weight: bold;
+  margin-left: 0.25rem;
+}
+
+.portal-element.removable:hover .remove-icon {
+  display: inline;
+}
+
+.store-portal-btn {
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.pending {
+  color: var(--success-color);
+  font-weight: bold;
+}
+
+.craft-hint {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--accent-color);
+  font-style: italic;
+  text-align: center;
+}
+
+/* Stored Portals Styles */
+.stored-portal {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  background-color: var(--background-light);
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+  border-left: 3px solid var(--primary-color);
+}
+
+.portal-info {
+  flex: 1;
+}
+
+.portal-level-badge {
+  display: inline-block;
+  background-color: var(--primary-color);
+  color: var(--text-primary);
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  margin-right: 0.5rem;
+}
+
+.portal-elements-preview {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.portal-actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.btn-danger-small {
+  background-color: transparent;
+  border: 1px solid var(--danger-color);
+  color: var(--danger-color);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.btn-danger-small:hover {
+  background-color: var(--danger-color);
+  color: var(--text-primary);
+}
+
+.btn-primary-small {
+  background-color: var(--primary-color);
+  color: var(--text-primary);
+  border: none;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.2s ease;
+}
+
+.btn-primary-small:hover {
+  background-color: #805ad5;
+}
+
+/* Portal meets/doesn't meet requirements */
+.stored-portal.meets-requirements {
+  border-left-color: var(--success-color);
+  background-color: rgba(72, 187, 120, 0.1);
+}
+
+.stored-portal.does-not-meet {
+  opacity: 0.7;
+}
+
+/* Element bonus on inventory items */
+.inventory-item .element-bonus {
+  font-size: 0.7rem;
+  color: var(--success-color);
+  background-color: rgba(72, 187, 120, 0.2);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+}
+
+/* Crafting Preview Styles */
+.portal-preview {
+  background-color: var(--background-light);
+  border-radius: 6px;
+  padding: 0.75rem;
+  margin-top: 0.5rem;
+  border: 1px solid var(--primary-color);
+}
+
+.preview-header {
+  color: var(--primary-color);
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  border-bottom: 1px solid var(--background-medium);
+  padding-bottom: 0.25rem;
+}
+
+.preview-section {
+  margin-bottom: 0.5rem;
+}
+
+.preview-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.preview-label strong {
+  color: var(--accent-color);
+}
+
+.preview-aspects {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.aspect-element {
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  text-transform: capitalize;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.aspect-element:hover {
+  opacity: 0.8;
+}
+
+.aspect-element .remove-x {
+  font-size: 0.9rem;
+  opacity: 0.6;
+}
+
+.aspect-element:hover .remove-x {
+  opacity: 1;
+  color: var(--danger-color);
+}
+
+.aspect-element.fire { background-color: rgba(245, 101, 101, 0.4); }
+.aspect-element.water { background-color: rgba(66, 153, 225, 0.4); }
+.aspect-element.earth { background-color: rgba(104, 211, 145, 0.4); }
+.aspect-element.air { background-color: rgba(226, 232, 240, 0.4); }
+.aspect-element.lightning { background-color: rgba(250, 240, 137, 0.4); }
+
+.preview-contents {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.content-item {
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  background-color: var(--background-medium);
+}
+
+.preview-aspects .none,
+.preview-contents .none {
+  color: var(--text-secondary);
+  font-style: italic;
+  font-size: 0.8rem;
+}
+
+.preview-empty {
+  color: var(--text-secondary);
+  font-style: italic;
+  text-align: center;
+  padding: 0.5rem;
+  font-size: 0.85rem;
 }

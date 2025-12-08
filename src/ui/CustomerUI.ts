@@ -1,41 +1,70 @@
 import type { Game } from '../game/Game';
 import type { CustomerSystem } from '../game/Customer';
-import type { Portal } from '../game/Portal';
+import type { Portal as PortalType, Customer } from '../types';
 import { formatTime } from '../utils/helpers';
 
 export class CustomerUI {
   private game: Game;
   private queueContainer: HTMLElement | null;
-  private contractContainer: HTMLElement | null;
+  private timerInterval: number | null = null;
 
   constructor(game: Game) {
     this.game = game;
     this.queueContainer = document.getElementById('customer-queue');
-    this.contractContainer = document.getElementById('current-contract');
   }
 
   public initialize(): void {
-    // Add complete contract button
-    if (this.contractContainer) {
-      const completeBtn = document.createElement('button');
-      completeBtn.id = 'complete-contract-btn';
-      completeBtn.className = 'btn-primary';
-      completeBtn.textContent = 'Complete Contract';
-      completeBtn.style.marginTop = '1rem';
-      completeBtn.style.display = 'none';
-      completeBtn.addEventListener('click', () => {
-        this.game.completeContract();
-      });
-      this.contractContainer.appendChild(completeBtn);
+    // Start timer interval for updating countdowns (every second)
+    this.timerInterval = window.setInterval(() => {
+      this.updateTimers();
+    }, 1000);
+  }
+
+  public dispose(): void {
+    if (this.timerInterval !== null) {
+      clearInterval(this.timerInterval);
+      this.timerInterval = null;
     }
   }
 
-  public update(customers: CustomerSystem, portal: Portal): void {
-    this.renderQueue(customers);
-    this.renderCurrentContract(customers, portal);
+  private updateTimers(): void {
+    if (!this.queueContainer) return;
+
+    const now = Date.now();
+    const timerElements = this.queueContainer.querySelectorAll('.customer-timer');
+    let hasExpired = false;
+    
+    timerElements.forEach((timerEl) => {
+      const card = timerEl.closest('.customer-card') as HTMLElement;
+      if (!card) return;
+      
+      const arrivedAt = parseInt(card.dataset.arrivedAt || '0', 10);
+      const patience = parseInt(card.dataset.patience || '0', 10);
+      
+      if (arrivedAt && patience) {
+        const waitTime = Math.floor((now - arrivedAt) / 1000);
+        const timeRemaining = Math.max(0, patience - waitTime);
+        
+        timerEl.textContent = `⏱️ ${formatTime(timeRemaining)}`;
+        timerEl.classList.toggle('urgent', timeRemaining < 30);
+        
+        if (timeRemaining === 0) {
+          hasExpired = true;
+        }
+      }
+    });
+
+    // If any customer expired, trigger a full UI refresh
+    if (hasExpired) {
+      this.game.refreshUI();
+    }
   }
 
-  private renderQueue(customers: CustomerSystem): void {
+  public update(customers: CustomerSystem, storedPortals: PortalType[]): void {
+    this.renderQueue(customers, storedPortals);
+  }
+
+  private renderQueue(customers: CustomerSystem, storedPortals: PortalType[]): void {
     if (!this.queueContainer) return;
 
     const queue = customers.getQueue();
@@ -48,99 +77,134 @@ export class CustomerUI {
     let html = '';
     const now = Date.now();
 
-    for (let i = 0; i < queue.length; i++) {
-      const customer = queue[i];
+    for (const customer of queue) {
       const waitTime = Math.floor((now - customer.arrivedAt) / 1000);
       const timeRemaining = Math.max(0, customer.patience - waitTime);
-      const isActive = i === 0;
+
+      // Find which portals can fulfill this customer
+      const matchingPortals = storedPortals.filter(portal => 
+        this.portalMeetsRequirements(portal, customer)
+      );
+
+      // Build requirements display
+      const reqElements = customer.requirements.requiredElements?.map(el => {
+        const needed = customer.requirements.minElementAmount || 1;
+        return `${el} ≥${needed}`;
+      }).join(', ') || 'None';
 
       html += `
-        <div class="customer-card ${isActive ? 'active' : ''}">
-          <div class="customer-name">${customer.icon} ${customer.name}</div>
+        <div class="customer-card" data-customer-id="${customer.id}" data-arrived-at="${customer.arrivedAt}" data-patience="${customer.patience}">
+          <div class="customer-header">
+            <div class="customer-name">${customer.icon} ${customer.name}</div>
+            <div class="customer-timer ${timeRemaining < 30 ? 'urgent' : ''}">⏱️ ${formatTime(timeRemaining)}</div>
+          </div>
           <div class="customer-requirements">
-            Level ${customer.requirements.minLevel}+
-            ${customer.requirements.requiredElements?.map((e) => `• ${e}`).join(' ') || ''}
+            <span class="req-level">Lv ${customer.requirements.minLevel}+</span>
+            <span class="req-elements">${reqElements}</span>
           </div>
           <div class="customer-reward">💰 ${customer.payment} gold</div>
-          <div class="customer-timer">⏱️ ${formatTime(timeRemaining)}</div>
+          <div class="customer-fulfill">
+            ${this.renderPortalSelector(customer, matchingPortals, storedPortals)}
+          </div>
         </div>
       `;
     }
 
     this.queueContainer.innerHTML = html;
+
+    // Add event listeners for fulfill buttons
+    this.queueContainer.querySelectorAll('.btn-fulfill-contract').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const button = e.target as HTMLButtonElement;
+        const customerId = button.dataset.customerId;
+        const portalId = button.dataset.portalId;
+        if (customerId && portalId) {
+          this.game.fulfillCustomerWithPortal(customerId, portalId);
+        }
+      });
+    });
+
+    // Add event listeners for portal selectors
+    this.queueContainer.querySelectorAll('.portal-select').forEach(select => {
+      select.addEventListener('change', (e) => {
+        const selectEl = e.target as HTMLSelectElement;
+        const customerId = selectEl.dataset.customerId;
+        const fulfillBtn = this.queueContainer?.querySelector(
+          `.btn-fulfill-contract[data-customer-id="${customerId}"]`
+        ) as HTMLButtonElement;
+        
+        if (fulfillBtn) {
+          fulfillBtn.dataset.portalId = selectEl.value;
+          fulfillBtn.disabled = !selectEl.value;
+        }
+      });
+    });
   }
 
-  private renderCurrentContract(customers: CustomerSystem, portal: Portal): void {
-    if (!this.contractContainer) return;
-
-    const customer = customers.getCurrentCustomer();
-    const completeBtn = document.getElementById('complete-contract-btn');
-
-    if (!customer) {
-      const existingContent = this.contractContainer.querySelector('.contract-content');
-      if (existingContent) {
-        existingContent.remove();
-      }
-      if (completeBtn) {
-        completeBtn.style.display = 'none';
-      }
-      return;
+  private renderPortalSelector(customer: Customer, matchingPortals: PortalType[], allPortals: PortalType[]): string {
+    if (allPortals.length === 0) {
+      return '<span class="no-portals">No portals crafted</span>';
     }
 
-    const portalData = portal.getData();
-    const meetsLevel = portalData.level >= customer.requirements.minLevel;
+    if (matchingPortals.length === 0) {
+      return '<span class="no-match">No matching portals</span>';
+    }
 
-    let meetsElements = true;
+    if (matchingPortals.length === 1) {
+      // Single matching portal - show direct fulfill button
+      const portal = matchingPortals[0];
+      const elementsStr = Object.entries(portal.elements)
+        .filter(([, amt]) => amt && amt > 0)
+        .map(([el, amt]) => `${el}:${amt}`)
+        .join(' ');
+      
+      return `
+        <button class="btn-fulfill-contract btn-primary-small" 
+                data-customer-id="${customer.id}" 
+                data-portal-id="${portal.id}">
+          Fulfill (Lv${portal.level} ${elementsStr})
+        </button>
+      `;
+    }
+
+    // Multiple matching portals - show dropdown
+    let options = '<option value="">Select portal...</option>';
+    for (const portal of matchingPortals) {
+      const elementsStr = Object.entries(portal.elements)
+        .filter(([, amt]) => amt && amt > 0)
+        .map(([el, amt]) => `${el}:${amt}`)
+        .join(' ');
+      options += `<option value="${portal.id}">Lv${portal.level} - ${elementsStr || 'No elements'}</option>`;
+    }
+
+    return `
+      <select class="portal-select" data-customer-id="${customer.id}">
+        ${options}
+      </select>
+      <button class="btn-fulfill-contract btn-primary-small" 
+              data-customer-id="${customer.id}" 
+              data-portal-id=""
+              disabled>
+        Fulfill
+      </button>
+    `;
+  }
+
+  private portalMeetsRequirements(portal: PortalType, customer: Customer): boolean {
+    if (portal.level < customer.requirements.minLevel) {
+      return false;
+    }
+
     if (customer.requirements.requiredElements) {
       for (const element of customer.requirements.requiredElements) {
-        const amount = portalData.elements[element] || 0;
+        const amount = portal.elements[element] || 0;
         if (amount < (customer.requirements.minElementAmount || 1)) {
-          meetsElements = false;
-          break;
+          return false;
         }
       }
     }
 
-    const canComplete = meetsLevel && meetsElements;
-
-    // Find or create contract content div
-    let contentDiv = this.contractContainer.querySelector('.contract-content') as HTMLElement;
-    if (!contentDiv) {
-      contentDiv = document.createElement('div');
-      contentDiv.className = 'contract-content';
-      this.contractContainer.insertBefore(contentDiv, completeBtn);
-    }
-
-    contentDiv.innerHTML = `
-      <h4>Current Contract</h4>
-      <div class="contract-details">
-        <p><strong>${customer.name}</strong></p>
-        <p>Requirements:</p>
-        <ul>
-          <li class="${meetsLevel ? 'met' : 'unmet'}">
-            ${meetsLevel ? '✓' : '✗'} Level ${customer.requirements.minLevel}+
-            (Current: ${portalData.level})
-          </li>
-          ${
-            customer.requirements.requiredElements
-              ?.map((el) => {
-                const amount = portalData.elements[el] || 0;
-                const needed = customer.requirements.minElementAmount || 1;
-                const met = amount >= needed;
-                return `<li class="${met ? 'met' : 'unmet'}">
-                  ${met ? '✓' : '✗'} ${el}: ${amount}/${needed}
-                </li>`;
-              })
-              .join('') || ''
-          }
-        </ul>
-        <p class="contract-reward">Reward: 💰 ${customer.payment} gold</p>
-      </div>
-    `;
-
-    if (completeBtn) {
-      completeBtn.style.display = 'block';
-      (completeBtn as HTMLButtonElement).disabled = !canComplete;
-    }
+    return true;
   }
 }

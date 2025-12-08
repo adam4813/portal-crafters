@@ -19,9 +19,8 @@
       <main class="game-main">
         <aside class="sidebar left-sidebar">
           <section id="customer-panel" class="panel">
-            <h2>Customers</h2>
+            <h2>Customer Requests</h2>
             <div id="customer-queue"></div>
-            <div id="current-contract" class="contract-display"></div>
           </section>
           
           <section id="inventory-panel" class="panel">
@@ -29,14 +28,25 @@
             <div id="inventory-items"></div>
             <div id="inventory-elements"></div>
           </section>
+          
+          <section id="portal-inventory-panel" class="panel">
+            <h2>Crafted Portals</h2>
+            <div id="portal-inventory"></div>
+          </section>
         </aside>
         
         <section class="game-canvas-container">
           <div id="portal-canvas"></div>
           <div id="crafting-panel" class="panel">
-            <h3>Crafting</h3>
-            <p class="crafting-help">Click ingredients in inventory to add • Click filled slots to remove</p>
-            <div id="ingredient-slots"></div>
+            <h3>Portal Crafting</h3>
+            <div class="flex-container">
+              <div id="crafting-preview"></div>
+              <div>
+                <p class="crafting-help">Click ingredients in inventory to add <br/> Click filled slots to remove</p>
+                <br/>
+                <div id="ingredient-slots"></div>
+              </div>
+            </div>
             <button id="craft-button" class="btn-primary">Craft Portal</button>
           </div>
         </section>

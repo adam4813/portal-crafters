@@ -2,7 +2,7 @@ import type { GameState } from '../types';
 import { createInitialGameState } from '../utils/helpers';
 
 const SAVE_KEY = 'portal-crafters-save';
-const AUTO_SAVE_INTERVAL = 30000; // 30 seconds
+const AUTO_SAVE_INTERVAL = 5000; // 5 seconds
 
 export class SaveSystem {
   private autoSaveInterval: ReturnType<typeof setInterval> | null = null;

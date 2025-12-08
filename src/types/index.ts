@@ -179,6 +179,7 @@ export interface GameState {
   upgrades: Record<string, number>;
   customerQueue: Customer[];
   currentPortal: Portal | null;
+  storedPortals: Portal[];
   totalPortalsCreated: number;
   totalCustomersServed: number;
   totalGoldEarned: number;

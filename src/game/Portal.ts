@@ -146,6 +146,21 @@ export class Portal {
     this.updateVisualization();
   }
 
+  public removeElement(element: ElementType, amount: number): void {
+    const current = this.portalData.elements[element] || 0;
+    const newAmount = Math.max(0, current - amount);
+    if (newAmount === 0) {
+      delete this.portalData.elements[element];
+    } else {
+      this.portalData.elements[element] = newAmount;
+    }
+    this.portalData.level = calculatePortalLevel(
+      this.portalData.manaInvested,
+      this.portalData.elements
+    );
+    this.updateVisualization();
+  }
+
   public addIngredient(ingredientId: string): void {
     this.portalData.ingredients.push(ingredientId);
     this.updateVisualization();
