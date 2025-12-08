@@ -2,7 +2,7 @@ import type { Game } from '../game/Game';
 import type { CustomerSystem } from '../game/Customer';
 import type { ProgressionSystem } from '../game/ProgressionSystem';
 import type { ElementSystem } from '../game/ElementSystem';
-import type { Portal as PortalType, Customer } from '../types';
+import type { Portal as PortalType, Customer, ContractModifier, Reward } from '../types';
 import { formatTime } from '../utils/helpers';
 
 export class CustomerUI {
@@ -387,7 +387,7 @@ export class CustomerUI {
     return true;
   }
 
-  private formatModifiers(modifiers: import('../types').ContractModifier[]): string {
+  private formatModifiers(modifiers: ContractModifier[]): string {
     if (!modifiers || modifiers.length === 0) return '';
 
     const modifierLabels: Record<string, string> = {
@@ -398,7 +398,7 @@ export class CustomerUI {
       experimental: '🧪 Experimental',
     };
 
-    const badges = modifiers.map((mod) => modifierLabels[mod] || mod).join(' ');
+    const badges = modifiers.map((mod) => `<span>${modifierLabels[mod] || mod}</span>`).join('');
     return `<div class="customer-modifiers">${badges}</div>`;
   }
 
@@ -418,7 +418,7 @@ export class CustomerUI {
     return parts.join(' ');
   }
 
-  private formatSpecialReward(reward: import('../types').Reward): string {
+  private formatSpecialReward(reward: Reward): string {
     switch (reward.type) {
       case 'gold':
         return `+${reward.amount} gold`;

@@ -4,6 +4,7 @@ import type {
   ContractRequirements,
   ElementType,
   EquipmentSlot,
+  ContractModifier,
 } from '../types';
 import {
   CUSTOMER_TEMPLATES,
@@ -143,7 +144,7 @@ export class CustomerSystem {
    */
   private applyModifierEffects(
     requirements: ContractRequirements,
-    modifiers: import('../types').ContractModifier[],
+    modifiers: ContractModifier[],
     template: CustomerTemplate
   ): void {
     for (const modifier of modifiers) {

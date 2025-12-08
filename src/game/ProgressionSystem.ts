@@ -14,7 +14,8 @@ const PROGRESSION_TIERS: ProgressionTier[] = [
     },
     miniBossContract: {
       name: 'The First Trial',
-      description: 'Create a balanced portal using both Fire and Water elements to prove your basic crafting skills.',
+      description:
+        'Create a balanced portal using both Fire and Water elements to prove your basic crafting skills.',
       minLevel: 3,
       requiredElements: ['fire', 'water'],
       minElementAmount: 5,
@@ -31,7 +32,8 @@ const PROGRESSION_TIERS: ProgressionTier[] = [
     },
     miniBossContract: {
       name: 'Elemental Harmony',
-      description: 'Craft a portal infused with the essence of earth and sky. Combine Earth and Air elements to create a stable dimensional gateway.',
+      description:
+        'Craft a portal infused with the essence of earth and sky. Combine Earth and Air elements to create a stable dimensional gateway.',
       minLevel: 5,
       requiredElements: ['earth', 'air'],
       minElementAmount: 8,
@@ -49,7 +51,8 @@ const PROGRESSION_TIERS: ProgressionTier[] = [
     },
     miniBossContract: {
       name: 'The Frozen Storm',
-      description: 'Channel the raw power of nature. Create a portal combining Ice, Lightning, and Nature elements to withstand extreme conditions.',
+      description:
+        'Channel the raw power of nature. Create a portal combining Ice, Lightning, and Nature elements to withstand extreme conditions.',
       minLevel: 8,
       requiredElements: ['ice', 'lightning', 'nature'],
       minElementAmount: 10,
@@ -67,7 +70,8 @@ const PROGRESSION_TIERS: ProgressionTier[] = [
     },
     miniBossContract: {
       name: 'Balance of Extremes',
-      description: 'Master the duality of existence. Forge a portal using Shadow and Light elements in perfect equilibrium, stabilized by Void energy.',
+      description:
+        'Master the duality of existence. Forge a portal using Shadow and Light elements in perfect equilibrium, stabilized by Void energy.',
       minLevel: 12,
       requiredElements: ['shadow', 'light', 'void'],
       minElementAmount: 15,
@@ -85,7 +89,8 @@ const PROGRESSION_TIERS: ProgressionTier[] = [
     },
     miniBossContract: {
       name: 'The Eternal Gateway',
-      description: 'Transcend mortal limitations. Create the ultimate portal infused with Time, Chaos, Life, and Death - the four pillars of cosmic reality.',
+      description:
+        'Transcend mortal limitations. Create the ultimate portal infused with Time, Chaos, Life, and Death - the four pillars of cosmic reality.',
       minLevel: 15,
       requiredElements: ['time', 'chaos', 'life', 'death'],
       minElementAmount: 20,

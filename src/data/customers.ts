@@ -1,4 +1,11 @@
-import type { CustomerTemplate, ElementType, ElementTier } from '../types';
+import type {
+  CustomerTemplate,
+  ElementType,
+  ElementTier,
+  ContractModifier,
+  Reward,
+  RewardTier,
+} from '../types';
 import { getElementTier, calculateContractDifficultyFromElements } from './elements';
 
 export const CUSTOMER_TEMPLATES: CustomerTemplate[] = [
@@ -342,8 +349,8 @@ export function selectElementRequirementsByTier(
 export function generateContractModifiers(
   template: CustomerTemplate,
   difficulty: number
-): import('../types').ContractModifier[] {
-  const modifiers: import('../types').ContractModifier[] = [];
+): ContractModifier[] {
+  const modifiers: ContractModifier[] = [];
 
   if (!template.modifierChances) {
     return modifiers;
@@ -377,7 +384,7 @@ export function generateContractModifiers(
 export function generateSpecialReward(
   template: CustomerTemplate,
   difficulty: number
-): import('../types').Reward | undefined {
+): Reward | undefined {
   if (!template.specialRewardChance) {
     return undefined;
   }
@@ -392,11 +399,23 @@ export function generateSpecialReward(
 
   if (roll < 0.4) {
     // Ingredient reward (40% chance)
-    // TODO: Import ingredients once available
+    // Select ingredient based on tier
+    const ingredientsByTier: Record<number, string[]> = {
+      1: ['fire_crystal', 'water_essence'],
+      2: ['earth_shard', 'wind_wisp', 'iron_ore'],
+      3: ['lightning_spark', 'copper_wire', 'glass_lens', 'enchanted_ink'],
+      4: ['moon_dust', 'ancient_rune', 'phoenix_feather'],
+      5: ['dragon_scale', 'mana_crystal', 'philosophers_stone'],
+    };
+
+    const availableIngredients = ingredientsByTier[tier] || ingredientsByTier[1];
+    const selectedIngredient =
+      availableIngredients[Math.floor(Math.random() * availableIngredients.length)];
+
     return {
       type: 'ingredient',
       amount: Math.floor(1 + difficulty * 0.5),
-      itemId: 'fire_crystal', // Placeholder - should select based on tier
+      itemId: selectedIngredient,
     };
   } else if (roll < 0.7) {
     // Generated equipment reward (30% chance)
@@ -424,8 +443,8 @@ export function generateSpecialReward(
  */
 export function determineRewardTier(
   template: CustomerTemplate,
-  modifiers: import('../types').ContractModifier[]
-): import('../types').RewardTier {
+  modifiers: ContractModifier[]
+): RewardTier {
   const tier = template.tier || 1;
   const hasSpecialReward = template.specialRewardChance && template.specialRewardChance > 0;
   const modifierCount = modifiers.length;
