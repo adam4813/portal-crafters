@@ -28,14 +28,14 @@ body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background-color: var(--background-dark);
   color: var(--text-primary);
-  height: 100vh;
+  height: 100dvh;
   overflow: hidden;
 }
 
 #app {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100%;
   overflow: hidden;
 }
 
@@ -1132,6 +1132,30 @@ body {
 
 .research-node.unlocked {
   border-left: 3px solid var(--success-color);
+}
+
+.research-node.tier-locked-node {
+  opacity: 0.6;
+  background-color: var(--background-dark);
+}
+
+.tier-locked {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  background-color: var(--background-medium);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.tier-locked .lock-icon {
+  font-size: 1rem;
+}
+
+.tier-locked .tier-requirement {
+  font-weight: 500;
 }
 
 /* Recipe Book Styles */

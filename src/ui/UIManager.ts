@@ -20,6 +20,8 @@ import { getIngredientById } from '../data/ingredients';
 import { extractTagsFromGeneratedEquipment } from '../data/portalTypes';
 import { getEquipmentById } from '../data/equipment';
 import type { PortalTypeDefinition } from '../data/portalTypes';
+import { getElementDefinition, getTierDisplayName } from '../data/elements';
+import type { ElementTier } from '../types';
 
 export interface UIUpdateData {
   inventory: InventorySystem;
@@ -37,7 +39,6 @@ export interface UIUpdateData {
 type ModalType =
   | 'shop'
   | 'upgrades'
-  | 'research'
   | 'mana-purchase'
   | 'recipes'
   | 'guide'
@@ -70,6 +71,7 @@ export class UIManager {
   private currentModal: ModalType = null;
   private currentGuideSection: string = 'getting-started';
   private currentShopTab: 'items' | 'equipment' = 'items';
+  private currentUpgradesTab: 'upgrades' | 'elements' = 'upgrades';
 
   // Last update data for modal re-renders
   private lastUpdateData: UIUpdateData | null = null;
@@ -148,9 +150,6 @@ export class UIManager {
       .getElementById('upgrades-btn')
       ?.addEventListener('click', () => this.openModal('upgrades'));
     document
-      .getElementById('research-btn')
-      ?.addEventListener('click', () => this.openModal('research'));
-    document
       .getElementById('recipes-btn')
       ?.addEventListener('click', () => this.openModal('recipes'));
     document
@@ -201,7 +200,6 @@ export class UIManager {
       expeditions: '🗺️ Expeditions',
       shop: '🛒 Shop',
       upgrades: '⬆️ Upgrades',
-      research: '🔬 Research',
       'mana-purchase': '✨ Purchase Mana',
       recipes: '📖 Recipe Book',
       inventory: '🎒 Inventory',
@@ -256,9 +254,6 @@ export class UIManager {
         break;
       case 'upgrades':
         this.renderUpgradesModal();
-        break;
-      case 'research':
-        this.renderResearchModal();
         break;
       case 'mana-purchase':
         this.renderManaPurchaseModal();
@@ -504,48 +499,126 @@ export class UIManager {
   private renderUpgradesModal(): void {
     if (!this.modalContent || !this.lastUpdateData) return;
 
-    const { inventory, upgrades } = this.lastUpdateData;
-    const allUpgrades = upgrades.getAllUpgrades();
+    const { inventory, upgrades, elements } = this.lastUpdateData;
     const gold = inventory.getGold();
 
-    let html = '';
+    // Build tabs
+    let html = `
+      <div class="shop-tabs">
+        <button class="shop-tab ${this.currentUpgradesTab === 'upgrades' ? 'active' : ''}" data-tab="upgrades">⬆️ Upgrades</button>
+        <button class="shop-tab ${this.currentUpgradesTab === 'elements' ? 'active' : ''}" data-tab="elements">✨ Elements</button>
+      </div>
+      <div class="shop-tab-content">
+    `;
 
-    for (const upgrade of allUpgrades) {
-      const cost = upgrades.getUpgradeCost(upgrade.id);
-      const canAfford = gold >= cost;
-      const isMaxed = upgrade.currentLevel >= upgrade.maxLevel;
+    if (this.currentUpgradesTab === 'upgrades') {
+      const allUpgrades = upgrades.getAllUpgrades();
 
-      let effectInfo = '';
-      if (upgrade.type === 'manaConversion' && upgrade.currentLevel > 0) {
-        const effectValue = upgrades.getEffect(upgrade.id);
-        const percentage = Math.round(effectValue * 100);
-        effectInfo = `<div class="upgrade-effect">+${percentage}% efficiency</div>`;
-      }
+      for (const upgrade of allUpgrades) {
+        const cost = upgrades.getUpgradeCost(upgrade.id);
+        const canAfford = gold >= cost;
+        const isMaxed = upgrade.currentLevel >= upgrade.maxLevel;
 
-      html += `
-        <div class="shop-item ${isMaxed ? 'maxed' : ''}">
-          <div class="shop-item-info">
-            <div class="shop-item-name">${upgrade.name}</div>
-            <div class="shop-item-description">${upgrade.description}</div>
-            ${effectInfo}
-            <div class="shop-item-level">
-              Level: ${upgrade.currentLevel}/${upgrade.maxLevel}
+        let effectInfo = '';
+        if (upgrade.type === 'manaConversion' && upgrade.currentLevel > 0) {
+          const effectValue = upgrades.getEffect(upgrade.id);
+          const percentage = Math.round(effectValue * 100);
+          effectInfo = `<div class="upgrade-effect">+${percentage}% efficiency</div>`;
+        }
+
+        html += `
+          <div class="shop-item ${isMaxed ? 'maxed' : ''}">
+            <div class="shop-item-info">
+              <div class="shop-item-name">${upgrade.name}</div>
+              <div class="shop-item-description">${upgrade.description}</div>
+              ${effectInfo}
+              <div class="shop-item-level">
+                Level: ${upgrade.currentLevel}/${upgrade.maxLevel}
+              </div>
             </div>
+            <button 
+              class="btn-secondary buy-upgrade-btn" 
+              data-id="${upgrade.id}"
+              ${!canAfford || isMaxed ? 'disabled' : ''}
+            >
+              ${isMaxed ? 'MAX' : `${formatNumber(cost)} 💰`}
+            </button>
           </div>
-          <button 
-            class="btn-secondary buy-upgrade-btn" 
-            data-id="${upgrade.id}"
-            ${!canAfford || isMaxed ? 'disabled' : ''}
-          >
-            ${isMaxed ? 'MAX' : `${formatNumber(cost)} 💰`}
-          </button>
-        </div>
-      `;
+        `;
+      }
+    } else if (this.currentUpgradesTab === 'elements') {
+      const allNodes = elements.getAllResearchNodes();
+      const { progression } = this.lastUpdateData;
+      const currentProgressionTier = progression.getState().currentTier;
+
+      // Map element tiers to required progression tiers
+      const tierRequirements: Record<ElementTier, number> = {
+        common: 1,
+        standard: 1,
+        rare: 2,
+        exotic: 3,
+        legendary: 4,
+      };
+
+      for (const node of allNodes) {
+        const info = elements.getElementInfo(node.element);
+        if (!info) continue;
+
+        const elementDef = getElementDefinition(node.element);
+        const elementTier = elementDef?.tier || 'common';
+        const requiredProgressionTier = tierRequirements[elementTier];
+        const isTierLocked = currentProgressionTier < requiredProgressionTier;
+
+        const canResearch = elements.canResearch(node.element);
+        const canAfford = gold >= node.cost;
+
+        let actionContent = '';
+        if (node.unlocked) {
+          actionContent = '';
+        } else if (isTierLocked) {
+          actionContent = `
+            <div class="tier-locked" title="Reach ${getTierDisplayName(elementTier)} tier to unlock">
+              <span class="lock-icon">🔒</span>
+              <span class="tier-requirement">Tier ${requiredProgressionTier}</span>
+            </div>
+          `;
+        } else {
+          actionContent = `
+            <button 
+              class="btn-secondary research-btn" 
+              data-element="${node.element}"
+              ${!canResearch || !canAfford ? 'disabled' : ''}
+            >
+              ${formatNumber(node.cost)} 💰
+            </button>
+          `;
+        }
+
+        html += `
+          <div class="research-node ${node.unlocked ? 'unlocked' : 'locked'} ${isTierLocked ? 'tier-locked-node' : ''}">
+            <div class="research-info">
+              <span class="element-icon">${info.icon}</span>
+              <span class="element-name">${info.name}</span>
+              ${node.unlocked ? '<span class="unlocked-badge">✓</span>' : ''}
+            </div>
+            ${actionContent}
+          </div>
+        `;
+      }
     }
 
+    html += '</div>';
     this.modalContent.innerHTML = html;
 
-    // Add click handlers
+    // Add click handlers for tabs
+    this.modalContent.querySelectorAll('.shop-tab').forEach((tab) => {
+      tab.addEventListener('click', () => {
+        this.currentUpgradesTab = (tab as HTMLElement).dataset.tab as 'upgrades' | 'elements';
+        this.renderUpgradesModal();
+      });
+    });
+
+    // Add click handlers for upgrades
     this.modalContent.querySelectorAll('.buy-upgrade-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
         const id = (btn as HTMLElement).dataset.id;
@@ -555,57 +628,14 @@ export class UIManager {
         }
       });
     });
-  }
 
-  private renderResearchModal(): void {
-    if (!this.modalContent || !this.lastUpdateData) return;
-
-    const { elements, inventory } = this.lastUpdateData;
-    const allNodes = elements.getAllResearchNodes();
-    const gold = inventory.getGold();
-
-    let html = '';
-
-    for (const node of allNodes) {
-      const info = elements.getElementInfo(node.element);
-      if (!info) continue;
-
-      const canResearch = elements.canResearch(node.element);
-      const canAfford = gold >= node.cost;
-
-      html += `
-        <div class="research-node ${node.unlocked ? 'unlocked' : 'locked'}">
-          <div class="research-info">
-            <span class="element-icon">${info.icon}</span>
-            <span class="element-name">${info.name}</span>
-            ${node.unlocked ? '<span class="unlocked-badge">✓</span>' : ''}
-          </div>
-          ${
-            !node.unlocked
-              ? `
-            <button 
-              class="btn-secondary research-btn" 
-              data-element="${node.element}"
-              ${!canResearch || !canAfford ? 'disabled' : ''}
-            >
-              ${formatNumber(node.cost)} 💰
-            </button>
-          `
-              : ''
-          }
-        </div>
-      `;
-    }
-
-    this.modalContent.innerHTML = html;
-
-    // Add click handlers
+    // Add click handlers for elements research
     this.modalContent.querySelectorAll('.research-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
         const element = (btn as HTMLElement).dataset.element;
         if (element) {
           this.game.researchElement(element as any);
-          this.renderResearchModal();
+          this.renderUpgradesModal();
         }
       });
     });
@@ -1013,7 +1043,6 @@ export class UIManager {
       { id: 'mana-gold', label: '💰 Mana & Gold' },
       { id: 'shop', label: '🛒 Shop' },
       { id: 'upgrades', label: '⬆️ Upgrades' },
-      { id: 'research', label: '🔬 Research' },
       { id: 'recipes', label: '📖 Recipes' },
       { id: 'crafting', label: '🔮 Crafting' },
       { id: 'elements', label: '✨ Elements' },
@@ -1103,18 +1132,6 @@ export class UIManager {
         </ul>
         <p>Each upgrade can be leveled up multiple times for stronger effects.</p>
       `,
-      research: `
-        <h4>Research</h4>
-        <p>Research unlocks new elements for your portals:</p>
-        <ul>
-          <li><strong>Fire 🔥</strong> and <strong>Water 💧</strong> - Available from start</li>
-          <li><strong>Earth 🌿</strong> - Unlockable</li>
-          <li><strong>Air 💨</strong> - Unlockable</li>
-          <li><strong>Lightning ⚡</strong> - Unlockable</li>
-        </ul>
-        <p>Some elements require prerequisites before they can be researched.</p>
-        <p>Each element has a <strong>potency multiplier</strong> that affects how much power it contributes.</p>
-      `,
       recipes: `
         <h4>Recipe Book</h4>
         <p>Recipes are discovered by combining ingredients in the crafting slots.</p>
@@ -1150,6 +1167,7 @@ export class UIManager {
           <li>💨 <strong>Air</strong> - Light, swift portals</li>
           <li>⚡ <strong>Lightning</strong> - Powerful, electric portals</li>
         </ul>
+        <p><strong>Unlocking Elements:</strong> Fire and Water are available from the start. Other elements can be unlocked in the Upgrades menu under the Elements tab.</p>
         <p><strong>Element Potency:</strong> Each element has a power multiplier (shown as 1x, 1.2x, etc.) that affects how much it contributes to portal level.</p>
         <p>Use the +/- buttons next to each element in the crafting area to adjust amounts.</p>
       `,
