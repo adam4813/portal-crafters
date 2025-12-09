@@ -95,6 +95,21 @@ export class CraftingUI {
 
     // Create the element picker modal
     this.createElementPickerModal();
+
+    // Initialize element slot assignments from current portal data
+    this.initializeElementSlotsFromPortal();
+  }
+
+  private initializeElementSlotsFromPortal(): void {
+    const portalData = this.game.getPortal().getData();
+    const elementsWithAmounts = Object.entries(portalData.elements)
+      .filter(([, amount]) => amount && amount > 0)
+      .map(([element]) => element as ElementType);
+
+    // Assign each element with a non-zero amount to a slot
+    for (let i = 0; i < elementsWithAmounts.length && i < TOTAL_ELEMENT_SLOTS; i++) {
+      this.elementSlotAssignments[i] = elementsWithAmounts[i];
+    }
   }
 
   private getUnlockedElementSlotCount(): number {

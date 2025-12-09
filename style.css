@@ -1719,6 +1719,7 @@ body {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  height: 36px;
   padding: 0.4rem 0.5rem;
   background-color: var(--background-medium);
   border-radius: 4px;
@@ -1733,7 +1734,7 @@ body {
 }
 
 .mana-control-label {
-  color: var(--primary-color);
+  color: var(--text-primary);
   font-weight: 500;
   min-width: 70px;
   flex: 1;
@@ -1809,7 +1810,7 @@ body {
 
 .element-slot-row.empty {
   cursor: pointer;
-  border: 1px dashed var(--text-secondary);
+  border: 1px dashed var(--primary-color);
 }
 
 .element-slot-row.empty:hover {
@@ -1819,30 +1820,12 @@ body {
 
 .element-slot-clickable {
   cursor: pointer;
-  padding: 0.15rem 0.25rem;
   border-radius: 3px;
   transition: background-color 0.2s ease;
 }
 
 .element-slot-clickable:hover {
   background-color: var(--background-dark);
-}
-
-/* Element type colors for slot rows */
-.element-slot-row.fire {
-  border-left: 3px solid var(--fire-color);
-}
-.element-slot-row.water {
-  border-left: 3px solid var(--water-color);
-}
-.element-slot-row.earth {
-  border-left: 3px solid var(--earth-color);
-}
-.element-slot-row.air {
-  border-left: 3px solid var(--air-color);
-}
-.element-slot-row.lightning {
-  border-left: 3px solid var(--lightning-color);
 }
 
 /* Mobile styles */
