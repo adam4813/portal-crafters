@@ -5,6 +5,7 @@ import { formatTime } from '../utils/helpers';
 
 export class ExpeditionUI {
   private game: Game;
+  private currentTab: 'active' | 'available' | null = null;
 
   constructor(game: Game) {
     this.game = game;
@@ -14,26 +15,33 @@ export class ExpeditionUI {
     // Expedition UI is rendered in a modal, so no initialization needed here
   }
 
+  public resetTabState(): void {
+    this.currentTab = null;
+  }
+
   public render(expeditions: ExpeditionSystem, storedPortals: PortalType[]): string {
     const activeExpeditions = expeditions.getActiveExpeditions();
     const hasActive = activeExpeditions.length > 0;
+
+    // Use stored tab if set, otherwise default based on active expeditions
+    const activeTab = this.currentTab ?? (hasActive ? 'active' : 'available');
 
     let html = '<div class="expeditions-panel">';
 
     // Tabs
     html += `
       <div class="expedition-tabs">
-        <button class="expedition-tab ${hasActive ? 'active' : ''}" data-tab="active">
+        <button class="expedition-tab ${activeTab === 'active' ? 'active' : ''}" data-tab="active">
           🗺️ Active (${activeExpeditions.length})
         </button>
-        <button class="expedition-tab ${!hasActive ? 'active' : ''}" data-tab="available">
+        <button class="expedition-tab ${activeTab === 'available' ? 'active' : ''}" data-tab="available">
           🌀 Available (${storedPortals.length})
         </button>
       </div>
     `;
 
     // Active tab content
-    html += `<div class="expedition-tab-content" data-tab-content="active" style="${hasActive ? '' : 'display:none'}">`;
+    html += `<div class="expedition-tab-content" data-tab-content="active" style="${activeTab === 'active' ? '' : 'display:none'}">`;
     if (activeExpeditions.length === 0) {
       html += '<p class="empty-message">No active expeditions. Send a portal to start one!</p>';
     } else {
@@ -42,7 +50,7 @@ export class ExpeditionUI {
     html += '</div>';
 
     // Available tab content
-    html += `<div class="expedition-tab-content" data-tab-content="available" style="${!hasActive ? '' : 'display:none'}">`;
+    html += `<div class="expedition-tab-content" data-tab-content="available" style="${activeTab === 'available' ? '' : 'display:none'}">`;
     html += '<div class="expedition-intro">';
     html +=
       "<p>Send portals to gather resources! The portal's elemental composition determines what can be found.</p>";
@@ -180,7 +188,10 @@ export class ExpeditionUI {
     document.querySelectorAll('.expedition-tab').forEach((tab) => {
       tab.addEventListener('click', (e) => {
         const button = e.target as HTMLButtonElement;
-        const tabName = button.dataset.tab;
+        const tabName = button.dataset.tab as 'active' | 'available';
+
+        // Store the tab state
+        this.currentTab = tabName;
 
         // Update tab active state
         document.querySelectorAll('.expedition-tab').forEach((t) => t.classList.remove('active'));

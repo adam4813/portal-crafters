@@ -72,6 +72,7 @@ export class UIManager {
   private currentGuideSection: string = 'getting-started';
   private currentShopTab: 'items' | 'equipment' = 'items';
   private currentUpgradesTab: 'upgrades' | 'elements' = 'upgrades';
+  private currentRecipesTab: 'ingredient-recipes' | 'portal-types' = 'ingredient-recipes';
 
   // Last update data for modal re-renders
   private lastUpdateData: UIUpdateData | null = null;
@@ -243,6 +244,20 @@ export class UIManager {
     if (!this.modalOverlay) return;
 
     const wasPaused = this.shouldPauseTimersForModal(this.currentModal);
+
+    // Reset tab states when closing modals
+    if (this.currentModal === 'expeditions') {
+      this.expeditionUI.resetTabState();
+    } else if (this.currentModal === 'inventory') {
+      this.craftingUI.resetInventoryTabState();
+    } else if (this.currentModal === 'recipes') {
+      this.currentRecipesTab = 'ingredient-recipes';
+    } else if (this.currentModal === 'shop') {
+      this.currentShopTab = 'items';
+    } else if (this.currentModal === 'upgrades') {
+      this.currentUpgradesTab = 'upgrades';
+    }
+
     this.currentModal = null;
 
     // Only resume timers if they were paused for this modal
@@ -258,6 +273,9 @@ export class UIManager {
 
   private renderModalContent(): void {
     if (!this.modalContent || !this.lastUpdateData) return;
+
+    // Save scroll position before re-render
+    const scrollTop = this.modalContent.scrollTop;
 
     switch (this.currentModal) {
       case 'pause':
@@ -291,6 +309,9 @@ export class UIManager {
         this.renderContractsModal();
         break;
     }
+
+    // Restore scroll position after re-render
+    this.modalContent.scrollTop = scrollTop;
   }
 
   private renderContractsModal(): void {
@@ -747,12 +768,12 @@ export class UIManager {
 
       let html = `
         <div class="recipes-tabs">
-          <button class="recipe-tab active" data-tab="ingredient-recipes">🧪 Ingredient Recipes</button>
-          <button class="recipe-tab" data-tab="portal-types">🌀 Portal Types</button>
+          <button class="recipe-tab ${this.currentRecipesTab === 'ingredient-recipes' ? 'active' : ''}" data-tab="ingredient-recipes">🧪 Ingredient Recipes</button>
+          <button class="recipe-tab ${this.currentRecipesTab === 'portal-types' ? 'active' : ''}" data-tab="portal-types">🌀 Portal Types</button>
         </div>
         <div class="recipes-content">
-          <div id="ingredient-recipes-tab" class="recipe-tab-content active"></div>
-          <div id="portal-types-tab" class="recipe-tab-content hidden"></div>
+          <div id="ingredient-recipes-tab" class="recipe-tab-content ${this.currentRecipesTab === 'ingredient-recipes' ? 'active' : 'hidden'}"></div>
+          <div id="portal-types-tab" class="recipe-tab-content ${this.currentRecipesTab === 'portal-types' ? 'active' : 'hidden'}"></div>
         </div>
       `;
 
@@ -775,7 +796,11 @@ export class UIManager {
       // Setup tab switching
       this.modalContent!.querySelectorAll('.recipe-tab').forEach((tab) => {
         tab.addEventListener('click', () => {
-          const tabName = (tab as HTMLElement).dataset.tab;
+          const tabName = (tab as HTMLElement).dataset.tab as 'ingredient-recipes' | 'portal-types';
+
+          // Store the tab state
+          this.currentRecipesTab = tabName;
+
           this.modalContent!.querySelectorAll('.recipe-tab').forEach((t) =>
             t.classList.remove('active')
           );

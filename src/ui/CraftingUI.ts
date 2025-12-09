@@ -56,6 +56,7 @@ export class CraftingUI {
   private elementSlotAssignments: (ElementType | null)[] = [];
   private elementSlotsLeftContainer: HTMLElement | null = null;
   private elementSlotsRightContainer: HTMLElement | null = null;
+  private currentInventoryTab: 'ingredients' | 'equipment' = 'ingredients';
 
   constructor(game: Game, _uiManager: UIManager) {
     this.game = game;
@@ -596,13 +597,17 @@ export class CraftingUI {
     // Tabs
     html += `
       <div class="slot-picker-tabs">
-        <button class="slot-picker-tab active" data-tab="ingredients">🧪 Ingredients</button>
-        <button class="slot-picker-tab" data-tab="equipment">⚔️ Equipment</button>
+        <button class="slot-picker-tab ${this.currentInventoryTab === 'ingredients' ? 'active' : ''}" data-tab="ingredients">🧪 Ingredients</button>
+        <button class="slot-picker-tab ${this.currentInventoryTab === 'equipment' ? 'active' : ''}" data-tab="equipment">⚔️ Equipment</button>
       </div>
     `;
 
-    // Tab content - start with ingredients
-    html += this.renderIngredientsTab(inventory);
+    // Tab content - render based on current tab
+    if (this.currentInventoryTab === 'ingredients') {
+      html += this.renderIngredientsTab(inventory);
+    } else {
+      html += this.renderEquipmentTab(inventory);
+    }
 
     container.innerHTML = html;
 
@@ -610,6 +615,9 @@ export class CraftingUI {
     container.querySelectorAll('.slot-picker-tab').forEach((tab) => {
       tab.addEventListener('click', () => {
         const tabName = (tab as HTMLElement).dataset.tab as 'ingredients' | 'equipment';
+
+        // Store the tab state
+        this.currentInventoryTab = tabName;
 
         // Update tab active state
         container.querySelectorAll('.slot-picker-tab').forEach((t) => t.classList.remove('active'));
@@ -626,6 +634,10 @@ export class CraftingUI {
         }
       });
     });
+  }
+
+  public resetInventoryTabState(): void {
+    this.currentInventoryTab = 'ingredients';
   }
 
   public update(crafting: CraftingSystem, _inventory: InventorySystem): void {
