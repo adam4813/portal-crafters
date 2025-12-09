@@ -980,6 +980,7 @@ export class Game {
       'success'
     );
     this.updateUI();
+    this.uiManager.refreshModalContent();
   }
 
   public completeExpedition(expeditionId: string): void {
@@ -1026,6 +1027,7 @@ export class Game {
 
     showToast(rewardMessage, 'success');
     this.updateUI();
+    this.uiManager.refreshModalContent();
   }
 
   /**

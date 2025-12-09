@@ -15,7 +15,7 @@ import { ShopUI } from './ShopUI';
 import { ResearchUI } from './ResearchUI';
 import { PortalInventoryUI } from './PortalInventoryUI';
 import { ExpeditionUI } from './ExpeditionUI';
-import { formatNumber } from '../utils/helpers';
+import { formatNumber, formatTime } from '../utils/helpers';
 import { getIngredientById } from '../data/ingredients';
 import { extractTagsFromGeneratedEquipment } from '../data/portalTypes';
 import { getEquipmentById } from '../data/equipment';
@@ -271,11 +271,15 @@ export class UIManager {
     this.game.refreshUI();
   }
 
-  private renderModalContent(): void {
+  private async renderModalContent(): Promise<void> {
     if (!this.modalContent || !this.lastUpdateData) return;
 
-    // Save scroll position before re-render
+    // Save scroll positions before re-render (both modal-content and any nested scrollable elements)
     const scrollTop = this.modalContent.scrollTop;
+    const nestedScrollable = this.modalContent.querySelector(
+      '.expedition-tab-content, .customer-queue-modal, .shop-tab-content, .recipes-content, .slot-picker-tab-content'
+    );
+    const nestedScrollTop = nestedScrollable?.scrollTop ?? 0;
 
     switch (this.currentModal) {
       case 'pause':
@@ -297,7 +301,7 @@ export class UIManager {
         this.renderManaPurchaseModal();
         break;
       case 'recipes':
-        this.renderRecipesModal();
+        await this.renderRecipesModal();
         break;
       case 'inventory':
         this.renderInventoryModal();
@@ -310,8 +314,18 @@ export class UIManager {
         break;
     }
 
-    // Restore scroll position after re-render
-    this.modalContent.scrollTop = scrollTop;
+    // Restore scroll positions after re-render (use requestAnimationFrame to ensure DOM has updated)
+    requestAnimationFrame(() => {
+      if (this.modalContent) {
+        this.modalContent.scrollTop = scrollTop;
+        const newNestedScrollable = this.modalContent.querySelector(
+          '.expedition-tab-content:not([style*="display: none"]), .customer-queue-modal, .shop-tab-content, .recipes-content, .slot-picker-tab-content'
+        );
+        if (newNestedScrollable) {
+          newNestedScrollable.scrollTop = nestedScrollTop;
+        }
+      }
+    });
   }
 
   private renderContractsModal(): void {
@@ -1358,6 +1372,67 @@ export class UIManager {
     this.portalInventoryUI.update(data.storedPortals);
 
     // Update modal content if open
+    if (this.currentModal) {
+      // For modals that don't pause timers, only update timer elements to avoid DOM recreation
+      if (!this.shouldPauseTimersForModal(this.currentModal)) {
+        this.updateModalTimersOnly();
+      }
+      // Don't re-render modal for paused modals during regular updates
+      // Modal content is only rendered on open or explicit refresh
+    }
+  }
+
+  private updateModalTimersOnly(): void {
+    if (!this.modalContent) return;
+
+    if (this.currentModal === 'expeditions') {
+      // Update expedition timers
+      const expeditions = this.game.getExpeditions();
+      this.modalContent.querySelectorAll('.active-expedition').forEach((card) => {
+        const cardEl = card as HTMLElement;
+        const expeditionId = cardEl.dataset.expeditionId;
+        if (!expeditionId) return;
+
+        const timerEl = cardEl.querySelector('.expedition-timer');
+        if (!timerEl) return;
+
+        const isComplete = expeditions.isExpeditionComplete(expeditionId);
+        const timeRemaining = expeditions.getTimeRemaining(expeditionId);
+        const wasComplete = cardEl.classList.contains('complete');
+
+        timerEl.textContent = isComplete ? '✅ Complete!' : `⏱️ ${formatTime(timeRemaining)}`;
+        timerEl.classList.toggle('complete', isComplete);
+        cardEl.classList.toggle('complete', isComplete);
+
+        // Show collect button if just completed
+        if (isComplete && !wasComplete) {
+          // Need full re-render to add the button
+          this.renderModalContent();
+          return;
+        }
+      });
+    } else if (this.currentModal === 'contracts') {
+      // Update customer timers in modal
+      const now = Date.now();
+      this.modalContent.querySelectorAll('.customer-timer').forEach((timerEl) => {
+        const card = timerEl.closest('.customer-card') as HTMLElement;
+        if (!card || timerEl.classList.contains('unlimited')) return;
+
+        const arrivedAt = parseInt(card.dataset.arrivedAt || '0', 10);
+        const patience = parseInt(card.dataset.patience || '0', 10);
+
+        if (arrivedAt && patience) {
+          const waitTime = Math.floor((now - arrivedAt) / 1000);
+          const timeRemaining = Math.max(0, patience - waitTime);
+
+          timerEl.textContent = `⏱️ ${formatTime(timeRemaining)}`;
+          timerEl.classList.toggle('urgent', timeRemaining < 30);
+        }
+      });
+    }
+  }
+
+  public refreshModalContent(): void {
     if (this.currentModal) {
       this.renderModalContent();
     }

@@ -156,7 +156,7 @@ export class ExpeditionUI {
       const tooltip = `Portal Level: ${portal.level}\nMana Invested: ${portal.manaInvested}\nElements: ${elementsStr || 'None'}\nDuration: ${durationDisplay}\n\nPotential Rewards:\n${rewardsStr}`;
 
       html += `
-        <div class="expedition-card active-expedition ${isComplete ? 'complete' : ''}" title="${tooltip.replace(/"/g, '&quot;')}">
+        <div class="expedition-card active-expedition ${isComplete ? 'complete' : ''}" data-expedition-id="${expedition.id}" title="${tooltip.replace(/"/g, '&quot;')}">
           <div class="expedition-header">
             <h4>🗺️ Lv${portal.level} Portal</h4>
             <span class="expedition-timer ${isComplete ? 'complete' : ''}">${isComplete ? '✅ Complete!' : `⏱️ ${formatTime(timeRemaining)}`}</span>
