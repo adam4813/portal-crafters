@@ -102,12 +102,9 @@ export class Game {
   }
 
   public async initialize(): Promise<void> {
-    // Try to load saved game
-    const savedState = this.saveSystem.load();
-    if (savedState) {
-      this.loadState(savedState);
-    } else {
-      this.loadState(this.gameState);
+    // Load state if not already loaded by main.ts
+    if (!this.gameState.inventory) {
+      this.loadState(createInitialGameState());
     }
 
     // Initialize portal visualization
@@ -149,7 +146,7 @@ export class Game {
     console.log('Game initialized');
   }
 
-  private loadState(state: GameState): void {
+  public loadState(state: GameState): void {
     this.gameState = { ...state };
 
     // Initialize all systems with saved state
@@ -809,6 +806,10 @@ export class Game {
     this.portal.reset();
     this.updateUI();
     showToast('Game reset!', 'warning');
+  }
+
+  public getSaveSystem(): SaveSystem {
+    return this.saveSystem;
   }
 
   // Public method for UI components to trigger a refresh

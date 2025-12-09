@@ -1,16 +1,39 @@
 import type { GameState } from '../types';
 import { createInitialGameState } from '../utils/helpers';
 
-const SAVE_KEY = 'portal-crafters-save';
+const SAVE_KEY_PREFIX = 'portal-crafters-save-slot-';
+const NUM_SAVE_SLOTS = 3;
+
+export interface SaveSlotInfo {
+  slot: number;
+  isEmpty: boolean;
+  lastSaveTime: number | null;
+  playTime: number;
+  gold: number;
+  tier: number;
+}
 
 export class SaveSystem {
   private onLoadCallbacks: ((state: GameState) => void)[] = [];
   private onSaveCallbacks: (() => GameState)[] = [];
+  private currentSlot: number = 0;
 
   constructor() {}
 
   public initialize(): void {
     // No auto-save - saves are event-driven (on craft, purchase, etc.) and on page unload
+  }
+
+  public setCurrentSlot(slot: number): void {
+    this.currentSlot = slot;
+  }
+
+  public getCurrentSlot(): number {
+    return this.currentSlot;
+  }
+
+  private getSlotKey(slot: number): string {
+    return `${SAVE_KEY_PREFIX}${slot}`;
   }
 
   public onLoad(callback: (state: GameState) => void): void {
@@ -22,6 +45,10 @@ export class SaveSystem {
   }
 
   public save(): boolean {
+    return this.saveToSlot(this.currentSlot);
+  }
+
+  public saveToSlot(slot: number): boolean {
     try {
       // Collect state from all systems
       let state = createInitialGameState();
@@ -33,9 +60,9 @@ export class SaveSystem {
       state.lastSaveTime = Date.now();
 
       const saveData = JSON.stringify(state);
-      localStorage.setItem(SAVE_KEY, saveData);
+      localStorage.setItem(this.getSlotKey(slot), saveData);
 
-      console.log('Game saved successfully');
+      console.log(`Game saved successfully to slot ${slot}`);
       return true;
     } catch (error) {
       console.error('Failed to save game:', error);
@@ -44,10 +71,14 @@ export class SaveSystem {
   }
 
   public load(): GameState | null {
+    return this.loadFromSlot(this.currentSlot);
+  }
+
+  public loadFromSlot(slot: number): GameState | null {
     try {
-      const saveData = localStorage.getItem(SAVE_KEY);
+      const saveData = localStorage.getItem(this.getSlotKey(slot));
       if (!saveData) {
-        console.log('No save data found, creating new game');
+        console.log(`No save data found in slot ${slot}, creating new game`);
         return null;
       }
 
@@ -62,7 +93,7 @@ export class SaveSystem {
       // Notify load callbacks
       this.onLoadCallbacks.forEach((cb) => cb(state));
 
-      console.log('Game loaded successfully');
+      console.log(`Game loaded successfully from slot ${slot}`);
       return state;
     } catch (error) {
       console.error('Failed to load game:', error);
@@ -81,17 +112,72 @@ export class SaveSystem {
     return true;
   }
 
+  public getAllSaveSlots(): SaveSlotInfo[] {
+    const slots: SaveSlotInfo[] = [];
+
+    for (let i = 0; i < NUM_SAVE_SLOTS; i++) {
+      const saveData = localStorage.getItem(this.getSlotKey(i));
+
+      if (!saveData) {
+        slots.push({
+          slot: i,
+          isEmpty: true,
+          lastSaveTime: null,
+          playTime: 0,
+          gold: 0,
+          tier: 1,
+        });
+      } else {
+        try {
+          const state = JSON.parse(saveData) as GameState;
+          slots.push({
+            slot: i,
+            isEmpty: false,
+            lastSaveTime: state.lastSaveTime || null,
+            playTime: state.playTime || 0,
+            gold: state.inventory?.gold || 0,
+            tier: state.progression?.currentTier || 1,
+          });
+        } catch {
+          slots.push({
+            slot: i,
+            isEmpty: true,
+            lastSaveTime: null,
+            playTime: 0,
+            gold: 0,
+            tier: 1,
+          });
+        }
+      }
+    }
+
+    return slots;
+  }
+
   public hasSaveData(): boolean {
-    return localStorage.getItem(SAVE_KEY) !== null;
+    return localStorage.getItem(this.getSlotKey(this.currentSlot)) !== null;
+  }
+
+  public hasAnySaveData(): boolean {
+    for (let i = 0; i < NUM_SAVE_SLOTS; i++) {
+      if (localStorage.getItem(this.getSlotKey(i))) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public deleteSave(): void {
-    localStorage.removeItem(SAVE_KEY);
-    console.log('Save data deleted');
+    this.deleteSlot(this.currentSlot);
+  }
+
+  public deleteSlot(slot: number): void {
+    localStorage.removeItem(this.getSlotKey(slot));
+    console.log(`Save data deleted from slot ${slot}`);
   }
 
   public exportSave(): string {
-    const saveData = localStorage.getItem(SAVE_KEY);
+    const saveData = localStorage.getItem(this.getSlotKey(this.currentSlot));
     if (!saveData) return '';
 
     // Encode to base64 for sharing
@@ -107,7 +193,7 @@ export class SaveSystem {
         return false;
       }
 
-      localStorage.setItem(SAVE_KEY, saveData);
+      localStorage.setItem(this.getSlotKey(this.currentSlot), saveData);
       return true;
     } catch (error) {
       console.error('Failed to import save:', error);
@@ -117,7 +203,7 @@ export class SaveSystem {
 
   public getLastSaveTime(): number | null {
     try {
-      const saveData = localStorage.getItem(SAVE_KEY);
+      const saveData = localStorage.getItem(this.getSlotKey(this.currentSlot));
       if (!saveData) return null;
 
       const state = JSON.parse(saveData) as GameState;

@@ -7,7 +7,26 @@
     <link rel="stylesheet" href="/style.css" />
   </head>
   <body>
-    <div id="app">
+    <!-- Title Screen -->
+    <div id="title-screen" class="title-screen">
+      <div class="title-content">
+        <h1 class="title-logo">🌀 Portal Crafters</h1>
+        <p class="title-tagline">Craft portals. Fulfill contracts. Master the elements.</p>
+        
+        <div class="title-menu">
+          <button id="new-game-btn" class="btn-primary title-btn">✨ New Game</button>
+          <button id="load-game-btn" class="btn-secondary title-btn">📂 Load Game</button>
+        </div>
+        
+        <div id="save-slots-container" class="save-slots-container hidden">
+          <h3>Select Save Slot</h3>
+          <div id="save-slots" class="save-slots"></div>
+          <button id="back-to-title-btn" class="btn-secondary">← Back</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="app" class="hidden">
       <header class="game-header">
         <button id="menu-toggle" class="menu-toggle">☰</button>
         <h1>Portal Crafters</h1>
@@ -27,7 +46,6 @@
             <button id="shop-btn" class="nav-btn">🛒 Shop</button>
             <button id="upgrades-btn" class="nav-btn">⬆️ Upgrades</button>
             <button id="recipes-btn" class="nav-btn">📖 Recipes</button>
-            <button id="guide-btn" class="nav-btn">📚 Guide</button>
           </div>
           <div class="nav-footer">
             <button id="pause-btn" class="nav-btn">⏸️ Pause</button>

@@ -144,7 +144,6 @@ export class UIManager {
   private setupModalHandlers(): void {
     // Nav buttons
     document.getElementById('pause-btn')?.addEventListener('click', () => this.openModal('pause'));
-    document.getElementById('guide-btn')?.addEventListener('click', () => this.openModal('guide'));
     document.getElementById('shop-btn')?.addEventListener('click', () => this.openModal('shop'));
     document
       .getElementById('upgrades-btn')
@@ -1216,6 +1215,8 @@ export class UIManager {
         <div class="pause-actions">
           <button id="resume-game-btn" class="btn-primary pause-action-btn">▶️ Resume Game</button>
           <button id="save-game-btn" class="btn-secondary pause-action-btn">💾 Save Game</button>
+          <button id="guide-menu-btn" class="btn-secondary pause-action-btn">📚 Game Guide</button>
+          <button id="return-title-btn" class="btn-danger pause-action-btn">🏠 Return to Title</button>
         </div>
         
         <div class="pause-info">
@@ -1251,6 +1252,19 @@ export class UIManager {
 
     document.getElementById('save-game-btn')?.addEventListener('click', () => {
       this.game.saveGame();
+    });
+
+    document.getElementById('guide-menu-btn')?.addEventListener('click', () => {
+      this.openModal('guide');
+    });
+
+    document.getElementById('return-title-btn')?.addEventListener('click', () => {
+      if (confirm('Return to title screen? Your game will be saved.')) {
+        this.game.saveGame();
+        this.closeModal();
+        // Call the global returnToTitle function
+        (window as unknown as { returnToTitle: () => void }).returnToTitle();
+      }
     });
   }
 
