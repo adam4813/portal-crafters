@@ -61,7 +61,7 @@ export class Game {
 
     // Set up orthographic camera for 2D view
     const aspect = container.clientWidth / container.clientHeight;
-    const viewSize = 5;
+    const viewSize = 3;
     this.camera = new THREE.OrthographicCamera(
       -viewSize * aspect,
       viewSize * aspect,
@@ -296,7 +296,7 @@ export class Game {
     const height = this.canvasContainer.clientHeight;
 
     const aspect = width / height;
-    const viewSize = 5;
+    const viewSize = 3;
 
     this.camera.left = -viewSize * aspect;
     this.camera.right = viewSize * aspect;
