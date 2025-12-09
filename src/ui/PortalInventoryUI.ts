@@ -95,29 +95,29 @@ function buildPortalTooltip(portal: PortalType): string {
 
 export class PortalInventoryUI {
   private game: Game;
-  private container: HTMLElement | null;
 
   constructor(game: Game) {
     this.game = game;
-    this.container = document.getElementById('portal-inventory');
   }
 
   public initialize(): void {
     // Initial render will happen on first update
   }
 
-  public update(storedPortals: PortalType[]): void {
-    if (!this.container) return;
+  public update(_storedPortals: PortalType[]): void {
+    // No longer rendering to sidebar, just used for modal
+  }
 
+  public renderToModal(container: HTMLElement, storedPortals: PortalType[]): void {
     if (storedPortals.length === 0) {
-      this.container.innerHTML = `
+      container.innerHTML = `
         <p class="empty-message">No crafted portals</p>
         <p class="info-text">Craft portals using ingredients to store them here.</p>
       `;
       return;
     }
 
-    let html = '';
+    let html = '<div class="portal-list">';
     for (const portal of storedPortals) {
       const elementsStr = Object.entries(portal.elements)
         .filter(([, amount]) => amount && amount > 0)
@@ -145,10 +145,11 @@ export class PortalInventoryUI {
         </div>
       `;
     }
+    html += '</div>';
 
-    this.container.innerHTML = html;
+    container.innerHTML = html;
 
-    this.container.querySelectorAll('.btn-reclaim-portal').forEach((btn) => {
+    container.querySelectorAll('.btn-reclaim-portal').forEach((btn) => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         const portalId = (e.target as HTMLElement).dataset.portalId;

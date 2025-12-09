@@ -9,77 +9,79 @@
   <body>
     <div id="app">
       <header class="game-header">
+        <button id="menu-toggle" class="menu-toggle">☰</button>
         <h1>Portal Crafters</h1>
-        <div class="header-buttons">
-          <button id="pause-btn" class="btn-header">⏸️ Pause</button>
-          <button id="guide-btn" class="btn-header">📚 Guide</button>
-          <button id="shop-btn" class="btn-header">🛒 Shop</button>
-          <button id="upgrades-btn" class="btn-header">⬆️ Upgrades</button>
-          <button id="research-btn" class="btn-header">🔬 Research</button>
-        </div>
         <div id="resources">
           <span id="money-display">Gold: 100</span>
           <span id="mana-display">Mana: 0</span>
         </div>
       </header>
       
-      <main class="game-main">
-        <aside class="sidebar left-sidebar">
-          <section id="customer-panel" class="panel">
-            <h2>Contracts</h2>
-            <div id="progression-status" class="progression-status"></div>
-            <div class="panel-body" id="customer-queue"></div>
-          </section>
-          <section id="active-expeditions-panel" class="panel">
-            <h2>Expeditions</h2>
-            <div class="panel-body" id="active-expeditions"></div>
-            <div class="panel-footer">
-              <button id="start-expedition-btn" class="btn-secondary">🗺️ Start Expedition</button>
-            </div>
-          </section>
-        </aside>
+      <div class="game-layout">
+        <nav id="main-nav" class="main-nav">
+          <div class="nav-buttons">
+            <button id="inventory-btn" class="nav-btn">🎒 Inventory</button>
+            <button id="portals-btn" class="nav-btn">🌀 Portals</button>
+            <button id="shop-btn" class="nav-btn">🛒 Shop</button>
+            <button id="upgrades-btn" class="nav-btn">⬆️ Upgrades</button>
+            <button id="research-btn" class="nav-btn">🔬 Research</button>
+            <button id="recipes-btn" class="nav-btn">📖 Recipes</button>
+            <button id="guide-btn" class="nav-btn">📚 Guide</button>
+          </div>
+          <div class="nav-footer">
+            <button id="pause-btn" class="nav-btn">⏸️ Pause</button>
+          </div>
+        </nav>
         
-        <section class="game-canvas-container">
-          <div id="portal-canvas"></div>
-          <div id="crafting-panel" class="panel">
-            <div class="panel-header-with-action">
-              <h3>Portal Crafting</h3>
-              <button id="recipes-btn" class="btn-header-small">📖 Recipes</button>
-            </div>
-            <div class="panel-body">
-              <div class="crafting-grid">
-                <div id="portal-ingredient-section" class="crafting-cell">
-                  <button id="inventory-btn" class="btn-secondary inventory-btn">🎒 Inventory</button>
-                  <div id="ingredient-slots"></div>
-                  <div id="item-effects"></div>
-                </div>
-                <div id="portal-power-section" class="crafting-cell">
-                  <div id="level-progress-container"></div>
-                  <div id="portal-resources"></div>
-                </div>
-                <div id="element-slots-left" class="crafting-cell">
-                  <h4>Element Aspects</h4>
-                  <div class="element-slots-column"></div>
-                </div>
-                <div id="element-slots-right" class="crafting-cell">
-                  <h4 class="mobile-hidden">&nbsp;</h4>
-                  <div class="element-slots-column"></div>
+        <main class="game-main">
+          <aside class="sidebar left-sidebar">
+            <section id="customer-panel" class="panel">
+              <h2>Contracts</h2>
+              <div id="progression-status" class="progression-status"></div>
+              <div class="panel-body" id="customer-queue"></div>
+            </section>
+            <section id="active-expeditions-panel" class="panel">
+              <h2>Expeditions</h2>
+              <div class="panel-body" id="active-expeditions"></div>
+              <div class="panel-footer">
+                <button id="start-expedition-btn" class="btn-secondary">🗺️ Start Expedition</button>
+              </div>
+            </section>
+          </aside>
+          
+          <section class="game-canvas-container">
+            <div id="portal-canvas"></div>
+            <div id="crafting-panel" class="panel">
+              <div class="panel-header-with-action">
+                <h3>Portal Crafting</h3>
+              </div>
+              <div class="panel-body">
+                <div class="crafting-grid">
+                  <div id="portal-ingredient-section" class="crafting-cell">
+                    <div id="ingredient-slots"></div>
+                    <div id="item-effects"></div>
+                  </div>
+                  <div id="portal-power-section" class="crafting-cell">
+                    <div id="level-progress-container"></div>
+                    <div id="portal-resources"></div>
+                  </div>
+                  <div id="element-slots-left" class="crafting-cell">
+                    <h4>Element Aspects</h4>
+                    <div class="element-slots-column"></div>
+                  </div>
+                  <div id="element-slots-right" class="crafting-cell">
+                    <h4 class="mobile-hidden">&nbsp;</h4>
+                    <div class="element-slots-column"></div>
+                  </div>
                 </div>
               </div>
+              <div class="panel-footer">
+                <button id="craft-button" class="btn-primary">Craft Portal</button>
+              </div>
             </div>
-            <div class="panel-footer">
-              <button id="craft-button" class="btn-primary">Craft Portal</button>
-            </div>
-          </div>
-        </section>
-        
-        <aside class="sidebar right-sidebar">
-          <section id="portal-inventory-panel" class="panel">
-            <h2>Crafted Portals</h2>
-            <div class="panel-body" id="portal-inventory"></div>
           </section>
-        </aside>
-      </main>
+        </main>
+      </div>
     </div>
     
     <!-- Modals -->

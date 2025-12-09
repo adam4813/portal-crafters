@@ -84,14 +84,6 @@ export class CraftingUI {
       });
     }
 
-    // Set up inventory button
-    const inventoryBtn = document.getElementById('inventory-btn');
-    if (inventoryBtn) {
-      inventoryBtn.addEventListener('click', () => {
-        this.openInventoryModal();
-      });
-    }
-
     // Create initial slots - only once
     if (!this.slotsInitialized) {
       this.createSlots();
@@ -251,22 +243,6 @@ export class CraftingUI {
     this.elementSlotAssignments[slotIndex] = null;
     this.closeElementPicker();
     this.game.refreshUI();
-  }
-
-  private openInventoryModal(): void {
-    if (!this.slotPickerModal) return;
-
-    // Open modal without a target slot (view-only mode)
-    this.activeSlotIndex = null;
-    this.renderSlotPickerContent('ingredients');
-
-    // Update the modal title for inventory viewing
-    const titleEl = this.slotPickerModal.querySelector('.modal-header h2');
-    if (titleEl) {
-      titleEl.textContent = 'Inventory';
-    }
-
-    this.slotPickerModal.classList.remove('hidden');
   }
 
   private getUnlockedSlotCount(): number {
@@ -594,6 +570,47 @@ export class CraftingUI {
     for (let i = 0; i < TOTAL_ELEMENT_SLOTS; i++) {
       this.elementSlotAssignments[i] = null;
     }
+  }
+
+  public renderInventoryModalContent(container: HTMLElement): void {
+    // Render the inventory content (ingredients and equipment tabs) to an external container
+    const inventory = this.game.getInventory();
+
+    let html = '';
+
+    // Tabs
+    html += `
+      <div class="slot-picker-tabs">
+        <button class="slot-picker-tab active" data-tab="ingredients">🧪 Ingredients</button>
+        <button class="slot-picker-tab" data-tab="equipment">⚔️ Equipment</button>
+      </div>
+    `;
+
+    // Tab content - start with ingredients
+    html += this.renderIngredientsTab(inventory);
+
+    container.innerHTML = html;
+
+    // Add tab click handlers
+    container.querySelectorAll('.slot-picker-tab').forEach((tab) => {
+      tab.addEventListener('click', () => {
+        const tabName = (tab as HTMLElement).dataset.tab as 'ingredients' | 'equipment';
+
+        // Update tab active state
+        container.querySelectorAll('.slot-picker-tab').forEach((t) => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        // Re-render tab content
+        const tabContent = container.querySelector('.slot-picker-tab-content');
+        if (tabContent) {
+          if (tabName === 'ingredients') {
+            tabContent.outerHTML = this.renderIngredientsTab(inventory);
+          } else {
+            tabContent.outerHTML = this.renderEquipmentTab(inventory);
+          }
+        }
+      });
+    });
   }
 
   public update(crafting: CraftingSystem, _inventory: InventorySystem): void {

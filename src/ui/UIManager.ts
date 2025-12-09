@@ -44,6 +44,8 @@ type ModalType =
   | 'guide'
   | 'pause'
   | 'expeditions'
+  | 'inventory'
+  | 'portals'
   | null;
 
 export class UIManager {
@@ -107,15 +109,43 @@ export class UIManager {
     this.portalInventoryUI.initialize();
     this.expeditionUI.initialize();
     this.setupModalHandlers();
+    this.setupNavigation();
+  }
+
+  private setupNavigation(): void {
+    // Mobile menu toggle
+    const menuToggle = document.getElementById('menu-toggle');
+    const mainNav = document.getElementById('main-nav');
+
+    // Create overlay for mobile menu
+    const navOverlay = document.createElement('div');
+    navOverlay.className = 'nav-overlay';
+    navOverlay.id = 'nav-overlay';
+    document.body.appendChild(navOverlay);
+
+    menuToggle?.addEventListener('click', () => {
+      mainNav?.classList.toggle('open');
+      navOverlay.classList.toggle('open');
+    });
+
+    navOverlay.addEventListener('click', () => {
+      mainNav?.classList.remove('open');
+      navOverlay.classList.remove('open');
+    });
+
+    // Close nav when a button is clicked (mobile)
+    document.querySelectorAll('.nav-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        mainNav?.classList.remove('open');
+        navOverlay.classList.remove('open');
+      });
+    });
   }
 
   private setupModalHandlers(): void {
-    // Header buttons
+    // Nav buttons
     document.getElementById('pause-btn')?.addEventListener('click', () => this.openModal('pause'));
     document.getElementById('guide-btn')?.addEventListener('click', () => this.openModal('guide'));
-    document
-      .getElementById('start-expedition-btn')
-      ?.addEventListener('click', () => this.openModal('expeditions'));
     document.getElementById('shop-btn')?.addEventListener('click', () => this.openModal('shop'));
     document
       .getElementById('upgrades-btn')
@@ -124,11 +154,19 @@ export class UIManager {
       .getElementById('research-btn')
       ?.addEventListener('click', () => this.openModal('research'));
     document
-      .getElementById('mana-converter-btn')
-      ?.addEventListener('click', () => this.openModal('mana-converter'));
-    document
       .getElementById('recipes-btn')
       ?.addEventListener('click', () => this.openModal('recipes'));
+    document
+      .getElementById('inventory-btn')
+      ?.addEventListener('click', () => this.openModal('inventory'));
+    document
+      .getElementById('portals-btn')
+      ?.addEventListener('click', () => this.openModal('portals'));
+
+    // Other buttons
+    document
+      .getElementById('start-expedition-btn')
+      ?.addEventListener('click', () => this.openModal('expeditions'));
 
     // Close button
     this.modalClose?.addEventListener('click', () => this.closeModal());
@@ -165,6 +203,8 @@ export class UIManager {
       research: '🔬 Research',
       'mana-converter': '✨ Mana Converter',
       recipes: '📖 Recipe Book',
+      inventory: '🎒 Inventory',
+      portals: '🌀 Crafted Portals',
     };
     this.modalTitle.textContent = titles[type || ''] || '';
 
@@ -224,7 +264,27 @@ export class UIManager {
       case 'recipes':
         this.renderRecipesModal();
         break;
+      case 'inventory':
+        this.renderInventoryModal();
+        break;
+      case 'portals':
+        this.renderPortalsModal();
+        break;
     }
+  }
+
+  private renderInventoryModal(): void {
+    if (!this.modalContent || !this.lastUpdateData) return;
+
+    // Use the CraftingUI's slot picker modal content rendering
+    this.craftingUI.renderInventoryModalContent(this.modalContent);
+  }
+
+  private renderPortalsModal(): void {
+    if (!this.modalContent || !this.lastUpdateData) return;
+
+    // Render stored portals
+    this.portalInventoryUI.renderToModal(this.modalContent, this.lastUpdateData.storedPortals);
   }
 
   private renderExpeditionsModal(): void {

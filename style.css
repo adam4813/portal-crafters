@@ -43,47 +43,93 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 2rem;
+  padding: 0.75rem 1rem;
   background-color: var(--background-medium);
   border-bottom: 2px solid var(--primary-color);
+  gap: 1rem;
+}
+
+.menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
 }
 
 .game-header h1 {
   color: var(--primary-color);
-  font-size: 1.5rem;
-}
-
-.header-buttons {
-  display: flex;
-  gap: 0.75rem;
-}
-
-.btn-header {
-  background-color: var(--background-light);
-  color: var(--text-primary);
-  border: 1px solid var(--primary-color);
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-header:hover {
-  background-color: var(--primary-color);
-  transform: translateY(-2px);
+  font-size: 1.25rem;
+  flex-shrink: 0;
 }
 
 #resources {
   display: flex;
-  gap: 2rem;
-  font-size: 1.1rem;
+  gap: 1rem;
+  font-size: 0.95rem;
+  margin-left: auto;
 }
 
 #resources span {
-  padding: 0.5rem 1rem;
+  padding: 0.4rem 0.75rem;
   background-color: var(--background-light);
   border-radius: 4px;
+}
+
+/* Main layout with nav */
+.game-layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.main-nav {
+  width: 160px;
+  background-color: var(--background-medium);
+  border-right: 1px solid var(--background-light);
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem;
+  flex-shrink: 0;
+}
+
+.nav-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: transparent;
+  color: var(--text-primary);
+  border: none;
+  padding: 0.6rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  width: 100%;
+}
+
+.nav-btn:hover {
+  background-color: var(--background-light);
+}
+
+.nav-btn:active {
+  background-color: var(--primary-color);
+}
+
+.nav-footer {
+  border-top: 1px solid var(--background-light);
+  padding-top: 0.5rem;
+  margin-top: 0.5rem;
 }
 
 .game-main {
@@ -1799,14 +1845,69 @@ body {
   border-left: 3px solid var(--lightning-color);
 }
 
-/* Mobile: 1 column, inventory first, then portal power, then all elements */
+/* Mobile styles */
+@media (max-width: 768px) {
+  .menu-toggle {
+    display: block;
+  }
+
+  .main-nav {
+    position: fixed;
+    top: 0;
+    left: -200px;
+    width: 200px;
+    height: 100vh;
+    z-index: 1000;
+    transition: left 0.3s ease;
+    padding-top: 60px;
+  }
+
+  .main-nav.open {
+    left: 0;
+  }
+
+  .nav-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+  }
+
+  .nav-overlay.open {
+    display: block;
+  }
+
+  .game-layout {
+    flex-direction: column;
+  }
+
+  .game-main {
+    flex-direction: column;
+  }
+
+  .sidebar.left-sidebar {
+    width: 100%;
+    flex-direction: row;
+    gap: 0.5rem;
+    max-height: 200px;
+  }
+
+  .sidebar.left-sidebar .panel {
+    flex: 1;
+  }
+}
+
 @media (max-width: 600px) {
   .crafting-grid {
     grid-template-columns: 1fr;
     grid-template-rows: auto;
   }
 
-  /* Mobile order: inventory, portal power, elements left, elements right */
+  /* Mobile order: slots, portal power, elements left, elements right */
   #portal-ingredient-section {
     order: 1;
   }
@@ -1829,6 +1930,24 @@ body {
 
   .mobile-hidden {
     display: none;
+  }
+
+  .sidebar.left-sidebar {
+    flex-direction: column;
+    max-height: none;
+  }
+
+  .game-header h1 {
+    font-size: 1rem;
+  }
+
+  #resources {
+    gap: 0.5rem;
+    font-size: 0.8rem;
+  }
+
+  #resources span {
+    padding: 0.25rem 0.5rem;
   }
 }
 
