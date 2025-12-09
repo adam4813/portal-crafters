@@ -136,6 +136,10 @@ export class ExpeditionUI {
             <span class="expedition-timer ${isComplete ? 'complete' : ''}">${isComplete ? '✅ Complete!' : `⏱️ ${formatTime(timeRemaining)}`}</span>
           </div>
           <p class="expedition-description">${elementsStr || 'Pure mana'}</p>
+          <div class="expedition-rewards">
+            <strong>Potential Rewards:</strong>
+            ${this.renderRewardsList(rewards)}
+          </div>
           ${
             isComplete
               ? `

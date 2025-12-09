@@ -2,8 +2,9 @@ import type { Game } from '../game/Game';
 import type { CustomerSystem } from '../game/Customer';
 import type { ProgressionSystem } from '../game/ProgressionSystem';
 import type { ElementSystem } from '../game/ElementSystem';
-import type { Portal as PortalType, Customer } from '../types';
+import type { Portal as PortalType, Customer, ContractModifier, Reward } from '../types';
 import { formatTime } from '../utils/helpers';
+import { calculateAdjustedPayment } from '../data/customers';
 
 export class CustomerUI {
   private game: Game;
@@ -158,9 +159,27 @@ export class CustomerUI {
       // Build requirements display
       const reqElements = this.formatElementRequirement(customer.requirements);
       const reqMana = customer.requirements.minMana ? `✨ ≥${customer.requirements.minMana}` : '';
+      const reqEquipment = this.formatEquipmentRequirement(customer.requirements);
 
-      // Add special class for mini-boss
-      const cardClass = isMiniBoss ? 'customer-card miniboss-card' : 'customer-card';
+      // Format modifiers display
+      const modifiersHtml = this.formatModifiers(customer.requirements.modifiers || []);
+
+      // Format special rewards display
+      const specialRewardHtml = customer.specialReward
+        ? `<div class="customer-special-reward">🎁 Special: ${this.formatSpecialReward(customer.specialReward)}</div>`
+        : '';
+
+      // Calculate adjusted payment with modifiers using shared utility
+      const adjustedPayment = calculateAdjustedPayment(
+        customer.payment,
+        customer.requirements.modifiers
+      );
+
+      // Add special class for mini-boss and special customers
+      let cardClass = 'customer-card';
+      if (isMiniBoss) cardClass += ' miniboss-card';
+      if (customer.isSpecial) cardClass += ' special-card';
+
       const timerDisplay = isMiniBoss
         ? '<div class="customer-timer unlimited">⏱️ ∞ Unlimited</div>'
         : `<div class="customer-timer ${timeRemaining < 30 ? 'urgent' : ''}">⏱️ ${formatTime(timeRemaining)}</div>`;
@@ -171,12 +190,15 @@ export class CustomerUI {
             <div class="customer-name">${customer.icon} ${customer.name}</div>
             ${timerDisplay}
           </div>
+          ${modifiersHtml}
           <div class="customer-requirements">
             <span class="req-level">Lv ${customer.requirements.minLevel}+</span>
             ${reqMana ? `<span class="req-mana">${reqMana}</span>` : ''}
             <span class="req-elements">${reqElements}</span>
+            ${reqEquipment ? `<span class="req-equipment">${reqEquipment}</span>` : ''}
           </div>
-          <div class="customer-reward">💰 ${customer.payment} gold</div>
+          <div class="customer-reward">💰 ${adjustedPayment} gold</div>
+          ${specialRewardHtml}
           <div class="customer-fulfill">
             ${this.renderPortalSelector(customer, matchingPortals, storedPortals)}
           </div>
@@ -332,6 +354,122 @@ export class CustomerUI {
     }
     // If reqElements is undefined, any combination is allowed
 
+    // Check equipment requirements
+    if (customer.requirements.requiredEquipmentSlots) {
+      const equipmentSlots = customer.requirements.requiredEquipmentSlots;
+      const requiredCount = customer.requirements.minEquipmentCount || equipmentSlots.length;
+
+      // Count how many required slots are filled in the portal
+      let filledCount = 0;
+      for (const slot of equipmentSlots) {
+        // Check if portal has equipment in this slot
+        // We need to check both portal.equipment (static) and portal.generatedEquipmentAttributes
+        const hasStaticEquipment = portal.equipment.some((eqId) => {
+          // Import getEquipmentById at top of file if needed
+          const eq = this.game
+            .getInventory()
+            .getAllOwnedEquipment()
+            .find((e) => e.id === eqId);
+          return eq && eq.slot === slot;
+        });
+        const hasGeneratedEquipment = (portal.generatedEquipmentAttributes || []).some(
+          (genEq) => genEq.slot === slot
+        );
+
+        if (hasStaticEquipment || hasGeneratedEquipment) {
+          filledCount++;
+        }
+      }
+
+      if (filledCount < requiredCount) {
+        return false;
+      }
+    }
+
+    // Check minimum equipment rarity (if specified)
+    if (customer.requirements.minEquipmentRarity) {
+      const rarityOrder = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
+      const minRarityIndex = rarityOrder.indexOf(customer.requirements.minEquipmentRarity);
+
+      // Check all equipment in portal meets minimum rarity
+      let hasEquipment = false;
+      for (const eqId of portal.equipment) {
+        const eq = this.game
+          .getInventory()
+          .getAllOwnedEquipment()
+          .find((e) => e.id === eqId);
+        if (eq) {
+          hasEquipment = true;
+          const eqRarityIndex = rarityOrder.indexOf(eq.rarity);
+          if (eqRarityIndex < minRarityIndex) {
+            return false;
+          }
+        }
+      }
+
+      // Also check generated equipment
+      for (const genEq of portal.generatedEquipmentAttributes || []) {
+        hasEquipment = true;
+        const eqRarityIndex = rarityOrder.indexOf(genEq.rarity);
+        if (eqRarityIndex < minRarityIndex) {
+          return false;
+        }
+      }
+
+      // Must have at least one piece of equipment if rarity is required
+      if (!hasEquipment) {
+        return false;
+      }
+    }
+
     return true;
+  }
+
+  private formatModifiers(modifiers: ContractModifier[]): string {
+    if (!modifiers || modifiers.length === 0) return '';
+
+    const modifierLabels: Record<string, string> = {
+      urgent: '⚡ Urgent',
+      bonus: '💎 Bonus',
+      perfectionist: '✨ Perfectionist',
+      bulk_order: '📦 Bulk Order',
+      experimental: '🧪 Experimental',
+    };
+
+    const badges = modifiers.map((mod) => `<span>${modifierLabels[mod] || mod}</span>`).join('');
+    return `<div class="customer-modifiers">${badges}</div>`;
+  }
+
+  private formatEquipmentRequirement(requirements: Customer['requirements']): string {
+    const parts: string[] = [];
+
+    if (requirements.requiredEquipmentSlots && requirements.requiredEquipmentSlots.length > 0) {
+      const slots = requirements.requiredEquipmentSlots;
+      const count = requirements.minEquipmentCount || slots.length;
+      parts.push(`⚔️ ${count}x ${slots.join('/')}`);
+    }
+
+    if (requirements.minEquipmentRarity) {
+      parts.push(`💎 ${requirements.minEquipmentRarity}+`);
+    }
+
+    return parts.join(' ');
+  }
+
+  private formatSpecialReward(reward: Reward): string {
+    switch (reward.type) {
+      case 'gold':
+        return `+${reward.amount} gold`;
+      case 'mana':
+        return `+${reward.amount} mana`;
+      case 'ingredient':
+        return `${reward.amount}x ingredient`;
+      case 'equipment':
+        return 'Equipment';
+      case 'generatedEquipment':
+        return 'Generated equipment';
+      default:
+        return 'Unknown reward';
+    }
   }
 }

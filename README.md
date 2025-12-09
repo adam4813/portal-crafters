@@ -232,6 +232,183 @@ To add a new element:
 4. Add a conversion rate to `CONVERSION_RATES`
 5. Optionally add element combinations to `ELEMENT_REQUIREMENTS` in `src/data/customers.ts`
 
+## 📜 Customer Contract System
+
+Portal Crafters features an advanced customer contract system where adventurers request portals with varying requirements and reward tiers. The system scales with player progression through 5 tiers and includes special customer types with unique mechanics.
+
+### Customer Templates
+
+The game includes **10 customer templates** organized by difficulty tier:
+
+#### Regular Customers (Tiers 1-5)
+
+1. **Tier 1 - Novices**: Novice Mage, Apprentice Wizard, Student Alchemist
+   - Base Payment: 50 gold (±20 variance)
+   - Simple element requirements (Fire, Water)
+   - Low modifier chances
+2. **Tier 2 - Journeymen**: Battle Mage, Elemental Knight, Arcane Scholar
+   - Base Payment: 100 gold (±40 variance)
+   - Standard elements (Earth, Air)
+   - Moderate modifier chances
+3. **Tier 3 - Masters**: Master Conjurer, High Priestess, Archmage
+   - Base Payment: 200 gold (±80 variance)
+   - Rare elements (Ice, Lightning, Nature)
+   - Higher modifier chances
+4. **Tier 4 - Elite**: Void Walker, Crystal Sage, Shadow Master
+   - Base Payment: 400 gold (±100 variance)
+   - Exotic elements (Shadow, Light, Void)
+   - Special reward chance: 10%
+5. **Tier 4-5 - Masters**: Temporal Mage, Chaos Lord, Life Weaver
+   - Base Payment: 800 gold (±200 variance)
+   - Legendary elements (Time, Chaos, Life, Death)
+   - Special reward chance: 15%
+6. **Tier 5 - Legendary**: Planeswalker, Dimensional Archon, Cosmic Weaver
+   - Base Payment: 1200 gold (±300 variance)
+   - Most complex requirements
+   - Special reward chance: 20%
+
+#### Special Customers (4 Types)
+
+Special customers have unique mechanics and appear with ~5% base probability (increases with difficulty):
+
+1. **Wealthy Merchant** (Tier 3)
+   - High payment with simpler requirements
+   - 30% special reward chance
+   - Prefers "bonus" and "bulk_order" modifiers
+   - Icons: 💰👔🎩💎
+2. **Experimental Researcher** (Tier 3)
+   - Complex experimental requirements
+   - 50% special reward chance (often unique items)
+   - Frequently requests equipment
+   - Icons: 🧪🔬📡🧬
+3. **Time-Traveler** (Tier 4)
+   - Unusual requirements, often urgent
+   - 40% special reward chance
+   - Variable reward types
+   - Icons: ⏰🌀⌛🔮
+4. **Ancient Entity** (Tier 5)
+   - Extreme requirements, legendary rewards
+   - 80% special reward chance
+   - Very high payment (2000 gold base)
+   - Icons: 🐲👁️🦑🌠
+
+### Contract Requirements
+
+Contracts can specify multiple requirement types:
+
+#### Element Requirements
+
+- **Specific Elements**: Must include certain elements (e.g., Fire + Water)
+- **Any Elements**: Must have some elemental energy (but any type)
+- **No Elements**: Must be pure mana (no elemental conversion)
+- **Minimum Amount**: Required quantity of each element
+
+#### Equipment Requirements
+
+- **Required Slots**: Portal must include equipment from specific slots (weapon, armor, accessory)
+- **Minimum Rarity**: All equipment must meet or exceed a rarity threshold (common → legendary)
+- **Minimum Count**: Number of equipment pieces required
+
+#### Other Requirements
+
+- **Minimum Portal Level**: Based on mana invested and ingredients
+- **Minimum Mana**: Raw mana requirement (before element conversion)
+
+### Contract Modifiers
+
+Modifiers add variety and challenge to contracts, with payment bonuses:
+
+| Modifier          | Effect                                   | Payment Bonus | Probability Range |
+| ----------------- | ---------------------------------------- | ------------- | ----------------- |
+| **Urgent**        | Reduced patience, time pressure          | +30%          | 5-25%             |
+| **Bonus**         | Extra gold reward for completion         | +20%          | 10-35%            |
+| **Perfectionist** | Increased level and element requirements | +25%          | 5-25%             |
+| **Bulk Order**    | 50% more element/mana requirements       | +40%          | 5-20%             |
+| **Experimental**  | Requires specific equipment slots        | +15%          | 5-15%             |
+
+Modifiers are assigned probabilistically based on customer template and difficulty level. Higher-tier customers and special customers have higher modifier chances.
+
+### Reward Tiers
+
+Every contract has a reward tier that affects the quality of special rewards:
+
+- **Standard**: Normal rewards from regular contracts
+- **Enhanced**: Better rewards from mid-tier customers with modifiers
+- **Rare**: High-tier customers (4+) or complex requirements
+- **Unique**: Ancient entities and legendary customers with special rewards
+
+### Special Rewards
+
+Special customers can offer unique rewards as partial or full payment:
+
+- **Ingredients**: Rare elemental ingredients based on tier
+- **Generated Equipment**: Procedurally generated gear appropriate to difficulty
+- **Mana**: Bonus mana (50+ based on tier)
+- **Extra Gold**: Additional payment (50-200% of base)
+
+Special rewards appear alongside the regular gold payment and are shown to players before accepting contracts.
+
+### Progression Integration
+
+The contract system aligns with the 5-tier progression system:
+
+1. **Tier 1** → Novice customers, common elements
+2. **Tier 2** → Journeyman customers, standard elements unlocked (Earth/Air)
+3. **Tier 3** → Master customers, rare elements unlocked (Ice/Lightning/Nature)
+4. **Tier 4** → Elite customers, exotic elements unlocked (Shadow/Light/Void)
+5. **Tier 5** → Legendary customers, legendary elements unlocked (Time/Chaos/Life/Death)
+
+Mini-boss contracts appear at tier boundaries, and completing them unlocks the next tier.
+
+### Contract Generation Algorithm
+
+1. **Select Template**: Based on current difficulty level (1-5)
+   - 5% chance for special customer (if appropriate tier)
+   - Otherwise, select regular customer weighted by difficulty
+2. **Generate Requirements**: Based on template's difficulty multiplier
+   - Element requirements (65% specific, 15% undefined, 10% any, 10% none)
+   - Mana requirements (40% chance)
+   - Equipment requirements (if experimental modifier)
+3. **Apply Modifiers**: Roll for each modifier based on template chances
+4. **Determine Rewards**: Calculate reward tier and special reward
+5. **Adjust for Modifiers**: Apply modifier effects to requirements and payment
+
+### Extending the System
+
+To add a new customer template:
+
+1. Add template to `CUSTOMER_TEMPLATES` in `src/data/customers.ts`
+2. Specify `tier` (1-5) for progression alignment
+3. Define `modifierChances` for variety
+4. Set `isSpecial: true` for special customers
+5. Set `specialRewardChance` for unique rewards
+
+To add a new modifier:
+
+1. Add type to `ContractModifier` in `src/types/index.ts`
+2. Add to modifier chances in customer templates
+3. Implement effect in `applyModifierEffects()` in `Customer.ts`
+4. Add payment bonus in `calculateAdjustedPayment()` in `src/data/customers.ts`
+
+### Contract Display
+
+The UI displays the following information for each customer:
+
+- Customer name (adjective + base name from pool)
+- Customer icon (emoji from icon pool)
+- Contract requirements (elements, mana, equipment)
+- Base payment + modifiers
+- Special rewards (if offered)
+- Patience timer (time remaining before customer leaves)
+- Special customer indicator (for rare customers)
+
+Contract completion rewards:
+
+- Base gold payment (with modifier bonuses)
+- Special rewards (if offered)
+- Random portal completion rewards
+- Progression tracking
+
 ## 📁 Project Structure
 
 ```

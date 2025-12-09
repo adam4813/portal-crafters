@@ -103,6 +103,12 @@ export interface Portal {
   attributes?: Record<string, number>;
 }
 
+// Contract modifier types for special contract variations
+export type ContractModifier = 'urgent' | 'bonus' | 'perfectionist' | 'bulk_order' | 'experimental';
+
+// Reward tier types for contract rewards
+export type RewardTier = 'standard' | 'enhanced' | 'rare' | 'unique';
+
 // Customer contract requirements
 export interface ContractRequirements {
   minLevel: number;
@@ -115,6 +121,12 @@ export interface ContractRequirements {
   minElementAmount?: number;
   // Minimum raw mana required in the portal
   minMana?: number;
+  // Equipment requirements (optional) - specific equipment slots or rarities
+  requiredEquipmentSlots?: EquipmentSlot[];
+  minEquipmentRarity?: EquipmentRarity;
+  minEquipmentCount?: number;
+  // Contract modifiers for special requirements
+  modifiers?: ContractModifier[];
 }
 
 // Customer interface
@@ -126,6 +138,10 @@ export interface Customer {
   payment: number;
   patience: number; // Time in seconds before leaving
   arrivedAt: number;
+  // Special reward offered (if any) - unique items or ingredients as partial/full payment
+  specialReward?: Reward;
+  rewardTier?: RewardTier;
+  isSpecial?: boolean; // Rare/special customer flag
 }
 
 // Customer template for generating new customers
@@ -136,6 +152,19 @@ export interface CustomerTemplate {
   paymentVariance: number;
   basePatience: number;
   difficultyMultiplier: number;
+  // Tier alignment for progression (1-5 for standard, higher for advanced)
+  tier?: number;
+  // Special customer properties
+  isSpecial?: boolean;
+  specialRewardChance?: number; // 0-1 probability of offering special reward
+  // Modifier probabilities for this template
+  modifierChances?: {
+    urgent?: number;
+    bonus?: number;
+    perfectionist?: number;
+    bulk_order?: number;
+    experimental?: number;
+  };
 }
 
 // Recipe for crafting

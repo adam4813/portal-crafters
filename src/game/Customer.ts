@@ -1,10 +1,20 @@
-import type { Customer, CustomerTemplate, ContractRequirements, ElementType } from '../types';
+import type {
+  Customer,
+  CustomerTemplate,
+  ContractRequirements,
+  ElementType,
+  EquipmentSlot,
+  ContractModifier,
+} from '../types';
 import {
   CUSTOMER_TEMPLATES,
   generateCustomerName,
   generateCustomerIcon,
   generatePayment,
   selectElementRequirements,
+  generateContractModifiers,
+  generateSpecialReward,
+  determineRewardTier,
 } from '../data/customers';
 import { generateId } from '../utils/helpers';
 
@@ -71,25 +81,124 @@ export class CustomerSystem {
       return null;
     }
 
-    const templateIndex = Math.min(
-      Math.floor(Math.random() * this.difficultyLevel),
-      CUSTOMER_TEMPLATES.length - 1
-    );
-    const template = CUSTOMER_TEMPLATES[templateIndex];
+    // Select template based on difficulty level and tier
+    // Allow special customers to appear occasionally (5% chance at higher difficulties)
+    const template = this.selectTemplate();
 
     const requirements = this.generateRequirements(template);
+    const modifiers = generateContractModifiers(template, this.difficultyLevel);
+    const specialReward = generateSpecialReward(template, this.difficultyLevel);
+    const rewardTier = determineRewardTier(template, modifiers);
+
+    // Apply modifier effects to requirements
+    this.applyModifierEffects(requirements, modifiers, template);
+
+    // Calculate patience with urgent modifier reduction
+    let patience = template.basePatience + Math.floor(Math.random() * 30);
+    if (modifiers.includes('urgent')) {
+      patience = Math.floor(patience * 0.7); // 30% reduction for urgent contracts
+    }
+
     const customer: Customer = {
       id: generateId(),
       name: generateCustomerName(template),
       icon: generateCustomerIcon(template),
       requirements,
       payment: generatePayment(template),
-      patience: template.basePatience + Math.floor(Math.random() * 30),
+      patience,
       arrivedAt: Date.now(),
+      specialReward,
+      rewardTier,
+      isSpecial: template.isSpecial,
     };
 
     this.queue.push(customer);
     return customer;
+  }
+
+  /**
+   * Select a customer template based on difficulty and special customer probability
+   */
+  private selectTemplate(): CustomerTemplate {
+    // Separate regular and special customers
+    const regularTemplates = CUSTOMER_TEMPLATES.filter((t) => !t.isSpecial);
+    const specialTemplates = CUSTOMER_TEMPLATES.filter((t) => t.isSpecial);
+
+    // 5% base chance for special customers, increases with difficulty
+    const specialChance = Math.min(0.05 + this.difficultyLevel * 0.02, 0.2);
+
+    if (specialTemplates.length > 0 && Math.random() < specialChance) {
+      // Select a special customer appropriate for current difficulty
+      const appropriateSpecials = specialTemplates.filter(
+        (t) => (t.tier || 1) <= this.difficultyLevel + 1
+      );
+      if (appropriateSpecials.length > 0) {
+        return appropriateSpecials[Math.floor(Math.random() * appropriateSpecials.length)];
+      }
+    }
+
+    // Select regular template based on difficulty (allow +1 for variety)
+    const templateIndex = Math.min(
+      Math.floor(Math.random() * (this.difficultyLevel + 1)),
+      regularTemplates.length - 1
+    );
+    return regularTemplates[templateIndex];
+  }
+
+  /**
+   * Apply modifier effects to contract requirements
+   */
+  private applyModifierEffects(
+    requirements: ContractRequirements,
+    modifiers: ContractModifier[],
+    template: CustomerTemplate
+  ): void {
+    for (const modifier of modifiers) {
+      switch (modifier) {
+        case 'urgent':
+          // Note: Patience reduction is handled in spawnCustomer by reducing base patience
+          // Payment bonus is applied during contract completion
+          break;
+        case 'bonus':
+          // Payment bonus is applied during contract completion
+          break;
+        case 'perfectionist':
+          // Increase minimum level and element amount
+          requirements.minLevel = Math.floor(requirements.minLevel * 1.3);
+          if (requirements.minElementAmount) {
+            requirements.minElementAmount = Math.ceil(requirements.minElementAmount * 1.2);
+          }
+          break;
+        case 'bulk_order':
+          // Significantly increase element and mana requirements
+          if (requirements.minElementAmount) {
+            requirements.minElementAmount = Math.ceil(requirements.minElementAmount * 1.5);
+          }
+          if (requirements.minMana) {
+            requirements.minMana = Math.floor(requirements.minMana * 1.5);
+          }
+          break;
+        case 'experimental':
+          // Add equipment requirements (avoid duplicates)
+          if (!requirements.requiredEquipmentSlots) {
+            const slots: EquipmentSlot[] = ['weapon', 'armor', 'accessory'];
+            const slotCount = Math.min(
+              Math.ceil(1 + template.difficultyMultiplier * 0.5),
+              slots.length
+            );
+            requirements.requiredEquipmentSlots = [];
+
+            // Select unique slots
+            const availableSlots = [...slots];
+            for (let i = 0; i < slotCount && availableSlots.length > 0; i++) {
+              const randomIndex = Math.floor(Math.random() * availableSlots.length);
+              requirements.requiredEquipmentSlots.push(availableSlots[randomIndex]);
+              availableSlots.splice(randomIndex, 1);
+            }
+          }
+          break;
+      }
+    }
   }
 
   private generateRequirements(template: CustomerTemplate): ContractRequirements {
