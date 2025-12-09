@@ -146,7 +146,8 @@ body {
 }
 
 .sidebar {
-  width: 280px;
+  flex: 1;
+  max-width: 500px;
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -243,7 +244,6 @@ body {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  max-width: 600px;
   min-height: 0;
   overflow: hidden;
 }
@@ -263,6 +263,8 @@ body {
   flex-direction: column;
   gap: 1rem;
   padding: 1rem;
+  container-type: inline-size;
+  container-name: crafting-panel;
 }
 
 #portal-power-section {
@@ -1757,12 +1759,45 @@ body {
   margin-left: 4px;
 }
 
-/* Crafting Grid Layout - 2x2 on desktop, 1x4 on mobile */
+/* Crafting Grid Layout - 2x2 on wide containers, 1x4 on narrow */
 .crafting-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   grid-template-rows: auto auto;
   gap: 0.75rem;
+}
+
+/* Container query for narrow crafting panel */
+@container crafting-panel (max-width: 550px) {
+  .crafting-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+  }
+
+  /* Narrow order: slots, portal power, elements left, elements right */
+  #portal-ingredient-section {
+    order: 1;
+  }
+
+  #portal-power-section {
+    order: 2;
+  }
+
+  #element-slots-left {
+    order: 3;
+  }
+
+  #element-slots-right {
+    order: 4;
+  }
+
+  #element-slots-right h4 {
+    display: none;
+  }
+
+  .mobile-hidden {
+    display: none;
+  }
 }
 
 .crafting-cell {
@@ -1886,36 +1921,6 @@ body {
 }
 
 @media (max-width: 600px) {
-  .crafting-grid {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto;
-  }
-
-  /* Mobile order: slots, portal power, elements left, elements right */
-  #portal-ingredient-section {
-    order: 1;
-  }
-
-  #portal-power-section {
-    order: 2;
-  }
-
-  #element-slots-left {
-    order: 3;
-  }
-
-  #element-slots-right {
-    order: 4;
-  }
-
-  #element-slots-right h4 {
-    display: none;
-  }
-
-  .mobile-hidden {
-    display: none;
-  }
-
   .sidebar.left-sidebar {
     flex-direction: column;
     max-height: none;
