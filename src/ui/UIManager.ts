@@ -1208,6 +1208,8 @@ export class UIManager {
   private renderPauseModal(): void {
     if (!this.modalContent) return;
 
+    let hasSavedThisSession = false;
+
     const html = `
       <div class="pause-menu-content">
         <p class="pause-message">The game is paused. Customer timers and spawns are frozen.</p>
@@ -1252,6 +1254,7 @@ export class UIManager {
 
     document.getElementById('save-game-btn')?.addEventListener('click', () => {
       this.game.saveGame();
+      hasSavedThisSession = true;
     });
 
     document.getElementById('guide-menu-btn')?.addEventListener('click', () => {
@@ -1259,7 +1262,7 @@ export class UIManager {
     });
 
     document.getElementById('return-title-btn')?.addEventListener('click', () => {
-      if (confirm('Return to title screen? Your game will be saved.')) {
+      if (hasSavedThisSession || confirm('Return to title screen? Your game will be saved.')) {
         this.game.saveGame();
         this.closeModal();
         // Call the global returnToTitle function

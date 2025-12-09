@@ -286,6 +286,11 @@ export class CustomerSystem {
 
   public loadQueue(customers: Customer[]): void {
     this.queue = [...customers];
+    // If queue is empty after loading, spawn initial customers
+    if (this.queue.length === 0) {
+      this.spawnCustomer();
+      this.spawnCustomer();
+    }
   }
 
   public saveQueue(): Customer[] {

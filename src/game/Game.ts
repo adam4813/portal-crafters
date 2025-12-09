@@ -47,6 +47,8 @@ export class Game {
   private isPaused: boolean = false;
   private lastTime: number = 0;
   private animationFrameId: number | null = null;
+  private uiUpdateAccumulator: number = 0;
+  private readonly UI_UPDATE_INTERVAL: number = 1; // Update UI every 1 second
 
   constructor(containerId: string) {
     const container = document.getElementById(containerId);
@@ -212,6 +214,12 @@ export class Game {
 
     this.isRunning = true;
     this.lastTime = performance.now();
+
+    // Trigger resize to ensure canvas is properly sized after app becomes visible
+    requestAnimationFrame(() => {
+      this.handleResize();
+    });
+
     this.gameLoop();
   }
 
@@ -249,6 +257,13 @@ export class Game {
 
       // Ensure mini-boss contract is in queue if not completed
       this.updateMiniBossContract();
+    }
+
+    // Periodic UI update for customer timers and spawns
+    this.uiUpdateAccumulator += deltaTime;
+    if (this.uiUpdateAccumulator >= this.UI_UPDATE_INTERVAL) {
+      this.uiUpdateAccumulator = 0;
+      this.updateUI();
     }
   }
 
