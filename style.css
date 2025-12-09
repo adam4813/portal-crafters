@@ -78,6 +78,40 @@ body {
   border-radius: 4px;
 }
 
+#mana-display {
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    transform 0.1s ease;
+}
+
+#mana-display:hover {
+  background-color: var(--primary-color);
+  color: var(--background-dark);
+  transform: scale(1.05);
+}
+
+/* Mana Purchase Modal */
+.mana-purchase-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.mana-purchase-modal .mana-status {
+  display: flex;
+  justify-content: space-between;
+  padding: 1rem;
+  background-color: var(--background-light);
+  border-radius: 8px;
+}
+
+.mana-purchase-modal .mana-packages {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
 /* Main layout with nav */
 .game-layout {
   display: flex;
@@ -750,7 +784,7 @@ body {
 /* Progression Status Display */
 .progression-status {
   margin-bottom: 1rem;
-  padding-bottom: 1rem;
+  padding: 1rem;
   border-bottom: 2px solid var(--primary-color);
 }
 

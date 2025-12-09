@@ -13,7 +13,6 @@ import { InventoryUI } from './InventoryUI';
 import { CustomerUI } from './CustomerUI';
 import { ShopUI } from './ShopUI';
 import { ResearchUI } from './ResearchUI';
-import { ManaConversionUI } from './ManaConversionUI';
 import { PortalInventoryUI } from './PortalInventoryUI';
 import { ExpeditionUI } from './ExpeditionUI';
 import { formatNumber } from '../utils/helpers';
@@ -39,7 +38,7 @@ type ModalType =
   | 'shop'
   | 'upgrades'
   | 'research'
-  | 'mana-converter'
+  | 'mana-purchase'
   | 'recipes'
   | 'guide'
   | 'pause'
@@ -56,7 +55,6 @@ export class UIManager {
   private customerUI: CustomerUI;
   private shopUI: ShopUI;
   private researchUI: ResearchUI;
-  private manaConversionUI: ManaConversionUI;
   private portalInventoryUI: PortalInventoryUI;
   private expeditionUI: ExpeditionUI;
 
@@ -71,7 +69,7 @@ export class UIManager {
   private modalClose: HTMLElement | null;
   private currentModal: ModalType = null;
   private currentGuideSection: string = 'getting-started';
-  private currentShopTab: 'mana' | 'items' | 'equipment' = 'mana';
+  private currentShopTab: 'items' | 'equipment' = 'items';
 
   // Last update data for modal re-renders
   private lastUpdateData: UIUpdateData | null = null;
@@ -86,7 +84,6 @@ export class UIManager {
     this.customerUI = new CustomerUI(game);
     this.shopUI = new ShopUI(game);
     this.researchUI = new ResearchUI(game);
-    this.manaConversionUI = new ManaConversionUI(game);
     this.portalInventoryUI = new PortalInventoryUI(game);
     this.expeditionUI = new ExpeditionUI(game);
 
@@ -106,7 +103,6 @@ export class UIManager {
     this.customerUI.initialize();
     this.shopUI.initialize();
     this.researchUI.initialize();
-    this.manaConversionUI.initialize();
     this.portalInventoryUI.initialize();
     this.expeditionUI.initialize();
     this.setupModalHandlers();
@@ -170,6 +166,9 @@ export class UIManager {
       .getElementById('contracts-btn')
       ?.addEventListener('click', () => this.openModal('contracts'));
 
+    // Mana display opens purchase modal
+    this.manaDisplay?.addEventListener('click', () => this.openModal('mana-purchase'));
+
     // Close button
     this.modalClose?.addEventListener('click', () => this.closeModal());
 
@@ -200,10 +199,10 @@ export class UIManager {
       pause: '⏸️ Game Paused',
       guide: '📚 Game Guide',
       expeditions: '🗺️ Expeditions',
-      shop: '🛒 Mana Shop',
+      shop: '🛒 Shop',
       upgrades: '⬆️ Upgrades',
       research: '🔬 Research',
-      'mana-converter': '✨ Mana Converter',
+      'mana-purchase': '✨ Purchase Mana',
       recipes: '📖 Recipe Book',
       inventory: '🎒 Inventory',
       portals: '🌀 Crafted Portals',
@@ -261,8 +260,8 @@ export class UIManager {
       case 'research':
         this.renderResearchModal();
         break;
-      case 'mana-converter':
-        this.renderManaConverterModal();
+      case 'mana-purchase':
+        this.renderManaPurchaseModal();
         break;
       case 'recipes':
         this.renderRecipesModal();
@@ -319,15 +318,7 @@ export class UIManager {
     if (!this.modalContent || !this.lastUpdateData) return;
 
     const { inventory } = this.lastUpdateData;
-    const manaSystem = this.game.getManaSystem();
-    const exchangeRate = manaSystem.getExchangeRate();
     const gold = inventory.getGold();
-
-    const manaPackages = [
-      { gold: 10, label: 'Small Mana Pack' },
-      { gold: 50, label: 'Medium Mana Pack' },
-      { gold: 100, label: 'Large Mana Pack' },
-    ];
 
     const shopItems = [
       {
@@ -424,7 +415,6 @@ export class UIManager {
     // Build tabs
     let html = `
       <div class="shop-tabs">
-        <button class="shop-tab ${this.currentShopTab === 'mana' ? 'active' : ''}" data-tab="mana">✨ Mana</button>
         <button class="shop-tab ${this.currentShopTab === 'items' ? 'active' : ''}" data-tab="items">🧪 Items</button>
         <button class="shop-tab ${this.currentShopTab === 'equipment' ? 'active' : ''}" data-tab="equipment">⚔️ Equipment</button>
       </div>
@@ -432,27 +422,7 @@ export class UIManager {
       <div class="shop-tab-content">
     `;
 
-    if (this.currentShopTab === 'mana') {
-      html += '<div class="exchange-rate-info">';
-      html += `<p class="info-text">Current rate: <strong>${exchangeRate.manaPerGold} mana per gold</strong></p>`;
-      html += '</div>';
-
-      for (const pack of manaPackages) {
-        const manaAmount = pack.gold * exchangeRate.manaPerGold;
-        const canAfford = gold >= pack.gold;
-        html += `
-          <div class="shop-item ${!canAfford ? 'cannot-afford' : ''}">
-            <div class="shop-item-info">
-              <div class="shop-item-name">${pack.label}</div>
-              <div class="shop-item-description">+${manaAmount} mana</div>
-            </div>
-            <button class="btn-secondary buy-mana-btn" data-gold="${pack.gold}" ${!canAfford ? 'disabled' : ''}>
-              ${pack.gold} 💰
-            </button>
-          </div>
-        `;
-      }
-    } else if (this.currentShopTab === 'items') {
+    if (this.currentShopTab === 'items') {
       for (const item of shopItems) {
         const canAfford = gold >= item.cost;
         html += `
@@ -490,16 +460,7 @@ export class UIManager {
     // Add click handlers for tabs
     this.modalContent.querySelectorAll('.shop-tab').forEach((tab) => {
       tab.addEventListener('click', () => {
-        this.currentShopTab = (tab as HTMLElement).dataset.tab as 'mana' | 'items' | 'equipment';
-        this.renderShopModal();
-      });
-    });
-
-    // Add click handlers for mana packs
-    this.modalContent.querySelectorAll('.buy-mana-btn').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const goldCost = parseInt((btn as HTMLElement).dataset.gold || '0', 10);
-        this.game.purchaseMana(goldCost);
+        this.currentShopTab = (tab as HTMLElement).dataset.tab as 'items' | 'equipment';
         this.renderShopModal();
       });
     });
@@ -650,14 +611,64 @@ export class UIManager {
     });
   }
 
-  private renderManaConverterModal(): void {
+  private renderManaPurchaseModal(): void {
     if (!this.modalContent || !this.lastUpdateData) return;
 
-    this.manaConversionUI.renderToElement(
-      this.modalContent,
-      this.lastUpdateData.inventory,
-      this.lastUpdateData.elements
-    );
+    const { inventory } = this.lastUpdateData;
+    const manaSystem = this.game.getManaSystem();
+    const exchangeRate = manaSystem.getExchangeRate();
+    const gold = inventory.getGold();
+    const currentMana = inventory.getMana();
+
+    const manaPackages = [
+      { gold: 10, label: 'Small Mana Pack' },
+      { gold: 50, label: 'Medium Mana Pack' },
+      { gold: 100, label: 'Large Mana Pack' },
+    ];
+
+    let html = `
+      <div class="mana-purchase-modal">
+        <div class="mana-status">
+          <div class="current-mana">Current Mana: <strong>${formatNumber(currentMana)} ✨</strong></div>
+          <div class="current-gold">Your Gold: <strong>${gold} 💰</strong></div>
+        </div>
+        <div class="exchange-rate-info">
+          <p class="info-text">Exchange rate: <strong>${exchangeRate.manaPerGold} mana per gold</strong></p>
+        </div>
+        <div class="mana-packages">
+    `;
+
+    for (const pack of manaPackages) {
+      const manaAmount = pack.gold * exchangeRate.manaPerGold;
+      const canAfford = gold >= pack.gold;
+      html += `
+        <div class="shop-item ${!canAfford ? 'cannot-afford' : ''}">
+          <div class="shop-item-info">
+            <div class="shop-item-name">${pack.label}</div>
+            <div class="shop-item-description">+${manaAmount} mana</div>
+          </div>
+          <button class="btn-secondary buy-mana-btn" data-gold="${pack.gold}" ${!canAfford ? 'disabled' : ''}>
+            ${pack.gold} 💰
+          </button>
+        </div>
+      `;
+    }
+
+    html += `
+        </div>
+      </div>
+    `;
+
+    this.modalContent.innerHTML = html;
+
+    // Add click handlers for mana packs
+    this.modalContent.querySelectorAll('.buy-mana-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const goldCost = parseInt((btn as HTMLElement).dataset.gold || '0', 10);
+        this.game.purchaseMana(goldCost);
+        this.renderManaPurchaseModal();
+      });
+    });
   }
 
   private async renderRecipesModal(): Promise<void> {
@@ -1008,7 +1019,6 @@ export class UIManager {
       { id: 'elements', label: '✨ Elements' },
       { id: 'contracts', label: '📜 Contracts' },
       { id: 'expeditions', label: '🗺️ Expeditions' },
-      { id: 'mana-converter', label: '🔄 Mana Converter' },
     ];
 
     let navHtml = '<ul class="guide-nav">';
@@ -1172,17 +1182,6 @@ export class UIManager {
           <li>Level 5+: 7+ minutes</li>
         </ul>
         <p><strong>Tip:</strong> Hover over an active expedition to see potential rewards. High mana investment can slightly reduce expedition time!</p>
-      `,
-      'mana-converter': `
-        <h4>Mana Converter</h4>
-        <p>Transform mana into elemental energy:</p>
-        <ol>
-          <li>Select an element type to convert to</li>
-          <li>Choose the amount to convert</li>
-          <li>Click "Convert" to receive the elements</li>
-        </ol>
-        <p><strong>Conversion Rates:</strong> Different elements may require different amounts of mana. Upgrades can improve conversion efficiency.</p>
-        <p><strong>Tip:</strong> You can also add Raw Mana directly to portals without converting it!</p>
       `,
     };
 
