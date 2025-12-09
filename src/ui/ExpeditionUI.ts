@@ -15,30 +15,49 @@ export class ExpeditionUI {
   }
 
   public render(expeditions: ExpeditionSystem, storedPortals: PortalType[]): string {
+    const activeExpeditions = expeditions.getActiveExpeditions();
+    const hasActive = activeExpeditions.length > 0;
+
     let html = '<div class="expeditions-panel">';
 
-    // Introduction text
-    html += '<div class="expedition-intro">';
-    html +=
-      "<p>Send parties through your crafted portals to gather resources! The portal's elemental composition determines what can be found.</p>";
-    html += '<p><strong>Note:</strong> Portals are consumed when used for expeditions.</p>';
+    // Tabs
+    html += `
+      <div class="expedition-tabs">
+        <button class="expedition-tab ${hasActive ? 'active' : ''}" data-tab="active">
+          🗺️ Active (${activeExpeditions.length})
+        </button>
+        <button class="expedition-tab ${!hasActive ? 'active' : ''}" data-tab="available">
+          🌀 Available (${storedPortals.length})
+        </button>
+      </div>
+    `;
+
+    // Active tab content
+    html += `<div class="expedition-tab-content" data-tab-content="active" style="${hasActive ? '' : 'display:none'}">`;
+    if (activeExpeditions.length === 0) {
+      html += '<p class="empty-message">No active expeditions. Send a portal to start one!</p>';
+    } else {
+      html += this.renderActiveExpeditions(expeditions);
+    }
     html += '</div>';
 
-    // Available Portals Section
-    html += '<div class="expeditions-section">';
-    html += '<h3>Send Portal on Expedition</h3>';
+    // Available tab content
+    html += `<div class="expedition-tab-content" data-tab-content="available" style="${!hasActive ? '' : 'display:none'}">`;
+    html += '<div class="expedition-intro">';
+    html +=
+      "<p>Send portals to gather resources! The portal's elemental composition determines what can be found.</p>";
+    html += '<p><strong>Note:</strong> Portals are consumed when used for expeditions.</p>';
+    html += '</div>';
 
     if (storedPortals.length === 0) {
       html +=
         '<p class="empty-message">No portals available. Craft portals to send on expeditions!</p>';
     } else {
       html += '<div class="available-expeditions-list">';
-
       for (const portal of storedPortals) {
         const duration = expeditions.getExpectedDuration(portal);
         const rewards = expeditions.getExpectedRewards(portal);
 
-        // Format portal elements
         const elementsStr = Object.entries(portal.elements)
           .filter(([, amt]) => amt && amt > 0)
           .map(([el, amt]) => `${el}:${amt}`)
@@ -69,7 +88,6 @@ export class ExpeditionUI {
           </div>
         `;
       }
-
       html += '</div>';
     }
     html += '</div>';
@@ -158,6 +176,24 @@ export class ExpeditionUI {
   }
 
   public attachEventListeners(): void {
+    // Tab switching
+    document.querySelectorAll('.expedition-tab').forEach((tab) => {
+      tab.addEventListener('click', (e) => {
+        const button = e.target as HTMLButtonElement;
+        const tabName = button.dataset.tab;
+
+        // Update tab active state
+        document.querySelectorAll('.expedition-tab').forEach((t) => t.classList.remove('active'));
+        button.classList.add('active');
+
+        // Show/hide tab content
+        document.querySelectorAll('.expedition-tab-content').forEach((content) => {
+          const el = content as HTMLElement;
+          el.style.display = el.dataset.tabContent === tabName ? '' : 'none';
+        });
+      });
+    });
+
     // Send expedition buttons
     document.querySelectorAll('.send-expedition-btn').forEach((btn) => {
       btn.addEventListener('click', (e) => {

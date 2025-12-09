@@ -162,10 +162,8 @@ export class UIManager {
     document
       .getElementById('portals-btn')
       ?.addEventListener('click', () => this.openModal('portals'));
-
-    // Other buttons
     document
-      .getElementById('start-expedition-btn')
+      .getElementById('expeditions-btn')
       ?.addEventListener('click', () => this.openModal('expeditions'));
 
     // Close button
@@ -1257,15 +1255,6 @@ export class UIManager {
     this.customerUI.update(data.customers, data.storedPortals, data.progression, data.elements);
     this.researchUI.update(data.elements, data.inventory);
     this.portalInventoryUI.update(data.storedPortals);
-
-    // Update active expeditions in sidebar
-    const activeExpeditionsContainer = document.getElementById('active-expeditions');
-    if (activeExpeditionsContainer) {
-      activeExpeditionsContainer.innerHTML = this.expeditionUI.renderActiveExpeditions(
-        data.expeditions
-      );
-      this.expeditionUI.attachEventListeners();
-    }
 
     // Update modal content if open
     if (this.currentModal) {
