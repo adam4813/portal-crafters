@@ -8,6 +8,8 @@ import { getElementDefinition } from '../data/elements';
 
 const TOTAL_SLOTS = 8;
 const BASE_UNLOCKED_SLOTS = 4;
+const TOTAL_ELEMENT_SLOTS = 6;
+const BASE_ELEMENT_SLOTS = 3;
 
 interface EffectTotals {
   goldMult: number;
@@ -48,6 +50,12 @@ export class CraftingUI {
   private hoveredSlotIndex: number | null = null;
   private slotPickerModal: HTMLElement | null = null;
   private activeSlotIndex: number | null = null;
+  private elementPickerModal: HTMLElement | null = null;
+  private activeElementSlotIndex: number | null = null;
+  // Stores the element type assigned to each element slot (null = empty slot)
+  private elementSlotAssignments: (ElementType | null)[] = [];
+  private elementSlotsLeftContainer: HTMLElement | null = null;
+  private elementSlotsRightContainer: HTMLElement | null = null;
 
   constructor(game: Game, _uiManager: UIManager) {
     this.game = game;
@@ -56,6 +64,16 @@ export class CraftingUI {
     this.portalResourcesContainer = document.getElementById('portal-resources');
     this.levelProgressContainer = document.getElementById('level-progress-container');
     this.itemEffectsContainer = document.getElementById('item-effects');
+    this.elementSlotsLeftContainer = document.querySelector(
+      '#element-slots-left .element-slots-column'
+    );
+    this.elementSlotsRightContainer = document.querySelector(
+      '#element-slots-right .element-slots-column'
+    );
+    // Initialize element slot assignments
+    for (let i = 0; i < TOTAL_ELEMENT_SLOTS; i++) {
+      this.elementSlotAssignments.push(null);
+    }
   }
 
   public initialize(): void {
@@ -82,6 +100,157 @@ export class CraftingUI {
 
     // Create the slot picker modal
     this.createSlotPickerModal();
+
+    // Create the element picker modal
+    this.createElementPickerModal();
+  }
+
+  private getUnlockedElementSlotCount(): number {
+    const upgrades = this.game.getUpgrades();
+    // Check if there's an element_slots upgrade, otherwise use base
+    const elementSlotUpgradeLevel = upgrades.getLevel('element_slots') || 0;
+    return BASE_ELEMENT_SLOTS + elementSlotUpgradeLevel;
+  }
+
+  private createElementPickerModal(): void {
+    if (document.getElementById('element-picker-modal')) return;
+
+    const modal = document.createElement('div');
+    modal.id = 'element-picker-modal';
+    modal.className = 'modal-overlay hidden';
+    modal.innerHTML = `
+      <div class="modal-container element-picker-container">
+        <div class="modal-header">
+          <h2>Select Element</h2>
+          <button class="modal-close" id="element-picker-close">&times;</button>
+        </div>
+        <div id="element-picker-content" class="modal-content"></div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+    this.elementPickerModal = modal;
+
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        this.closeElementPicker();
+      }
+    });
+
+    modal.querySelector('#element-picker-close')?.addEventListener('click', () => {
+      this.closeElementPicker();
+    });
+  }
+
+  private openElementPicker(slotIndex: number): void {
+    if (!this.elementPickerModal) return;
+
+    this.activeElementSlotIndex = slotIndex;
+    const elements = this.game.getElements();
+    const unlockedElements = elements.getUnlockedElements();
+    const currentElement = this.elementSlotAssignments[slotIndex];
+
+    const content = this.elementPickerModal.querySelector('#element-picker-content');
+    if (!content) return;
+
+    let html = '';
+
+    // Show clear option if slot has an element assigned
+    if (currentElement) {
+      const elementDef = getElementDefinition(currentElement);
+      html += `
+        <div class="element-picker-current">
+          <span>Current: <strong>${elementDef?.icon || '?'} ${currentElement}</strong></span>
+          <button class="btn-secondary element-picker-clear-btn">Clear Slot</button>
+        </div>
+      `;
+    }
+
+    html += '<div class="element-picker-grid">';
+
+    for (const element of unlockedElements) {
+      const elementDef = getElementDefinition(element);
+      const icon = elementDef?.icon || '?';
+      const manaPerElement = elements.getManaPerElement(element);
+      const isSelected = currentElement === element;
+
+      html += `
+        <div class="element-picker-option ${isSelected ? 'selected' : ''}" data-element="${element}">
+          <span class="element-picker-icon">${icon}</span>
+          <span class="element-picker-name">${element}</span>
+          <span class="element-picker-cost">${manaPerElement} mana/unit</span>
+        </div>
+      `;
+    }
+
+    html += '</div>';
+
+    content.innerHTML = html;
+
+    // Add click handlers
+    content.querySelectorAll('.element-picker-option').forEach((option) => {
+      option.addEventListener('click', () => {
+        const element = (option as HTMLElement).dataset.element as ElementType;
+        if (element && this.activeElementSlotIndex !== null) {
+          this.assignElementToSlot(this.activeElementSlotIndex, element);
+        }
+      });
+    });
+
+    content.querySelector('.element-picker-clear-btn')?.addEventListener('click', () => {
+      if (this.activeElementSlotIndex !== null) {
+        this.clearElementSlot(this.activeElementSlotIndex);
+      }
+    });
+
+    this.elementPickerModal.classList.remove('hidden');
+  }
+
+  private closeElementPicker(): void {
+    if (this.elementPickerModal) {
+      this.elementPickerModal.classList.add('hidden');
+    }
+    this.activeElementSlotIndex = null;
+  }
+
+  private assignElementToSlot(slotIndex: number, element: ElementType): void {
+    // If this slot had a different element, refund its mana first
+    const oldElement = this.elementSlotAssignments[slotIndex];
+    if (oldElement && oldElement !== element) {
+      const portalData = this.game.getPortal().getData();
+      const oldAmount = portalData.elements[oldElement] || 0;
+      if (oldAmount > 0) {
+        // Refund the mana for this element
+        const elements = this.game.getElements();
+        const manaPerElement = elements.getManaPerElement(oldElement);
+        const refundMana = oldAmount * manaPerElement;
+        this.game.getInventory().addMana(refundMana);
+        this.game.getPortal().removeElement(oldElement, oldAmount);
+      }
+    }
+
+    this.elementSlotAssignments[slotIndex] = element;
+    this.closeElementPicker();
+    this.game.refreshUI();
+  }
+
+  private clearElementSlot(slotIndex: number): void {
+    const element = this.elementSlotAssignments[slotIndex];
+    if (element) {
+      // Refund any mana invested in this element
+      const portalData = this.game.getPortal().getData();
+      const amount = portalData.elements[element] || 0;
+      if (amount > 0) {
+        const elements = this.game.getElements();
+        const manaPerElement = elements.getManaPerElement(element);
+        const refundMana = amount * manaPerElement;
+        this.game.getInventory().addMana(refundMana);
+        this.game.getPortal().removeElement(element, amount);
+      }
+    }
+    this.elementSlotAssignments[slotIndex] = null;
+    this.closeElementPicker();
+    this.game.refreshUI();
   }
 
   private openInventoryModal(): void {
@@ -420,6 +589,13 @@ export class CraftingUI {
     this.activeSlotIndex = null;
   }
 
+  public resetElementSlots(): void {
+    // Reset all element slot assignments when portal is crafted
+    for (let i = 0; i < TOTAL_ELEMENT_SLOTS; i++) {
+      this.elementSlotAssignments[i] = null;
+    }
+  }
+
   public update(crafting: CraftingSystem, _inventory: InventorySystem): void {
     if (!this.slotsContainer) return;
 
@@ -569,12 +745,11 @@ export class CraftingUI {
     if (!this.portalResourcesContainer) return;
 
     let html = '';
-
-    // Mana control (raw power) - always show
     const inventory = this.game.getInventory();
     const availableMana = inventory.getMana();
     const portalMana = portalData.manaInvested;
 
+    // Mana control (raw power) - always show
     html += `
       <div class="mana-control">
         <span class="mana-control-icon">✨</span>
@@ -588,38 +763,7 @@ export class CraftingUI {
       </div>
     `;
 
-    // Get current portal elements with interactive controls
-    let elementsHtml = '';
-    for (const [element, amount] of Object.entries(portalData.elements)) {
-      if (amount && (amount as number) > 0) {
-        const elementAmount = amount as number;
-        const elementDef = getElementDefinition(element as ElementType);
-        const icon = elementDef?.icon || '?';
-        const potency = elementDef?.properties.powerMultiplier || 1.0;
-        const potencyDisplay = potency === 1.0 ? '1x' : `${potency}x`;
-        const canAddMore = inventory.hasElement(element as ElementType, 1);
-
-        elementsHtml += `
-          <div class="element-control ${element}" data-element="${element}">
-            <span class="element-control-icon">${icon}</span>
-            <span class="element-control-name">${element}</span>
-            <span class="element-control-potency" title="Power multiplier">${potencyDisplay}</span>
-            <span class="element-control-amount">${elementAmount}</span>
-            <div class="element-control-buttons">
-              <button class="element-btn element-btn-sub" data-element="${element}" data-action="sub" title="Remove 1 ${element}">−</button>
-              <button class="element-btn element-btn-add" data-element="${element}" data-action="add" title="Add 1 ${element}" ${canAddMore ? '' : 'disabled'}>+</button>
-              <button class="element-btn element-btn-remove" data-element="${element}" data-action="remove" title="Remove all ${element}">×</button>
-            </div>
-          </div>
-        `;
-      }
-    }
-
-    if (elementsHtml) {
-      html += `<div class="portal-elements">${elementsHtml}</div>`;
-    }
-
-    // Show element bonuses from ingredients (element affinity bonuses only, no level bonuses)
+    // Show element bonuses from ingredients
     const slots = crafting.getSlots();
     const elementBonuses: Partial<Record<ElementType, number>> = {};
 
@@ -632,16 +776,13 @@ export class CraftingUI {
       }
     }
 
-    // Show element bonuses only
     if (Object.keys(elementBonuses).length > 0) {
       html += '<div class="ingredient-bonuses">';
-
       for (const [element, amount] of Object.entries(elementBonuses)) {
         const elementDef = getElementDefinition(element as ElementType);
         const icon = elementDef?.icon || '?';
         html += `<span class="bonus-item">${icon} +${amount} ${element}</span>`;
       }
-
       html += '</div>';
     }
 
@@ -658,17 +799,106 @@ export class CraftingUI {
       });
     });
 
-    // Add click handlers for element control buttons
-    this.portalResourcesContainer.querySelectorAll('.element-btn[data-element]').forEach((btn) => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const element = (btn as HTMLElement).dataset.element as ElementType;
-        const action = (btn as HTMLElement).dataset.action;
-        if (element && action) {
-          this.handleElementAction(element, action, portalData.elements[element] || 0);
-        }
+    // Update element slots grid separately
+    this.updateElementSlotsGrid(portalData, availableMana);
+  }
+
+  private updateElementSlotsGrid(portalData: any, availableMana: number): void {
+    if (!this.elementSlotsLeftContainer || !this.elementSlotsRightContainer) return;
+
+    const elements = this.game.getElements();
+    const unlockedElementSlots = this.getUnlockedElementSlotCount();
+
+    // Build two columns, 3 rows each
+    let leftColumnHtml = '';
+    let rightColumnHtml = '';
+
+    for (let i = 0; i < TOTAL_ELEMENT_SLOTS; i++) {
+      const isLocked = i >= unlockedElementSlots;
+      const assignedElement = this.elementSlotAssignments[i];
+      let slotHtml = '';
+
+      if (isLocked) {
+        slotHtml = `
+          <div class="mana-control element-slot-row locked">
+            <span class="mana-control-icon">🔒</span>
+            <span class="mana-control-label">Locked</span>
+          </div>
+        `;
+      } else if (assignedElement) {
+        const elementDef = getElementDefinition(assignedElement);
+        const icon = elementDef?.icon || '?';
+        const manaPerElement = elements.getManaPerElement(assignedElement);
+        const currentAmount = portalData.elements[assignedElement] || 0;
+        const canAdd = availableMana >= manaPerElement;
+        const canRemove = currentAmount > 0;
+
+        slotHtml = `
+          <div class="mana-control element-slot-row ${assignedElement}" data-slot-index="${i}">
+            <span class="mana-control-icon element-slot-clickable" data-slot-index="${i}">${icon}</span>
+            <span class="mana-control-label element-slot-clickable" data-slot-index="${i}">${assignedElement}</span>
+            <span class="mana-control-amount">${currentAmount}</span>
+            <div class="mana-control-buttons">
+              <button class="element-btn element-btn-sub" data-slot="${i}" data-action="element-sub" title="−1 (+${manaPerElement} mana)" ${!canRemove ? 'disabled' : ''}>−</button>
+              <button class="element-btn element-btn-add" data-slot="${i}" data-action="element-add" title="+1 (−${manaPerElement} mana)" ${!canAdd ? 'disabled' : ''}>+</button>
+              <button class="element-btn element-btn-remove" data-slot="${i}" data-action="element-clear" title="Clear">×</button>
+            </div>
+          </div>
+        `;
+      } else {
+        slotHtml = `
+          <div class="mana-control element-slot-row empty" data-slot-index="${i}">
+            <span class="mana-control-icon">+</span>
+            <span class="mana-control-label">Add Element</span>
+          </div>
+        `;
+      }
+
+      // First 3 go in left column, next 3 in right column
+      if (i < 3) {
+        leftColumnHtml += slotHtml;
+      } else {
+        rightColumnHtml += slotHtml;
+      }
+    }
+
+    this.elementSlotsLeftContainer.innerHTML = leftColumnHtml;
+    this.elementSlotsRightContainer.innerHTML = rightColumnHtml;
+
+    // Add click handlers for both containers
+    const containers = [this.elementSlotsLeftContainer, this.elementSlotsRightContainer];
+
+    for (const container of containers) {
+      // Add click handlers for element slot clickable parts (icon/label to change element type)
+      container.querySelectorAll('.element-slot-clickable').forEach((el) => {
+        el.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const slotIndex = parseInt((el as HTMLElement).dataset.slotIndex || '0', 10);
+          this.openElementPicker(slotIndex);
+        });
       });
-    });
+
+      // Add click handlers for empty element slots
+      container.querySelectorAll('.element-slot-row.empty').forEach((slot) => {
+        slot.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const slotIndex = parseInt((slot as HTMLElement).dataset.slotIndex || '0', 10);
+          this.openElementPicker(slotIndex);
+        });
+      });
+
+      // Add click handlers for element +/- buttons
+      container.querySelectorAll('[data-action^="element-"]').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const slotIndex = parseInt((btn as HTMLElement).dataset.slot || '0', 10);
+          const action = (btn as HTMLElement).dataset.action;
+          if (action) {
+            this.handleElementSlotAction(slotIndex, action);
+          }
+        });
+      });
+    }
   }
 
   private handleManaAction(action: string, currentMana: number): void {
@@ -691,23 +921,51 @@ export class CraftingUI {
     }
   }
 
-  private handleElementAction(element: ElementType, action: string, currentAmount: number): void {
+  private handleElementSlotAction(slotIndex: number, action: string): void {
+    const element = this.elementSlotAssignments[slotIndex];
+
+    // Handle clear action even if no element (but slot exists)
+    if (action === 'element-clear') {
+      if (element) {
+        // Refund any mana invested in this element
+        const portalData = this.game.getPortal().getData();
+        const amount = portalData.elements[element] || 0;
+        if (amount > 0) {
+          const elements = this.game.getElements();
+          const manaPerElement = elements.getManaPerElement(element);
+          const refundMana = amount * manaPerElement;
+          this.game.getInventory().addMana(refundMana);
+          this.game.getPortal().removeElement(element, amount);
+        }
+        this.elementSlotAssignments[slotIndex] = null;
+        this.game.refreshUI();
+      }
+      return;
+    }
+
+    if (!element) return;
+
+    const elements = this.game.getElements();
+    const manaPerElement = elements.getManaPerElement(element);
     const inventory = this.game.getInventory();
+    const portalData = this.game.getPortal().getData();
+    const currentAmount = portalData.elements[element] || 0;
 
     switch (action) {
-      case 'sub':
+      case 'element-sub':
         if (currentAmount > 0) {
-          this.game.removeElementFromPortal(element, 1);
+          // Remove 1 element and refund mana
+          this.game.getPortal().removeElement(element, 1);
+          inventory.addMana(manaPerElement);
+          this.game.refreshUI();
         }
         break;
-      case 'add':
-        if (inventory.hasElement(element, 1)) {
-          this.game.addElementToPortal(element, 1);
-        }
-        break;
-      case 'remove':
-        if (currentAmount > 0) {
-          this.game.removeElementFromPortal(element, currentAmount);
+      case 'element-add':
+        if (inventory.hasMana(manaPerElement)) {
+          // Spend mana and add 1 element
+          inventory.spendMana(manaPerElement);
+          this.game.getPortal().addElement(element, 1);
+          this.game.refreshUI();
         }
         break;
     }

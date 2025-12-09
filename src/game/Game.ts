@@ -342,9 +342,11 @@ export class Game {
       generatedEquipmentAttributes: result?.generatedEquipmentUsed || [],
       typeName: portalType?.name,
       affinity: portalType?.affinity,
-      attributes: portalType?.attributes ? Object.fromEntries(
-        Object.entries(portalType.attributes).filter(([_, v]) => v !== undefined)
-      ) as Record<string, number> : undefined,
+      attributes: portalType?.attributes
+        ? (Object.fromEntries(
+            Object.entries(portalType.attributes).filter(([_, v]) => v !== undefined)
+          ) as Record<string, number>)
+        : undefined,
     };
 
     this.storedPortals.push(newPortal);
@@ -352,6 +354,9 @@ export class Game {
 
     // Reset the current portal for new crafting
     this.portal.reset();
+
+    // Reset element slot assignments in UI
+    this.uiManager.resetElementSlots();
 
     // Save after crafting
     this.saveSystem.save();

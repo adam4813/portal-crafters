@@ -1706,7 +1706,198 @@ body {
   margin-left: 4px;
 }
 
-/* Element Control Styles */
+/* Crafting Grid Layout - 2x2 on desktop, 1x4 on mobile */
+.crafting-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: auto auto;
+  gap: 0.75rem;
+}
+
+.crafting-cell {
+  min-width: 0;
+}
+
+.crafting-cell h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.mobile-hidden {
+  display: block;
+}
+
+/* Desktop: inventory top-left, portal power top-right, elements bottom */
+#portal-ingredient-section {
+  order: 1;
+}
+
+#portal-power-section {
+  order: 2;
+}
+
+#element-slots-left {
+  order: 3;
+}
+
+#element-slots-right {
+  order: 4;
+}
+
+/* Element Slots Column */
+.element-slots-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* Element Slot Row Styles (same layout as mana-control) */
+.element-slot-row {
+  margin-top: 0;
+}
+
+.element-slot-row.locked {
+  opacity: 0.5;
+}
+
+.element-slot-row.empty {
+  cursor: pointer;
+  border: 1px dashed var(--text-secondary);
+}
+
+.element-slot-row.empty:hover {
+  background-color: var(--background-dark);
+  border-color: var(--primary-color);
+}
+
+.element-slot-clickable {
+  cursor: pointer;
+  padding: 0.15rem 0.25rem;
+  border-radius: 3px;
+  transition: background-color 0.2s ease;
+}
+
+.element-slot-clickable:hover {
+  background-color: var(--background-dark);
+}
+
+/* Element type colors for slot rows */
+.element-slot-row.fire {
+  border-left: 3px solid var(--fire-color);
+}
+.element-slot-row.water {
+  border-left: 3px solid var(--water-color);
+}
+.element-slot-row.earth {
+  border-left: 3px solid var(--earth-color);
+}
+.element-slot-row.air {
+  border-left: 3px solid var(--air-color);
+}
+.element-slot-row.lightning {
+  border-left: 3px solid var(--lightning-color);
+}
+
+/* Mobile: 1 column, inventory first, then portal power, then all elements */
+@media (max-width: 600px) {
+  .crafting-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+  }
+
+  /* Mobile order: inventory, portal power, elements left, elements right */
+  #portal-ingredient-section {
+    order: 1;
+  }
+
+  #portal-power-section {
+    order: 2;
+  }
+
+  #element-slots-left {
+    order: 3;
+  }
+
+  #element-slots-right {
+    order: 4;
+  }
+
+  #element-slots-right h4 {
+    display: none;
+  }
+
+  .mobile-hidden {
+    display: none;
+  }
+}
+
+/* Element Picker Modal */
+.element-picker-container {
+  max-width: 400px;
+}
+
+.element-picker-current {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  background-color: var(--background-light);
+  border-radius: 6px;
+  border-left: 3px solid var(--accent-color);
+}
+
+.element-picker-current strong {
+  color: var(--accent-color);
+}
+
+.element-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+}
+
+.element-picker-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  background-color: var(--background-light);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+}
+
+.element-picker-option:hover {
+  background-color: var(--background-dark);
+  border-color: var(--primary-color);
+}
+
+.element-picker-option.selected {
+  border-color: var(--accent-color);
+  background-color: rgba(237, 137, 54, 0.2);
+}
+
+.element-picker-icon {
+  font-size: 2rem;
+  margin-bottom: 0.25rem;
+}
+
+.element-picker-name {
+  font-size: 0.9rem;
+  text-transform: capitalize;
+  font-weight: 500;
+}
+
+.element-picker-cost {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
+}
+
+/* Element Control Styles (legacy, kept for compatibility) */
 .element-control {
   display: flex;
   align-items: center;

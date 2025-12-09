@@ -799,7 +799,7 @@ export class UIManager {
       for (const generatedId of Object.keys(inventoryState.generatedEquipment)) {
         const generated = inventoryState.generatedEquipment[generatedId];
         const tags = extractTagsFromGeneratedEquipment(generated);
-        
+
         for (const tag of requiredTags) {
           if (tags.includes(tag)) {
             return true;
@@ -890,7 +890,7 @@ export class UIManager {
             for (const generatedId of Object.keys(inventoryState.generatedEquipment)) {
               const generated = inventoryState.generatedEquipment[generatedId];
               const tags = extractTagsFromGeneratedEquipment(generated);
-              
+
               if (tags.includes(tag)) {
                 const slots = crafting.getSlots();
                 const emptySlot = slots.find((s) => !s.ingredient && !s.equipment);
@@ -1211,5 +1211,9 @@ export class UIManager {
     if (this.currentModal) {
       this.renderModalContent();
     }
+  }
+
+  public resetElementSlots(): void {
+    this.craftingUI.resetElementSlots();
   }
 }

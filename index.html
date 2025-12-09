@@ -46,32 +46,34 @@
               <h3>Portal Crafting</h3>
               <button id="recipes-btn" class="btn-header-small">📖 Recipes</button>
             </div>
-            <div class="flex-container">
-              <div id="portal-power-section">
-                <div id="level-progress-container"></div>
-                <div id="portal-resources"></div>
-              </div>
-              <div id="portal-ingredient-section">
-                <button id="inventory-btn" class="btn-secondary inventory-btn">🎒 Inventory</button>
-                <div id="ingredient-slots"></div>
-                <div id="item-effects"></div>
+            <div class="panel-body">
+              <div class="crafting-grid">
+                <div id="portal-ingredient-section" class="crafting-cell">
+                  <button id="inventory-btn" class="btn-secondary inventory-btn">🎒 Inventory</button>
+                  <div id="ingredient-slots"></div>
+                  <div id="item-effects"></div>
+                </div>
+                <div id="portal-power-section" class="crafting-cell">
+                  <div id="level-progress-container"></div>
+                  <div id="portal-resources"></div>
+                </div>
+                <div id="element-slots-left" class="crafting-cell">
+                  <h4>Element Aspects</h4>
+                  <div class="element-slots-column"></div>
+                </div>
+                <div id="element-slots-right" class="crafting-cell">
+                  <h4 class="mobile-hidden">&nbsp;</h4>
+                  <div class="element-slots-column"></div>
+                </div>
               </div>
             </div>
-            <button id="craft-button" class="btn-primary">Craft Portal</button>
+            <div class="panel-footer">
+              <button id="craft-button" class="btn-primary">Craft Portal</button>
+            </div>
           </div>
         </section>
         
         <aside class="sidebar right-sidebar">
-          <section id="inventory-panel" class="panel">
-            <h2>Elements</h2>
-            <div class="panel-body">
-              <div id="inventory-elements"></div>
-            </div>
-            <div class="panel-footer">
-              <button id="mana-converter-btn" class="btn-secondary mana-converter-btn">✨ Mana Converter</button>
-            </div>
-          </section>
-          
           <section id="portal-inventory-panel" class="panel">
             <h2>Crafted Portals</h2>
             <div class="panel-body" id="portal-inventory"></div>
