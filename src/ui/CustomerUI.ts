@@ -281,6 +281,11 @@ export class CustomerUI {
         html += `</div>`;
       }
 
+      // Show advance button if all requirements are met
+      if (unlockStatus.canUnlock) {
+        html += `<button class="btn-primary advance-tier-btn">🎉 Advance to ${nextTier.name}</button>`;
+      }
+
       html += `</div>`;
       html += `</div>`;
     } else {
@@ -289,6 +294,14 @@ export class CustomerUI {
 
     html += '</div>';
     this.progressionContainer.innerHTML = html;
+
+    // Add click handler for advance button
+    const advanceBtn = this.progressionContainer.querySelector('.advance-tier-btn');
+    if (advanceBtn) {
+      advanceBtn.addEventListener('click', () => {
+        this.game.advanceToNextTier();
+      });
+    }
   }
 
   private renderQueue(customers: CustomerSystem, storedPortals: PortalType[]): void {

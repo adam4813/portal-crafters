@@ -865,6 +865,26 @@ body {
   background-color: rgba(160, 174, 192, 0.1);
 }
 
+.advance-tier-btn {
+  margin-top: 0.5rem;
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 0.9rem;
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 5px var(--primary-color);
+  }
+  50% {
+    box-shadow:
+      0 0 15px var(--primary-color),
+      0 0 25px var(--primary-color);
+  }
+}
+
 .customer-requirements {
   font-size: 0.85rem;
   color: var(--text-secondary);

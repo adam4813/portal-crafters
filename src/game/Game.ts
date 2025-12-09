@@ -428,13 +428,6 @@ export class Game {
       const currentTier = this.progressionSystem.getCurrentTier();
       this.progressionSystem.completeMiniBoss(currentTier.tier);
       showToast(`🏆 Mini-boss contract complete! Tier ${currentTier.tier} mastered!`, 'success');
-
-      // Check if we can advance to next tier
-      if (this.progressionSystem.canAdvanceToNextTier(this.elementSystem.getUnlockedElements())) {
-        this.progressionSystem.advanceToNextTier();
-        const newTier = this.progressionSystem.getCurrentTier();
-        showToast(`🎉 Advanced to ${newTier.name}!`, 'success');
-      }
     } else {
       // Regular contract - increment counter
       this.progressionSystem.completeContract();
@@ -639,6 +632,18 @@ export class Game {
     this.elementSystem.research(element);
     this.customerSystem.setUnlockedElements(this.elementSystem.getUnlockedElements());
     showToast(`Unlocked ${element} element!`, 'success');
+    this.updateUI();
+  }
+
+  public advanceToNextTier(): void {
+    if (!this.progressionSystem.canAdvanceToNextTier(this.elementSystem.getUnlockedElements())) {
+      showToast('Cannot advance to next tier yet!', 'error');
+      return;
+    }
+
+    this.progressionSystem.advanceToNextTier();
+    const newTier = this.progressionSystem.getCurrentTier();
+    showToast(`🎉 Advanced to ${newTier.name}!`, 'success');
     this.updateUI();
   }
 
