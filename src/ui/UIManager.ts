@@ -46,6 +46,7 @@ type ModalType =
   | 'expeditions'
   | 'inventory'
   | 'portals'
+  | 'contracts'
   | null;
 
 export class UIManager {
@@ -165,6 +166,9 @@ export class UIManager {
     document
       .getElementById('expeditions-btn')
       ?.addEventListener('click', () => this.openModal('expeditions'));
+    document
+      .getElementById('contracts-btn')
+      ?.addEventListener('click', () => this.openModal('contracts'));
 
     // Close button
     this.modalClose?.addEventListener('click', () => this.closeModal());
@@ -203,6 +207,7 @@ export class UIManager {
       recipes: '📖 Recipe Book',
       inventory: '🎒 Inventory',
       portals: '🌀 Crafted Portals',
+      contracts: '📜 Contracts',
     };
     this.modalTitle.textContent = titles[type || ''] || '';
 
@@ -268,7 +273,23 @@ export class UIManager {
       case 'portals':
         this.renderPortalsModal();
         break;
+      case 'contracts':
+        this.renderContractsModal();
+        break;
     }
+  }
+
+  private renderContractsModal(): void {
+    if (!this.modalContent || !this.lastUpdateData) return;
+
+    const { customers, storedPortals, progression, elements } = this.lastUpdateData;
+    this.modalContent.innerHTML = this.customerUI.renderForModal(
+      customers,
+      storedPortals,
+      progression,
+      elements
+    );
+    this.customerUI.attachModalEventListeners(this.modalContent);
   }
 
   private renderInventoryModal(): void {

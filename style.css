@@ -132,6 +132,10 @@ body {
   margin-top: 0.5rem;
 }
 
+.mobile-only {
+  display: none;
+}
+
 .game-main {
   display: flex;
   flex: 1;
@@ -1873,14 +1877,11 @@ body {
   }
 
   .sidebar.left-sidebar {
-    width: 100%;
-    flex-direction: row;
-    gap: 0.5rem;
-    max-height: 200px;
+    display: none;
   }
 
-  .sidebar.left-sidebar .panel {
-    flex: 1;
+  .mobile-only {
+    display: flex;
   }
 }
 

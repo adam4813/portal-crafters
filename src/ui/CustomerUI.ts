@@ -82,6 +82,164 @@ export class CustomerUI {
     this.renderQueue(customers, storedPortals);
   }
 
+  public renderForModal(
+    customers: CustomerSystem,
+    storedPortals: PortalType[],
+    progression?: ProgressionSystem,
+    elements?: ElementSystem
+  ): string {
+    let html = '<div class="contracts-modal-content">';
+
+    // Render progression status
+    html += this.renderProgressionStatusHtml(progression, elements);
+
+    // Render queue
+    html += this.renderQueueHtml(customers, storedPortals);
+
+    html += '</div>';
+    return html;
+  }
+
+  public attachModalEventListeners(container: HTMLElement): void {
+    // Add event listeners for fulfill buttons
+    container.querySelectorAll('.btn-fulfill-contract').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const button = e.target as HTMLButtonElement;
+        const customerId = button.dataset.customerId;
+        const portalId = button.dataset.portalId;
+        if (customerId && portalId) {
+          this.game.fulfillCustomerWithPortal(customerId, portalId);
+        }
+      });
+    });
+
+    // Add event listeners for portal selectors
+    container.querySelectorAll('.portal-select').forEach((select) => {
+      select.addEventListener('change', (e) => {
+        const selectEl = e.target as HTMLSelectElement;
+        const customerId = selectEl.dataset.customerId;
+        const fulfillBtn = container.querySelector(
+          `.btn-fulfill-contract[data-customer-id="${customerId}"]`
+        ) as HTMLButtonElement;
+
+        if (fulfillBtn) {
+          fulfillBtn.dataset.portalId = selectEl.value;
+          fulfillBtn.disabled = !selectEl.value;
+        }
+      });
+    });
+  }
+
+  private renderProgressionStatusHtml(
+    progression?: ProgressionSystem,
+    elements?: ElementSystem
+  ): string {
+    if (!progression || !elements) return '';
+
+    const currentTier = progression.getCurrentTier();
+    const nextTier = progression.getNextTier();
+    const contractsCompleted = progression.getContractsCompletedThisTier();
+    const miniBossCompleted = progression.isMiniBossCompleted(currentTier.tier);
+
+    let html = '<div class="progression-info">';
+    html += `<div class="tier-name">🏆 ${currentTier.name} (Tier ${currentTier.tier})</div>`;
+    html += `<div class="tier-progress">`;
+    html += `<span class="contracts-count">Contracts: ${contractsCompleted}</span>`;
+    html += `<span class="miniboss-status ${miniBossCompleted ? 'complete' : 'incomplete'}">`;
+    html += miniBossCompleted ? '✅ Mini-boss Complete' : '⚔️ Mini-boss Pending';
+    html += `</span>`;
+    html += `</div>`;
+
+    if (nextTier) {
+      const unlockStatus = progression.getNextTierUnlockStatus(elements.getUnlockedElements());
+      html += `<div class="next-tier-info">`;
+      html += `<div class="next-tier-name">Next: ${nextTier.name}</div>`;
+      html += `<div class="unlock-requirements">`;
+      html += `<div class="requirement ${unlockStatus.miniBossCompleted ? 'met' : 'unmet'}">`;
+      html += `${unlockStatus.miniBossCompleted ? '✅' : '❌'} Complete mini-boss`;
+      html += `</div>`;
+      html += `<div class="requirement ${unlockStatus.contractsCompleted ? 'met' : 'unmet'}">`;
+      html += `${unlockStatus.contractsCompleted ? '✅' : '❌'} ${contractsCompleted}/${unlockStatus.contractsNeeded} contracts`;
+      html += `</div>`;
+      if (unlockStatus.elementNeeded) {
+        html += `<div class="requirement ${unlockStatus.elementUnlocked ? 'met' : 'unmet'}">`;
+        html += `${unlockStatus.elementUnlocked ? '✅' : '❌'} Research ${unlockStatus.elementNeeded}`;
+        html += `</div>`;
+      }
+      html += `</div>`;
+      html += `</div>`;
+    } else {
+      html += `<div class="next-tier-info">🎉 Max tier reached!</div>`;
+    }
+
+    html += '</div>';
+    return html;
+  }
+
+  private renderQueueHtml(customers: CustomerSystem, storedPortals: PortalType[]): string {
+    const queue = customers.getQueue();
+
+    if (queue.length === 0) {
+      return '<p class="empty-message">No customers waiting...</p>';
+    }
+
+    let html = '<div class="customer-queue-modal">';
+    const now = Date.now();
+
+    for (const customer of queue) {
+      const waitTime = Math.floor((now - customer.arrivedAt) / 1000);
+      const timeRemaining = Math.max(0, customer.patience - waitTime);
+      const isMiniBoss = customer.id.startsWith('miniboss-');
+      const matchingPortals = storedPortals.filter((portal) =>
+        this.portalMeetsRequirements(portal, customer)
+      );
+      const reqElements = this.formatElementRequirement(customer.requirements);
+      const reqMana = customer.requirements.minMana ? `✨ ≥${customer.requirements.minMana}` : '';
+      const reqEquipment = this.formatEquipmentRequirement(customer.requirements);
+      const modifiersHtml = this.formatModifiers(customer.requirements.modifiers || []);
+      const specialRewardHtml = customer.specialReward
+        ? `<div class="customer-special-reward">🎁 Special: ${this.formatSpecialReward(customer.specialReward)}</div>`
+        : '';
+      const adjustedPayment = calculateAdjustedPayment(
+        customer.payment,
+        customer.requirements.modifiers
+      );
+
+      let cardClass = 'customer-card';
+      if (isMiniBoss) cardClass += ' miniboss-card';
+      if (customer.isSpecial) cardClass += ' special-card';
+
+      const timerDisplay = isMiniBoss
+        ? '<div class="customer-timer unlimited">⏱️ ∞ Unlimited</div>'
+        : `<div class="customer-timer ${timeRemaining < 30 ? 'urgent' : ''}">⏱️ ${formatTime(timeRemaining)}</div>`;
+
+      html += `
+        <div class="${cardClass}" data-customer-id="${customer.id}" data-arrived-at="${customer.arrivedAt}" data-patience="${customer.patience}">
+          <div class="customer-header">
+            <div class="customer-name">${customer.icon} ${customer.name}</div>
+            ${timerDisplay}
+          </div>
+          ${modifiersHtml}
+          <div class="customer-requirements">
+            <span class="req-level">Lv ${customer.requirements.minLevel}+</span>
+            ${reqMana ? `<span class="req-mana">${reqMana}</span>` : ''}
+            <span class="req-elements">${reqElements}</span>
+            ${reqEquipment ? `<span class="req-equipment">${reqEquipment}</span>` : ''}
+          </div>
+          <div class="customer-reward">💰 ${adjustedPayment} gold</div>
+          ${specialRewardHtml}
+          <div class="customer-fulfill">
+            ${this.renderPortalSelector(customer, matchingPortals, storedPortals)}
+          </div>
+        </div>
+      `;
+    }
+
+    html += '</div>';
+    return html;
+  }
+
   private renderProgressionStatus(progression?: ProgressionSystem, elements?: ElementSystem): void {
     if (!this.progressionContainer || !progression || !elements) return;
 
