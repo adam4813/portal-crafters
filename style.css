@@ -237,10 +237,11 @@ body {
 }
 
 #ingredient-slots {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   gap: 0.5rem;
-  flex-wrap: wrap;
   justify-content: center;
+  max-width: 280px;
 }
 
 .ingredient-slot {
@@ -254,6 +255,7 @@ body {
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
+  position: relative;
 }
 
 .ingredient-slot:hover {
@@ -261,29 +263,264 @@ body {
   background-color: var(--background-dark);
 }
 
+.ingredient-slot.locked {
+  cursor: not-allowed;
+  opacity: 0.5;
+  border-style: solid;
+  border-color: var(--secondary-color);
+  background-color: var(--background-dark);
+}
+
+.ingredient-slot.locked:hover {
+  border-color: var(--secondary-color);
+  background-color: var(--background-dark);
+}
+
 .ingredient-slot.filled {
   border-style: solid;
   border-color: var(--accent-color);
-  position: relative;
 }
 
 .ingredient-slot.filled:hover {
-  border-color: var(--danger-color);
-  background-color: var(--danger-color-light);
+  border-color: var(--primary-color);
+  background-color: var(--background-dark);
 }
 
-.ingredient-slot.filled:hover::after {
-  content: '✕';
+.slot-clear-btn {
   position: absolute;
-  top: 2px;
-  right: 2px;
-  font-size: 0.8rem;
-  color: var(--danger-color);
+  top: -6px;
+  right: -6px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: var(--danger-color);
+  color: var(--text-primary);
+  border: 2px solid var(--background-medium);
+  font-size: 0.9rem;
   font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+  z-index: 10;
+}
+
+.slot-clear-btn:hover {
+  transform: scale(1.1);
+  background-color: #c53030;
 }
 
 .ingredient-slot .ingredient-icon {
   font-size: 1.5rem;
+}
+
+/* Slot Picker Modal Styles */
+.slot-picker-container {
+  max-width: 500px;
+}
+
+.slot-picker-current {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  background-color: var(--background-light);
+  border-radius: 6px;
+  border-left: 3px solid var(--accent-color);
+}
+
+.slot-picker-current strong {
+  color: var(--accent-color);
+}
+
+.slot-picker-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid var(--background-light);
+  padding-bottom: 0.5rem;
+}
+
+.slot-picker-tab {
+  background-color: var(--background-light);
+  color: var(--text-secondary);
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px 4px 0 0;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  flex: 1;
+}
+
+.slot-picker-tab:hover {
+  background-color: var(--background-medium);
+  color: var(--text-primary);
+}
+
+.slot-picker-tab.active {
+  background-color: var(--primary-color);
+  color: var(--text-primary);
+}
+
+.slot-picker-tab-content {
+  max-height: 350px;
+  overflow-y: auto;
+}
+
+.slot-picker-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.slot-picker-section {
+  margin-bottom: 1.5rem;
+}
+
+.slot-picker-section h4 {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid var(--background-light);
+  padding-bottom: 0.25rem;
+}
+
+.slot-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+}
+
+.slot-picker-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  background-color: var(--background-light);
+  padding: 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+}
+
+.slot-picker-item:hover {
+  background-color: var(--background-dark);
+  border-color: var(--primary-color);
+}
+
+.slot-picker-item .item-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.slot-picker-item .item-icon {
+  font-size: 1.5rem;
+}
+
+.slot-picker-item .item-name {
+  flex: 1;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.slot-picker-item .item-count {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  background-color: var(--background-dark);
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+}
+
+.slot-picker-item .item-rarity {
+  font-size: 0.75rem;
+  text-transform: capitalize;
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  width: fit-content;
+}
+
+.slot-picker-item .item-rarity.rarity-common {
+  background-color: rgba(160, 174, 192, 0.2);
+  color: #a0aec0;
+}
+
+.slot-picker-item .item-rarity.rarity-uncommon {
+  background-color: rgba(72, 187, 120, 0.2);
+  color: #48bb78;
+}
+
+.slot-picker-item .item-rarity.rarity-rare {
+  background-color: rgba(66, 153, 225, 0.2);
+  color: #4299e1;
+}
+
+.slot-picker-item .item-rarity.rarity-epic {
+  background-color: rgba(159, 122, 234, 0.2);
+  color: #9f7aea;
+}
+
+.slot-picker-item .item-rarity.rarity-legendary {
+  background-color: rgba(237, 137, 54, 0.2);
+  color: #ed8936;
+}
+
+.slot-picker-item .item-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+}
+
+.slot-picker-item .item-stat {
+  font-size: 0.75rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 3px;
+  background-color: var(--background-dark);
+}
+
+.slot-picker-item .item-stat.element {
+  background-color: rgba(107, 70, 193, 0.2);
+  color: var(--primary-color);
+}
+
+.slot-picker-item .item-stat.gold {
+  background-color: rgba(236, 201, 75, 0.2);
+  color: var(--warning-color);
+}
+
+.slot-picker-item .item-stat.mana {
+  background-color: rgba(159, 122, 234, 0.2);
+  color: #9f7aea;
+}
+
+.slot-picker-item .item-stat.chance {
+  background-color: rgba(72, 187, 120, 0.2);
+  color: var(--success-color);
+}
+
+.slot-picker-item .item-stat.rarity {
+  background-color: rgba(237, 137, 54, 0.2);
+  color: var(--accent-color);
+}
+
+.slot-picker-item .item-stat.bonus {
+  background-color: rgba(66, 153, 225, 0.2);
+  color: var(--water-color);
+}
+
+.slot-picker-item .item-stat.quality {
+  background-color: rgba(160, 174, 192, 0.2);
+  color: var(--text-secondary);
+}
+
+/* Inventory button */
+.inventory-btn {
+  width: 100%;
+  margin-bottom: 0.5rem;
 }
 
 /* Item Effects Display */

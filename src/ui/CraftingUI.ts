@@ -6,6 +6,9 @@ import type { ElementType, CraftingSlot } from '../types';
 import { getLevelProgress } from '../utils/helpers';
 import { getElementDefinition } from '../data/elements';
 
+const TOTAL_SLOTS = 8;
+const BASE_UNLOCKED_SLOTS = 4;
+
 interface EffectTotals {
   goldMult: number;
   manaMult: number;
@@ -36,7 +39,6 @@ function calculateTotalEffects(slots: CraftingSlot[]): EffectTotals {
 
 export class CraftingUI {
   private game: Game;
-  private uiManager: UIManager;
   private slotsContainer: HTMLElement | null;
   private craftButton: HTMLElement | null;
   private portalResourcesContainer: HTMLElement | null;
@@ -44,10 +46,11 @@ export class CraftingUI {
   private itemEffectsContainer: HTMLElement | null;
   private slotsInitialized: boolean = false;
   private hoveredSlotIndex: number | null = null;
+  private slotPickerModal: HTMLElement | null = null;
+  private activeSlotIndex: number | null = null;
 
-  constructor(game: Game, uiManager: UIManager) {
+  constructor(game: Game, _uiManager: UIManager) {
     this.game = game;
-    this.uiManager = uiManager;
     this.slotsContainer = document.getElementById('ingredient-slots');
     this.craftButton = document.getElementById('craft-button');
     this.portalResourcesContainer = document.getElementById('portal-resources');
@@ -63,25 +66,65 @@ export class CraftingUI {
       });
     }
 
+    // Set up inventory button
+    const inventoryBtn = document.getElementById('inventory-btn');
+    if (inventoryBtn) {
+      inventoryBtn.addEventListener('click', () => {
+        this.openInventoryModal();
+      });
+    }
+
     // Create initial slots - only once
     if (!this.slotsInitialized) {
-      this.createSlots(4);
+      this.createSlots();
       this.slotsInitialized = true;
     }
+
+    // Create the slot picker modal
+    this.createSlotPickerModal();
   }
 
-  private createSlots(count: number): void {
+  private openInventoryModal(): void {
+    if (!this.slotPickerModal) return;
+
+    // Open modal without a target slot (view-only mode)
+    this.activeSlotIndex = null;
+    this.renderSlotPickerContent('ingredients');
+
+    // Update the modal title for inventory viewing
+    const titleEl = this.slotPickerModal.querySelector('.modal-header h2');
+    if (titleEl) {
+      titleEl.textContent = 'Inventory';
+    }
+
+    this.slotPickerModal.classList.remove('hidden');
+  }
+
+  private getUnlockedSlotCount(): number {
+    const upgrades = this.game.getUpgrades();
+    const slotUpgradeLevel = upgrades.getLevel('ingredient_slots');
+    return BASE_UNLOCKED_SLOTS + slotUpgradeLevel;
+  }
+
+  private createSlots(): void {
     if (!this.slotsContainer) return;
 
     this.slotsContainer.innerHTML = '';
 
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < TOTAL_SLOTS; i++) {
       const slot = document.createElement('div');
       slot.className = 'ingredient-slot';
       slot.dataset.slotIndex = i.toString();
       slot.innerHTML = '<span class="ingredient-icon">+</span>';
 
-      slot.addEventListener('click', () => {
+      slot.addEventListener('click', (e) => {
+        // Check if the click was on the clear button
+        const target = e.target as HTMLElement;
+        if (target.classList.contains('slot-clear-btn')) {
+          e.stopPropagation();
+          this.game.clearCraftingSlot(i);
+          return;
+        }
         this.handleSlotClick(i);
       });
 
@@ -99,25 +142,282 @@ export class CraftingUI {
     }
   }
 
-  private handleSlotClick(index: number): void {
-    const crafting = this.game.getCrafting();
-    const slot = crafting.getSlot(index);
+  private createSlotPickerModal(): void {
+    // Check if modal already exists
+    if (document.getElementById('slot-picker-modal')) return;
 
-    if (slot?.ingredient || slot?.equipment) {
-      // Clear the slot
-      this.game.clearCraftingSlot(index);
-    } else {
-      // Try to add the selected item from inventory
-      const selectedItem = this.uiManager.getSelectedItem();
-      if (selectedItem) {
-        if (selectedItem.type === 'ingredient') {
-          this.game.addIngredientToSlot(index, selectedItem.id);
-        } else if (selectedItem.type === 'equipment') {
-          this.game.addEquipmentToSlot(index, selectedItem.id);
-        }
-        this.uiManager.clearSelection();
+    const modal = document.createElement('div');
+    modal.id = 'slot-picker-modal';
+    modal.className = 'modal-overlay hidden';
+    modal.innerHTML = `
+      <div class="modal-container slot-picker-container">
+        <div class="modal-header">
+          <h2>Select Item</h2>
+          <button class="modal-close" id="slot-picker-close">&times;</button>
+        </div>
+        <div id="slot-picker-content" class="modal-content"></div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+    this.slotPickerModal = modal;
+
+    // Close handlers
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        this.closeSlotPicker();
       }
+    });
+
+    modal.querySelector('#slot-picker-close')?.addEventListener('click', () => {
+      this.closeSlotPicker();
+    });
+  }
+
+  private handleSlotClick(index: number): void {
+    const unlockedCount = this.getUnlockedSlotCount();
+
+    // Check if slot is locked
+    if (index >= unlockedCount) {
+      return; // Locked slot, do nothing
     }
+
+    // Open the picker modal for this slot
+    this.openSlotPicker(index);
+  }
+
+  private openSlotPicker(slotIndex: number): void {
+    if (!this.slotPickerModal) return;
+
+    this.activeSlotIndex = slotIndex;
+
+    // Update the modal title for slot selection
+    const titleEl = this.slotPickerModal.querySelector('.modal-header h2');
+    if (titleEl) {
+      titleEl.textContent = 'Select Item';
+    }
+
+    this.renderSlotPickerContent('ingredients');
+    this.slotPickerModal.classList.remove('hidden');
+  }
+
+  private renderSlotPickerContent(activeTab: 'ingredients' | 'equipment'): void {
+    if (!this.slotPickerModal) return;
+
+    const crafting = this.game.getCrafting();
+    const slot = this.activeSlotIndex !== null ? crafting.getSlot(this.activeSlotIndex) : null;
+    const inventory = this.game.getInventory();
+    const isFilled = !!(slot?.ingredient || slot?.equipment);
+    const isSelectMode = this.activeSlotIndex !== null;
+
+    const content = this.slotPickerModal.querySelector('#slot-picker-content');
+    if (!content) return;
+
+    let html = '';
+
+    // Show clear button if slot is filled (only in select mode)
+    if (isSelectMode && isFilled) {
+      const itemName = slot?.ingredient?.name || slot?.equipment?.name || 'Item';
+      html += `
+        <div class="slot-picker-current">
+          <span>Current: <strong>${itemName}</strong></span>
+          <button class="btn-secondary slot-picker-clear-btn">Clear Slot</button>
+        </div>
+      `;
+    }
+
+    // Tabs
+    html += `
+      <div class="slot-picker-tabs">
+        <button class="slot-picker-tab ${activeTab === 'ingredients' ? 'active' : ''}" data-tab="ingredients">🧪 Ingredients</button>
+        <button class="slot-picker-tab ${activeTab === 'equipment' ? 'active' : ''}" data-tab="equipment">⚔️ Equipment</button>
+      </div>
+    `;
+
+    // Tab content
+    if (activeTab === 'ingredients') {
+      html += this.renderIngredientsTab(inventory);
+    } else {
+      html += this.renderEquipmentTab(inventory);
+    }
+
+    content.innerHTML = html;
+
+    // Add tab click handlers
+    content.querySelectorAll('.slot-picker-tab').forEach((tab) => {
+      tab.addEventListener('click', () => {
+        const tabName = (tab as HTMLElement).dataset.tab as 'ingredients' | 'equipment';
+        this.renderSlotPickerContent(tabName);
+      });
+    });
+
+    // Add click handlers for items
+    content.querySelectorAll('.slot-picker-item').forEach((item) => {
+      item.addEventListener('click', () => {
+        const type = (item as HTMLElement).dataset.type;
+        const id = (item as HTMLElement).dataset.id;
+        if (type && id && this.activeSlotIndex !== null) {
+          this.selectItem(this.activeSlotIndex, type, id);
+        }
+      });
+    });
+
+    // Add clear button handler
+    content.querySelector('.slot-picker-clear-btn')?.addEventListener('click', () => {
+      if (this.activeSlotIndex !== null) {
+        this.game.clearCraftingSlot(this.activeSlotIndex);
+        this.closeSlotPicker();
+      }
+    });
+  }
+
+  private renderIngredientsTab(inventory: ReturnType<Game['getInventory']>): string {
+    const ownedIngredients = inventory.getOwnedIngredients();
+
+    if (ownedIngredients.length === 0) {
+      return '<div class="slot-picker-tab-content"><p class="empty-message">No ingredients available</p></div>';
+    }
+
+    let html = '<div class="slot-picker-tab-content"><div class="slot-picker-list">';
+
+    for (const ingredient of ownedIngredients) {
+      const count = inventory.getIngredients()[ingredient.id] || 0;
+
+      // Build stats display
+      const stats: string[] = [];
+      if (ingredient.elementAffinity) {
+        stats.push(`<span class="item-stat element">+5 ${ingredient.elementAffinity}</span>`);
+      }
+      if (ingredient.goldMultiplier && ingredient.goldMultiplier > 1) {
+        stats.push(
+          `<span class="item-stat gold">+${Math.round((ingredient.goldMultiplier - 1) * 100)}% Gold</span>`
+        );
+      }
+      if (ingredient.manaMultiplier && ingredient.manaMultiplier > 1) {
+        stats.push(
+          `<span class="item-stat mana">+${Math.round((ingredient.manaMultiplier - 1) * 100)}% Mana</span>`
+        );
+      }
+      if (ingredient.ingredientChance && ingredient.ingredientChance > 0) {
+        stats.push(
+          `<span class="item-stat chance">+${Math.round(ingredient.ingredientChance * 100)}% Ingredient</span>`
+        );
+      }
+      if (ingredient.equipmentChance && ingredient.equipmentChance > 0) {
+        stats.push(
+          `<span class="item-stat chance">+${Math.round(ingredient.equipmentChance * 100)}% Equipment</span>`
+        );
+      }
+      if (ingredient.rarityBonus && ingredient.rarityBonus > 0) {
+        stats.push(`<span class="item-stat rarity">+${ingredient.rarityBonus} Rarity</span>`);
+      }
+
+      html += `
+        <div class="slot-picker-item" data-type="ingredient" data-id="${ingredient.id}">
+          <div class="item-header">
+            <span class="item-icon">${ingredient.icon}</span>
+            <span class="item-name">${ingredient.name}</span>
+            <span class="item-count">x${count}</span>
+          </div>
+          ${stats.length > 0 ? `<div class="item-stats">${stats.join('')}</div>` : ''}
+        </div>
+      `;
+    }
+
+    html += '</div></div>';
+    return html;
+  }
+
+  private renderEquipmentTab(inventory: ReturnType<Game['getInventory']>): string {
+    const ownedEquipment = inventory.getOwnedEquipment();
+    const generatedEquipment = inventory.getGeneratedEquipment();
+
+    if (ownedEquipment.length === 0 && Object.keys(generatedEquipment).length === 0) {
+      return '<div class="slot-picker-tab-content"><p class="empty-message">No equipment available</p></div>';
+    }
+
+    let html = '<div class="slot-picker-tab-content"><div class="slot-picker-list">';
+
+    // Basic equipment
+    for (const equip of ownedEquipment) {
+      const count = inventory.getEquipment()[equip.id] || 0;
+
+      const stats: string[] = [];
+      if (equip.portalBonus > 0) {
+        stats.push(`<span class="item-stat bonus">+${equip.portalBonus} Portal Bonus</span>`);
+      }
+      if (equip.elementBonus) {
+        for (const [element, amount] of Object.entries(equip.elementBonus)) {
+          if (amount && amount > 0) {
+            stats.push(`<span class="item-stat element">+${amount} ${element}</span>`);
+          }
+        }
+      }
+
+      html += `
+        <div class="slot-picker-item" data-type="equipment" data-id="${equip.id}">
+          <div class="item-header">
+            <span class="item-icon">${equip.icon}</span>
+            <span class="item-name">${equip.name}</span>
+            <span class="item-count">x${count}</span>
+          </div>
+          <div class="item-rarity rarity-${equip.rarity}">${equip.rarity}</div>
+          ${stats.length > 0 ? `<div class="item-stats">${stats.join('')}</div>` : ''}
+        </div>
+      `;
+    }
+
+    // Generated equipment
+    for (const [id, equip] of Object.entries(generatedEquipment)) {
+      const stats: string[] = [];
+      if (equip.portalBonus > 0) {
+        stats.push(`<span class="item-stat bonus">+${equip.portalBonus} Portal Bonus</span>`);
+      }
+      if (equip.elementBonus) {
+        for (const [element, amount] of Object.entries(equip.elementBonus)) {
+          if (amount && amount > 0) {
+            stats.push(`<span class="item-stat element">+${amount} ${element}</span>`);
+          }
+        }
+      }
+      // Show total cost as quality indicator
+      if (equip.totalCost > 0) {
+        stats.push(`<span class="item-stat quality">Quality: ${equip.totalCost}</span>`);
+      }
+
+      html += `
+        <div class="slot-picker-item" data-type="generated" data-id="${id}">
+          <div class="item-header">
+            <span class="item-icon">${equip.icon}</span>
+            <span class="item-name">${equip.name}</span>
+            <span class="item-count">x1</span>
+          </div>
+          <div class="item-rarity rarity-${equip.rarity}">${equip.rarity}</div>
+          ${stats.length > 0 ? `<div class="item-stats">${stats.join('')}</div>` : ''}
+        </div>
+      `;
+    }
+
+    html += '</div></div>';
+    return html;
+  }
+
+  private selectItem(slotIndex: number, type: string, id: string): void {
+    if (type === 'ingredient') {
+      this.game.addIngredientToSlot(slotIndex, id);
+    } else if (type === 'equipment') {
+      this.game.addEquipmentToSlot(slotIndex, id);
+    } else if (type === 'generated') {
+      this.game.addGeneratedEquipmentToSlot(slotIndex, id);
+    }
+    this.closeSlotPicker();
+  }
+
+  private closeSlotPicker(): void {
+    if (this.slotPickerModal) {
+      this.slotPickerModal.classList.add('hidden');
+    }
+    this.activeSlotIndex = null;
   }
 
   public update(crafting: CraftingSystem, _inventory: InventorySystem): void {
@@ -125,23 +425,37 @@ export class CraftingUI {
 
     const slots = crafting.getSlots();
     const slotElements = this.slotsContainer.querySelectorAll('.ingredient-slot');
+    const unlockedCount = this.getUnlockedSlotCount();
 
     slotElements.forEach((element, index) => {
       const slot = slots[index];
       const slotElement = element as HTMLElement;
+      const isLocked = index >= unlockedCount;
 
-      if (slot?.ingredient) {
+      // Reset classes
+      slotElement.classList.remove('filled', 'locked');
+
+      if (isLocked) {
+        slotElement.classList.add('locked');
+        slotElement.innerHTML = '<span class="ingredient-icon">🔒</span>';
+        slotElement.title = 'Upgrade Crafting Slots to unlock';
+      } else if (slot?.ingredient) {
         slotElement.classList.add('filled');
-        slotElement.innerHTML = `<span class="ingredient-icon">${slot.ingredient.icon}</span>`;
-        slotElement.title = `${slot.ingredient.name}\nClick to remove`;
+        slotElement.innerHTML = `
+          <span class="ingredient-icon">${slot.ingredient.icon}</span>
+          <button class="slot-clear-btn" title="Remove ${slot.ingredient.name}">×</button>
+        `;
+        slotElement.title = `${slot.ingredient.name}\nClick to change`;
       } else if (slot?.equipment) {
         slotElement.classList.add('filled');
-        slotElement.innerHTML = `<span class="ingredient-icon">${slot.equipment.icon}</span>`;
-        slotElement.title = `${slot.equipment.name}\nClick to remove`;
+        slotElement.innerHTML = `
+          <span class="ingredient-icon">${slot.equipment.icon}</span>
+          <button class="slot-clear-btn" title="Remove ${slot.equipment.name}">×</button>
+        `;
+        slotElement.title = `${slot.equipment.name}\nClick to change`;
       } else {
-        slotElement.classList.remove('filled');
         slotElement.innerHTML = '<span class="ingredient-icon">+</span>';
-        slotElement.title = 'Select an item then click here to add';
+        slotElement.title = 'Click to add an item';
       }
     });
 
