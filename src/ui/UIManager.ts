@@ -185,12 +185,28 @@ export class UIManager {
     });
   }
 
+  private shouldPauseTimersForModal(type: ModalType): boolean {
+    // Expeditions modal never pauses timers
+    if (type === 'expeditions') return false;
+    // Contracts modal doesn't pause timers on mobile (where it's accessed via nav)
+    if (type === 'contracts' && this.isMobileView()) return false;
+    return true;
+  }
+
+  private isMobileView(): boolean {
+    return window.innerWidth <= 900;
+  }
+
   private openModal(type: ModalType): void {
     if (!this.modalOverlay || !this.modalTitle || !this.modalContent) return;
 
     this.currentModal = type;
-    this.game.pauseCustomerTimers();
-    this.customerUI.setPaused(true);
+
+    // Only pause timers for certain modals
+    if (this.shouldPauseTimersForModal(type)) {
+      this.game.pauseCustomerTimers();
+      this.customerUI.setPaused(true);
+    }
 
     // Set modal title
     const titles: Record<string, string> = {
@@ -226,9 +242,14 @@ export class UIManager {
   private closeModal(): void {
     if (!this.modalOverlay) return;
 
+    const wasPaused = this.shouldPauseTimersForModal(this.currentModal);
     this.currentModal = null;
-    this.game.resumeCustomerTimers();
-    this.customerUI.setPaused(false);
+
+    // Only resume timers if they were paused for this modal
+    if (wasPaused) {
+      this.game.resumeCustomerTimers();
+      this.customerUI.setPaused(false);
+    }
     this.modalOverlay.classList.add('hidden');
 
     // Force UI refresh to update customer cards with adjusted arrivedAt times
