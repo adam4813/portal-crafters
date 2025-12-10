@@ -1056,6 +1056,36 @@ export class Game {
     return calculatePortalEffects(generatedEquipmentAttributes);
   }
 
+  // Debug methods
+  public debugCompleteContracts(): void {
+    const nextTier = this.progressionSystem.getNextTier();
+    if (!nextTier) {
+      showToast('[DEBUG] Already at max tier!', 'warning');
+      return;
+    }
+    const needed = nextTier.unlockRequirements.contractsCompleted;
+    const current = this.progressionSystem.getContractsCompletedThisTier();
+    const toComplete = needed - current;
+    for (let i = 0; i < toComplete; i++) {
+      this.progressionSystem.completeContract();
+    }
+    showToast(`[DEBUG] Completed ${toComplete} contracts!`, 'success');
+    this.updateUI();
+    this.uiManager.refreshModalContent();
+  }
+
+  public debugCompleteMiniBoss(): void {
+    const currentTier = this.progressionSystem.getCurrentTier();
+    if (this.progressionSystem.isMiniBossCompleted(currentTier.tier)) {
+      showToast('[DEBUG] Mini-boss already completed!', 'warning');
+      return;
+    }
+    this.progressionSystem.completeMiniBoss(currentTier.tier);
+    showToast(`[DEBUG] Mini-boss for tier ${currentTier.tier} completed!`, 'success');
+    this.updateUI();
+    this.uiManager.refreshModalContent();
+  }
+
   public dispose(): void {
     this.stop();
     this.saveSystem.dispose();

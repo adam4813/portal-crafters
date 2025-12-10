@@ -427,6 +427,20 @@ export class UIManager {
         cost: 100,
         goldReward: 0,
       },
+      {
+        id: 'debug_complete_contracts',
+        name: '[DEBUG] Complete Contracts',
+        description: 'Completes all contract requirements for current tier',
+        cost: 0,
+        goldReward: 0,
+      },
+      {
+        id: 'debug_complete_miniboss',
+        name: '[DEBUG] Complete Mini-Boss',
+        description: 'Marks mini-boss as completed for current tier',
+        cost: 0,
+        goldReward: 0,
+      },
     ];
 
     const shopEquipment = [
@@ -527,11 +541,17 @@ export class UIManager {
           if (reward > 0) {
             inv.addGold(reward);
           }
-          // Add non-debug items to inventory as ingredients
-          if (!id.startsWith('debug_')) {
+          // Handle debug items
+          if (id === 'debug_complete_contracts') {
+            this.game.debugCompleteContracts();
+          } else if (id === 'debug_complete_miniboss') {
+            this.game.debugCompleteMiniBoss();
+          } else if (!id.startsWith('debug_')) {
+            // Add non-debug items to inventory as ingredients
             inv.addIngredient(id, 1);
           }
           this.game.refreshUI();
+          this.renderShopModal();
         }
       });
     });
@@ -546,6 +566,7 @@ export class UIManager {
           inv.spendGold(cost);
           inv.addEquipment(id, 1);
           this.game.refreshUI();
+          this.renderShopModal();
         }
       });
     });
@@ -663,9 +684,16 @@ export class UIManager {
         const canResearch = elements.canResearch(node.element);
         const canAfford = gold >= node.cost;
 
+        // Check if prerequisites are met
+        const unmetPrereqs = node.prerequisites.filter(
+          (prereq) => !elements.isElementUnlocked(prereq)
+        );
+
         let actionContent = '';
+        let prereqContent = '';
+
         if (node.unlocked) {
-          actionContent = '';
+          actionContent = '<span class="unlocked-badge">✓</span>';
         } else if (isTierLocked) {
           actionContent = `
             <div class="tier-locked" title="Reach ${getTierDisplayName(elementTier)} tier to unlock">
@@ -673,26 +701,49 @@ export class UIManager {
               <span class="tier-requirement">Tier ${requiredProgressionTier}</span>
             </div>
           `;
+        } else if (unmetPrereqs.length > 0) {
+          const prereqNames = unmetPrereqs
+            .map((el) => {
+              const def = getElementDefinition(el);
+              return def ? `${def.icon} ${def.name}` : el;
+            })
+            .join(', ');
+          actionContent = `
+            <button class="btn-secondary research-btn" disabled>
+              ${formatNumber(node.cost)} 💰
+            </button>
+          `;
+          prereqContent = `
+            <div class="prerequisites-required" title="Research these elements first">
+              <span class="prereq-label">Requires:</span>
+              <span class="prereq-list">${prereqNames}</span>
+            </div>
+          `;
         } else {
           actionContent = `
             <button 
               class="btn-secondary research-btn" 
               data-element="${node.element}"
-              ${!canResearch || !canAfford ? 'disabled' : ''}
+              ${!canAfford ? 'disabled' : ''}
             >
               ${formatNumber(node.cost)} 💰
             </button>
           `;
         }
 
+        const isResearchable = canResearch && !isTierLocked;
+        const nodeClass = node.unlocked ? 'unlocked' : isResearchable ? 'available' : 'locked';
+
         html += `
-          <div class="research-node ${node.unlocked ? 'unlocked' : 'locked'} ${isTierLocked ? 'tier-locked-node' : ''}">
-            <div class="research-info">
-              <span class="element-icon">${info.icon}</span>
-              <span class="element-name">${info.name}</span>
-              ${node.unlocked ? '<span class="unlocked-badge">✓</span>' : ''}
+          <div class="research-node ${nodeClass} ${isTierLocked ? 'tier-locked-node' : ''}">
+            <div class="research-node-main">
+              <div class="research-info">
+                <span class="element-icon">${info.icon}</span>
+                <span class="element-name">${info.name}</span>
+              </div>
+              ${actionContent}
             </div>
-            ${actionContent}
+            ${prereqContent}
           </div>
         `;
       }

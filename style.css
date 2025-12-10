@@ -807,16 +807,24 @@ body {
 .btn-secondary {
   background-color: var(--secondary-color);
   color: var(--text-primary);
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   padding: 0.5rem 1rem;
   border-radius: 4px;
   font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .btn-secondary:hover {
   background-color: #5a6b7c;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+  transform: translateY(-1px);
+}
+
+.btn-secondary:disabled {
+  pointer-events: none;
+  opacity: 0.5;
 }
 
 /* Customer Queue Styles */
@@ -1205,9 +1213,8 @@ body {
 .shop-tabs {
   display: flex;
   gap: 0.5rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
   border-bottom: 2px solid var(--background-light);
-  padding-bottom: 0.5rem;
 }
 
 .shop-tab {
@@ -1241,6 +1248,7 @@ body {
 .shop-tab-content {
   max-height: 400px;
   overflow-y: auto;
+  padding: 4px;
 }
 
 .shop-item {
@@ -1273,12 +1281,26 @@ body {
   border-radius: 4px;
   margin-bottom: 0.5rem;
   display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.research-node-main {
+  display: flex;
   justify-content: space-between;
   align-items: center;
+}
+.research-node .unlocked-badge {
+  width: 80px;
+  text-align: center;
 }
 
 .research-node.locked {
   opacity: 0.5;
+}
+
+.research-node.available {
+  border-left: 3px solid var(--primary-color);
 }
 
 .research-node.unlocked {
@@ -1306,6 +1328,25 @@ body {
 }
 
 .tier-locked .tier-requirement {
+  font-weight: 500;
+}
+
+.prerequisites-required {
+  padding: 0.5rem;
+  background-color: var(--background-dark);
+  border-radius: 4px;
+  font-size: 0.85rem;
+  border-left: 3px solid var(--warning-color);
+}
+
+.prerequisites-required .prereq-label {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  margin-right: 0.5rem;
+}
+
+.prerequisites-required .prereq-list {
+  color: var(--warning-color);
   font-weight: 500;
 }
 
