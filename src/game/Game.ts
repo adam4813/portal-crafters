@@ -384,6 +384,7 @@ export class Game {
     // Invalidate portal types cache since we crafted a new portal
     this.uiManager.invalidatePortalTypesCache();
     this.updateUI();
+    this.uiManager.refreshModalContent();
   }
 
   public fulfillCustomerWithPortal(customerId: string, portalId: string): void {
@@ -470,6 +471,7 @@ export class Game {
       showToast(`Contract complete! Received ${payment} gold!${modifierText}`, 'success');
     }
     this.updateUI();
+    this.uiManager.refreshModalContent();
   }
 
   // Legacy method - kept for backwards compatibility
@@ -657,6 +659,7 @@ export class Game {
     const newTier = this.progressionSystem.getCurrentTier();
     showToast(`🎉 Advanced to ${newTier.name}!`, 'success');
     this.updateUI();
+    this.uiManager.refreshModalContent();
   }
 
   public purchaseUpgrade(upgradeId: string): void {
@@ -669,6 +672,17 @@ export class Game {
     if (!this.upgradeSystem.canUpgrade(upgradeId)) {
       showToast('Upgrade maxed out!', 'warning');
       return;
+    }
+
+    // Check tier cap
+    const currentTier = this.progressionSystem.getState().currentTier;
+    const upgrade = this.upgradeSystem.getUpgrade(upgradeId);
+    if (upgrade) {
+      const maxLevelForTier = this.upgradeSystem.getMaxLevelForTier(upgradeId, currentTier);
+      if (upgrade.currentLevel >= maxLevelForTier) {
+        showToast('Reach a higher tier to unlock more levels!', 'warning');
+        return;
+      }
     }
 
     this.inventorySystem.spendGold(cost);
@@ -863,6 +877,7 @@ export class Game {
     this.portal.reset();
     showToast('Portal stored for later use!', 'success');
     this.updateUI();
+    this.uiManager.refreshModalContent();
   }
 
   public useStoredPortal(portalId: string): void {
@@ -887,6 +902,7 @@ export class Game {
     this.portal.setData(storedPortal);
     showToast('Portal loaded!', 'success');
     this.updateUI();
+    this.uiManager.refreshModalContent();
   }
 
   public reclaimStoredPortal(portalId: string): void {
@@ -906,6 +922,7 @@ export class Game {
       showToast('Portal reclaimed!', 'success');
     }
     this.updateUI();
+    this.uiManager.refreshModalContent();
   }
 
   public getStoredPortals(): PortalType[] {

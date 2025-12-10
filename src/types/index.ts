@@ -203,6 +203,8 @@ export interface Upgrade {
   baseCost: number;
   costMultiplier: number;
   effectPerLevel: number;
+  requiredTier?: number;
+  tierLevelCaps?: Record<number, number>;
 }
 
 // Reward from portal completion

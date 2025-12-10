@@ -568,11 +568,17 @@ export class UIManager {
 
     if (this.currentUpgradesTab === 'upgrades') {
       const allUpgrades = upgrades.getAllUpgrades();
+      const { progression } = this.lastUpdateData;
+      const currentProgressionTier = progression.getState().currentTier;
 
       for (const upgrade of allUpgrades) {
         const cost = upgrades.getUpgradeCost(upgrade.id);
         const canAfford = gold >= cost;
+        const maxLevelForTier = upgrades.getMaxLevelForTier(upgrade.id, currentProgressionTier);
         const isMaxed = upgrade.currentLevel >= upgrade.maxLevel;
+        const isTierCapped = upgrade.currentLevel >= maxLevelForTier && !isMaxed;
+        const requiredTier = upgrade.requiredTier || 1;
+        const isTierLocked = currentProgressionTier < requiredTier;
 
         let effectInfo = '';
         if (upgrade.type === 'manaConversion' && upgrade.currentLevel > 0) {
@@ -581,25 +587,55 @@ export class UIManager {
           effectInfo = `<div class="upgrade-effect">+${percentage}% efficiency</div>`;
         }
 
-        html += `
-          <div class="shop-item ${isMaxed ? 'maxed' : ''}">
-            <div class="shop-item-info">
-              <div class="shop-item-name">${upgrade.name}</div>
-              <div class="shop-item-description">${upgrade.description}</div>
-              ${effectInfo}
-              <div class="shop-item-level">
-                Level: ${upgrade.currentLevel}/${upgrade.maxLevel}
+        // Find next tier that unlocks more levels
+        let nextTierForMore: number | null = null;
+        if (isTierCapped && upgrade.tierLevelCaps) {
+          for (const [tier, cap] of Object.entries(upgrade.tierLevelCaps)) {
+            const tierNum = parseInt(tier, 10);
+            if (tierNum > currentProgressionTier && cap > maxLevelForTier) {
+              nextTierForMore = tierNum;
+              break;
+            }
+          }
+        }
+
+        if (isTierLocked) {
+          html += `
+            <div class="shop-item tier-locked-node">
+              <div class="shop-item-info">
+                <div class="shop-item-name">${upgrade.name}</div>
+                <div class="shop-item-description">${upgrade.description}</div>
+                <div class="shop-item-level">
+                  Level: ${upgrade.currentLevel}/${upgrade.maxLevel}
+                </div>
+              </div>
+              <div class="tier-locked" title="Reach Tier ${requiredTier} to unlock">
+                <span class="lock-icon">🔒</span>
+                <span class="tier-requirement">Tier ${requiredTier}</span>
               </div>
             </div>
-            <button 
-              class="btn-secondary buy-upgrade-btn" 
-              data-id="${upgrade.id}"
-              ${!canAfford || isMaxed ? 'disabled' : ''}
-            >
-              ${isMaxed ? 'MAX' : `${formatNumber(cost)} 💰`}
-            </button>
-          </div>
-        `;
+          `;
+        } else {
+          html += `
+            <div class="shop-item ${isMaxed ? 'maxed' : ''} ${isTierCapped ? 'tier-capped' : ''}">
+              <div class="shop-item-info">
+                <div class="shop-item-name">${upgrade.name}</div>
+                <div class="shop-item-description">${upgrade.description}</div>
+                ${effectInfo}
+                <div class="shop-item-level">
+                  Level: ${upgrade.currentLevel}/${upgrade.maxLevel}
+                </div>
+              </div>
+              <button 
+                class="btn-secondary buy-upgrade-btn" 
+                data-id="${upgrade.id}"
+                ${!canAfford || isMaxed || isTierCapped ? 'disabled' : ''}
+              >
+                ${isMaxed ? 'MAX' : isTierCapped ? `🔒 Tier ${nextTierForMore || '?'}` : `${formatNumber(cost)} 💰`}
+              </button>
+            </div>
+          `;
+        }
       }
     } else if (this.currentUpgradesTab === 'elements') {
       const allNodes = elements.getAllResearchNodes();

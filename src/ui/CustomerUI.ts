@@ -129,6 +129,14 @@ export class CustomerUI {
         }
       });
     });
+
+    // Add event listener for advance tier button
+    const advanceBtn = container.querySelector('.advance-tier-btn');
+    if (advanceBtn) {
+      advanceBtn.addEventListener('click', () => {
+        this.game.advanceToNextTier();
+      });
+    }
   }
 
   private renderProgressionStatusHtml(
@@ -166,6 +174,10 @@ export class CustomerUI {
         html += `<div class="requirement ${unlockStatus.elementUnlocked ? 'met' : 'unmet'}">`;
         html += `${unlockStatus.elementUnlocked ? '✅' : '❌'} Research ${unlockStatus.elementNeeded}`;
         html += `</div>`;
+      }
+      // Show advance button if all requirements are met
+      if (unlockStatus.canUnlock) {
+        html += `<button class="btn-primary advance-tier-btn">🎉 Advance to ${nextTier.name}</button>`;
       }
       html += `</div>`;
       html += `</div>`;

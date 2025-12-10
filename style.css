@@ -1309,6 +1309,16 @@ body {
   font-weight: 500;
 }
 
+.shop-item.tier-capped {
+  border-left: 3px solid var(--warning-color);
+}
+
+.tier-cap-info {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
 /* Recipe Book Styles */
 .recipe-entry {
   padding: 0.5rem;
@@ -2102,7 +2112,7 @@ body {
     top: 0;
     left: -200px;
     width: 200px;
-    height: 100vh;
+    height: 100%;
     z-index: 1000;
     transition: left 0.3s ease;
     padding-top: 60px;
