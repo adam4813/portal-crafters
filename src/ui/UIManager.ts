@@ -1196,6 +1196,15 @@ export class UIManager {
       { id: 'expeditions', label: '🗺️ Expeditions' },
     ];
 
+    // Build dropdown select for mobile
+    let selectHtml = '<select class="guide-nav-select">';
+    for (const section of sections) {
+      const selected = this.currentGuideSection === section.id ? 'selected' : '';
+      selectHtml += `<option value="${section.id}" ${selected}>${section.label}</option>`;
+    }
+    selectHtml += '</select>';
+
+    // Build sidebar nav for desktop
     let navHtml = '<ul class="guide-nav">';
     for (const section of sections) {
       const activeClass = this.currentGuideSection === section.id ? 'active' : '';
@@ -1207,12 +1216,22 @@ export class UIManager {
 
     this.modalContent.innerHTML = `
       <div class="guide-layout">
-        <nav class="guide-sidebar">${navHtml}</nav>
+        <nav class="guide-sidebar">
+          ${selectHtml}
+          ${navHtml}
+        </nav>
         <div class="guide-content">${contentHtml}</div>
       </div>
     `;
 
-    // Add click handlers for navigation
+    // Add change handler for dropdown (mobile)
+    const select = this.modalContent.querySelector('.guide-nav-select');
+    select?.addEventListener('change', (e) => {
+      this.currentGuideSection = (e.target as HTMLSelectElement).value;
+      this.renderGuideModal();
+    });
+
+    // Add click handlers for navigation items (desktop)
     this.modalContent.querySelectorAll('.guide-nav-item').forEach((item) => {
       item.addEventListener('click', () => {
         this.currentGuideSection = (item as HTMLElement).dataset.section || 'getting-started';
@@ -1227,28 +1246,29 @@ export class UIManager {
         <h4>Welcome to Portal Crafters!</h4>
         <p>Your goal is to craft magical portals and fulfill customer contracts to earn gold.</p>
         <div class="guide-steps">
-          <div class="guide-step"><span class="step-num">1</span> <strong>Buy Mana</strong> - Use gold to purchase mana from the Shop</div>
-          <div class="guide-step"><span class="step-num">2</span> <strong>Convert Mana</strong> - Transform mana into elemental energy using the Mana Converter</div>
-          <div class="guide-step"><span class="step-num">3</span> <strong>Add Power</strong> - Add Raw Mana and Elements to your portal to increase its level</div>
-          <div class="guide-step"><span class="step-num">4</span> <strong>Add Items</strong> - Place items in crafting slots for bonus effects (gold%, mana%, etc.)</div>
-          <div class="guide-step"><span class="step-num">5</span> <strong>Craft Portal</strong> - Click "Craft Portal" to create and store your portal</div>
-          <div class="guide-step"><span class="step-num">6</span> <strong>Fulfill Contracts</strong> - Match your portals to customer requirements</div>
+          <div class="guide-step"><span class="step-num">1</span> <strong>Buy Mana</strong> - Click the mana display to purchase mana with gold</div>
+          <div class="guide-step"><span class="step-num">2</span> <strong>Add Power</strong> - Add Raw Mana (+/- buttons) or Elements (element slots) to increase portal level</div>
+          <div class="guide-step"><span class="step-num">3</span> <strong>Add Items</strong> - Place items in crafting slots for bonus effects (gold%, mana%, etc.)</div>
+          <div class="guide-step"><span class="step-num">4</span> <strong>Craft Portal</strong> - Click "Craft Portal" to create and store your portal</div>
+          <div class="guide-step"><span class="step-num">5</span> <strong>Fulfill Contracts</strong> - Match your portals to customer requirements</div>
+          <div class="guide-step"><span class="step-num">6</span> <strong>Send Expeditions</strong> - Use extra portals to gather ingredients and equipment</div>
         </div>
       `,
       'mana-gold': `
         <h4>Mana & Gold</h4>
         <p><strong>Gold 💰</strong> is earned by fulfilling customer contracts. Use it to:</p>
         <ul>
-          <li>Purchase mana from the Shop</li>
+          <li>Purchase mana (click the mana display at the top)</li>
           <li>Buy items with special portal effects</li>
           <li>Buy upgrades to improve your crafting</li>
           <li>Research new elements</li>
         </ul>
-        <p><strong>Mana ✨</strong> is magical energy. It can be used two ways:</p>
+        <p><strong>Mana ✨</strong> is magical energy used for crafting portals:</p>
         <ul>
-          <li><strong>Raw Mana</strong> - Add directly to portals for power (use +/- buttons in crafting)</li>
-          <li><strong>Convert to Elements</strong> - Transform into elemental energy using the Mana Converter</li>
+          <li><strong>Raw Mana</strong> - Add directly to portals for power (10 mana = 1 level)</li>
+          <li><strong>Elements</strong> - Spend mana to add elements via element slots (each element costs mana based on rarity)</li>
         </ul>
+        <p><strong>Tip:</strong> Click an empty element slot to choose which element to add, then use +/- buttons to adjust the amount.</p>
       `,
       shop: `
         <h4>Shop</h4>
@@ -1271,12 +1291,13 @@ export class UIManager {
       `,
       upgrades: `
         <h4>Upgrades</h4>
-        <p>Upgrades permanently improve your crafting abilities:</p>
+        <p>Upgrades permanently improve your crafting and rewards:</p>
         <ul>
-          <li><strong>Mana Conversion</strong> - Increases efficiency when converting mana to elements</li>
           <li><strong>Reward Chance</strong> - Increases chance of bonus rewards from contracts</li>
+          <li><strong>Element Slots</strong> - Unlock more element slots for crafting complex portals</li>
         </ul>
         <p>Each upgrade can be leveled up multiple times for stronger effects.</p>
+        <p><strong>Elements Tab:</strong> Research new elements to unlock them for crafting. Higher tier elements are more powerful but cost more mana to add.</p>
       `,
       recipes: `
         <h4>Recipe Book</h4>
@@ -1305,17 +1326,22 @@ export class UIManager {
       `,
       elements: `
         <h4>Elements</h4>
-        <p>Elements define the magical aspect of your portals:</p>
+        <p>Elements define the magical aspect of your portals and fulfill contract requirements.</p>
+        <p><strong>Adding Elements:</strong></p>
         <ul>
-          <li>🔥 <strong>Fire</strong> - Passionate, energetic portals</li>
-          <li>💧 <strong>Water</strong> - Calm, flowing portals</li>
-          <li>🌿 <strong>Earth</strong> - Stable, grounded portals</li>
-          <li>💨 <strong>Air</strong> - Light, swift portals</li>
-          <li>⚡ <strong>Lightning</strong> - Powerful, electric portals</li>
+          <li>Click an empty element slot to choose which element to add</li>
+          <li>Use +/- buttons to adjust the amount (costs mana per unit)</li>
+          <li>Higher tier elements cost more mana but provide more power</li>
+          <li>Click the X button to remove all of an element and refund mana</li>
         </ul>
-        <p><strong>Unlocking Elements:</strong> Fire and Water are available from the start. Other elements can be unlocked in the Upgrades menu under the Elements tab.</p>
-        <p><strong>Element Potency:</strong> Each element has a power multiplier (shown as 1x, 1.2x, etc.) that affects how much it contributes to portal level.</p>
-        <p>Use the +/- buttons next to each element in the crafting area to adjust amounts.</p>
+        <p><strong>Unlocking Elements:</strong> Fire and Water are available from the start. Research other elements in the Upgrades menu → Elements tab.</p>
+        <p><strong>Element Tiers:</strong></p>
+        <ul>
+          <li><strong>Standard</strong> (Fire, Water, Earth, Air) - 10-12 mana per unit, 1x power</li>
+          <li><strong>Rare</strong> (Ice, Lightning, Metal, Nature) - 15-18 mana per unit, 1.2x power</li>
+          <li><strong>Exotic</strong> (Shadow, Light, Void, Crystal, Arcane) - 20-28 mana per unit, 1.5x power</li>
+          <li><strong>Legendary</strong> (Time, Chaos, Life, Death) - 50-60 mana per unit, 2x power</li>
+        </ul>
       `,
       contracts: `
         <h4>Contracts</h4>
